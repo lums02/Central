@@ -1,0 +1,91 @@
+// Media Queries
+@media (max-width: 1200px) {
+    .main-content {
+        margin-left: 200px;
+    }
+}
+
+@media (max-width: 992px) {
+    .sidebar {
+        width: 200px;
+    }
+
+    .main-content {
+        margin-left: 200px;
+    }
+}
+
+@media (max-width: 768px) {
+    .sidebar {
+        transform: translateX(-100%);
+        
+        &.active {
+            transform: translateX(0);
+        }
+    }
+
+    .main-content {
+        margin-left: 0;
+        
+        &.sidebar-active {
+            margin-left: $sidebar-width;
+        }
+    }
+
+    .sidebar-toggle {
+        display: block;
+    }
+
+    .sidebar-overlay {
+        display: block;
+    }
+
+    .patients-grid {
+        grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
+    }
+}
+
+@media (max-width: 576px) {
+    .page-header {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 15px;
+    }
+
+    .patients-grid {
+        grid-template-columns: 1fr;
+    }
+
+    .patient-card {
+        padding: 15px;
+    }
+
+    .search-bar input {
+        font-size: 0.9rem;
+    }
+}
+
+// Support du mode sombre
+@media (prefers-color-scheme: dark) {
+    body {
+        background: linear-gradient(135deg, #1a1a1a 0%, #2d2d2d 100%);
+    }
+
+    .card,
+    .patient-card,
+    .appointment-card {
+        background: #2d2d2d;
+        color: $text-light;
+    }
+
+    .form-control {
+        background: #2d2d2d;
+        border-color: #404040;
+        color: $text-light;
+
+        &:focus {
+            background: #2d2d2d;
+            color: $text-light;
+        }
+    }
+} 

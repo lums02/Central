@@ -1,0 +1,85 @@
+.sidebar {
+    width: $sidebar-width;
+    background: linear-gradient(135deg, $primary-color 0%, $secondary-color 100%);
+    color: $text-light;
+    height: 100vh;
+    position: fixed;
+    left: 0;
+    top: 0;
+    z-index: 1000;
+    transition: all $transition-speed ease;
+
+    &-header {
+        padding: 20px;
+        text-align: center;
+        border-bottom: 1px solid rgba($text-light, 0.1);
+
+        h3 {
+            margin: 0;
+            font-size: 1.5rem;
+        }
+    }
+
+    nav {
+        padding: 20px 0;
+
+        a {
+            display: flex;
+            align-items: center;
+            padding: 12px 20px;
+            color: $text-light;
+            text-decoration: none;
+            transition: all $transition-speed ease;
+
+            &:hover {
+                background: rgba($text-light, 0.1);
+            }
+
+            &.active {
+                background: $accent-color;
+            }
+
+            i {
+                margin-right: 10px;
+                font-size: 1.2rem;
+            }
+        }
+    }
+}
+
+.sidebar-toggle {
+    display: none;
+    position: fixed;
+    top: 20px;
+    left: 20px;
+    z-index: 1001;
+    background: $primary-color;
+    color: $text-light;
+    border: none;
+    border-radius: 50%;
+    width: 40px;
+    height: 40px;
+    cursor: pointer;
+    transition: all $transition-speed ease;
+
+    &:hover {
+        background: $secondary-color;
+    }
+}
+
+.sidebar-overlay {
+    display: none;
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: rgba($dark-color, 0.5);
+    z-index: 999;
+    opacity: 0;
+    transition: opacity $transition-speed ease;
+
+    &.active {
+        opacity: 1;
+    }
+} 
