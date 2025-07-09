@@ -1,15 +1,18 @@
 <?php
 
 use Illuminate\Support\Facades\Route;
+use App\Http\Controllers\RegisterController;
+use App\Http\Controllers\Auth\LoginController;
 
+// Page d'accueil
 Route::get('/', function () {
     return view('home');
 });
-use App\Http\Controllers\RegisterController;
 
-// Affiche le formulaire d'inscription
-Route::get('/register', [RegisterController::class, 'create'])->name('register');
 
-// Traite le formulaire d'inscription
-Route::post('/register', [RegisterController::class, 'store'])->name('register.store');
+Route::get('/register', [RegisterController::class, 'showRegistrationForm'])->name('register.form');
+Route::post('/register', [RegisterController::class, 'submit'])->name('register.submit');
 
+
+
+Route::get('/login', [LoginController::class, 'showLoginForm'])->name('login');

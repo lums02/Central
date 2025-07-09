@@ -22,7 +22,7 @@ window.startTrial = function () {
         cancelButtonText: 'Annuler'
     }).then((result) => {
         if (result.isConfirmed) {
-            window.location.href = 'register.php';
+            window.location.href = 'auth/register.blade.php';
         }
     });
 };
