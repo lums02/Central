@@ -3,9 +3,14 @@
 namespace App\Http\Controllers;
 
 use Illuminate\Http\Request;
- // adapte selon ton modèle utilisateur
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\DB;
+use App\Models\Hopital;
+use App\Models\Utilisateur;
+use App\Models\Pharmacie;
+use App\Models\BanqueSang;
+use App\Models\Centre;
+use App\Models\Patient;
 
 class RegisterController extends Controller
 {
@@ -15,57 +20,108 @@ class RegisterController extends Controller
     }
 
     public function submit(Request $request)
-    {
-        // Validation des données
-        $validated = $request->validate([
-            'nom' => 'required|string|max:255',
-            'email' => 'required|email|unique:hopitaux,email',
-            'telephone' => 'required|string|max:20',
-            'adresse' => 'required|string',
-            'type_hopital' => 'required|string',
-            'password' => 'required|string|min:8|confirmed',
-            'logo' => 'nullable|image|mimes:jpeg,png,jpg,gif|max:2048',
+{
+    // 1. Validation dynamique
+    $rules = [
+        'type_entite' => 'required|in:hopital,pharmacie,banque_sang,centre,patient',
+        'nom' => 'required|string|max:255',
+        'email' => 'required|email|unique:utilisateurs,email',
+        'password' => 'required|string|min:8|confirmed',
+        'logo' => 'nullable|image|mimes:jpeg,png,jpg,gif|max:2048',
+    ];
+
+    if (in_array($request->type_entite, ['hopital', 'pharmacie', 'banque_sang', 'centre'])) {
+        $rules['adresse'] = 'required|string';
+        if ($request->type_entite === 'hopital') {
+            $rules['type_hopital'] = 'required|string';
+        }
+    } elseif ($request->type_entite === 'patient') {
+        $rules['date_naissance'] = 'required|date';
+        $rules['sexe'] = 'required|in:masculin,feminin';
+    }
+
+    $validated = $request->validate($rules);
+
+    DB::beginTransaction();
+    try {
+        $logoPath = null;
+        if ($request->hasFile('logo')) {
+            $logoPath = $request->file('logo')->store('logos', 'public');
+        }
+
+        $entite_id = null;
+        $type = $validated['type_entite'];
+
+        switch ($type) {
+            case 'hopital':
+                $entite = Hopital::create([
+                    'nom' => $validated['nom'],
+                    'email' => $validated['email'],
+                    'adresse' => $validated['adresse'],
+                    'type_hopital' => $validated['type_hopital'],
+                    'nombre_lits' => 200,
+                    'logo' => $logoPath,
+                ]);
+                break;
+
+            case 'pharmacie':
+                $entite = Pharmacie::create([
+                    'nom' => $validated['nom'],
+                    'email' => $validated['email'],
+                    'adresse' => $validated['adresse'],
+                    'logo' => $logoPath,
+                ]);
+                break;
+
+            case 'banque_sang':
+                $entite = BanqueSang::create([
+                    'nom' => $validated['nom'],
+                    'email' => $validated['email'],
+                    'adresse' => $validated['adresse'],
+                    'logo' => $logoPath,
+                ]);
+                break;
+
+            case 'centre':
+                $entite = Centre::create([
+                    'nom' => $validated['nom'],
+                    'email' => $validated['email'],
+                    'adresse' => $validated['adresse'],
+                    'logo' => $logoPath,
+                ]);
+                break;
+
+            case 'patient':
+                $entite = Patient::create([
+                    'nom' => $validated['nom'],
+                    'email' => $validated['email'],
+                    'date_naissance' => $validated['date_naissance'],
+                    'sexe' => $validated['sexe'],
+                ]);
+                break;
+
+            default:
+                throw new \Exception('Type d\'entité non reconnu');
+        }
+
+        $entite_id = $entite->id;
+
+        Utilisateur::create([
+            'nom' => $validated['nom'],
+            'email' => $validated['email'],
+            'mot_de_passe' => Hash::make($validated['password']),
+            'role' => 'admin',
+            'type_utilisateur' => $type,
+            'hopital_id' => $entite_id,
         ]);
 
-        DB::beginTransaction();
+        DB::commit();
 
-        try {
-            // Upload logo si présent
-            $logoPath = null;
-            if ($request->hasFile('logo')) {
-                $logoPath = $request->file('logo')->store('logos', 'public');
-            }
-
-            // Création de l'hôpital
-            $hopital = Hopital::create([
-                'nom' => $validated['nom'],
-                'email' => $validated['email'],
-                'telephone' => $validated['telephone'],
-                'adresse' => $validated['adresse'],
-                'type_hopital' => $validated['type_hopital'],
-                'nombre_lits' => 200,  // par défaut ou à modifier
-                'logo' => $logoPath,
-            ]);
-
-            // Création de l'utilisateur admin associé
-            Utilisateur::create([
-                'nom' => $validated['nom'],
-                'email' => $validated['email'],
-                'mot_de_passe' => Hash::make($validated['password']),
-                'role' => 'admin',
-                'hopital_id' => $hopital->id,
-            ]);
-
-            DB::commit();
-
-            return redirect()->route('login')->with('success', 'Inscription réussie, connectez-vous.');
-
-        } catch (\Exception $e) {
-            DB::rollback();
-            return back()->withErrors(['error' => 'Erreur lors de l\'inscription : ' . $e->getMessage()])->withInput();
-        }
+        return redirect()->route('login')->with('success', 'Inscription réussie !');
+    } catch (\Exception $e) {
+        DB::rollBack();
+        return back()->withErrors(['error' => 'Erreur : ' . $e->getMessage()])->withInput();
     }
 }
 
-
-
+}

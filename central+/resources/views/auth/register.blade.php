@@ -4,21 +4,16 @@
 <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
-    <title>Inscription - Système Hospitalier</title>
+    <title>Inscription - Plateforme Santé</title>
 
-    <!-- Bootstrap CSS -->
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet" />
-
-    <!-- FontAwesome -->
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet" />
-    
     @vite('resources/css/register.css')
 </head>
 <body>
-<div class="register-container">
-    <h1 class="mb-4 text-center">Inscription Hôpital</h1>
+<div class="register-container mx-auto p-4 mt-5 bg-white rounded shadow" style="max-width: 500px;">
+    <h1 class="mb-4 text-center text-primary">Inscription</h1>
 
-    {{-- Affichage des erreurs de validation --}}
     @if ($errors->any())
         <div class="alert alert-danger">
             <ul class="mb-0">
@@ -29,38 +24,49 @@
         </div>
     @endif
 
-    <form action="{{ route('register.submit') }}" method="POST" enctype="multipart/form-data">
+    <form action="{{ route('register.submit') }}" method="POST" enctype="multipart/form-data" novalidate>
         @csrf
 
         <div class="mb-3">
-            <label for="logo" class="form-label">Logo de l'hôpital (optionnel)</label>
-            <input type="file" name="logo" id="logo" class="form-control" accept="image/*" />
+            <label for="type_entite" class="form-label"><i class="fas fa-building me-2"></i>Type d'entité</label>
+            <select name="type_entite" id="type_entite" class="form-select" required onchange="toggleFields()">
+                <option value="" disabled selected>-- Sélectionnez une entité --</option>
+                <option value="hopital" {{ old('type_entite') == 'hopital' ? 'selected' : '' }}>Hôpital</option>
+                <option value="pharmacie" {{ old('type_entite') == 'pharmacie' ? 'selected' : '' }}>Pharmacie</option>
+                <option value="banque_sang" {{ old('type_entite') == 'banque_sang' ? 'selected' : '' }}>Banque de sang</option>
+                <option value="centre" {{ old('type_entite') == 'centre' ? 'selected' : '' }}>Centre médical</option>
+                <option value="patient" {{ old('type_entite') == 'patient' ? 'selected' : '' }}>Patient</option>
+            </select>
         </div>
 
+        {{-- Champs communs à toutes les entités --}}
         <div class="mb-3">
-            <label for="nom" class="form-label">Nom de l'hôpital</label>
+            <label for="nom" class="form-label"><i class="fas fa-user me-2"></i>Nom complet ou raison sociale</label>
             <input type="text" name="nom" id="nom" class="form-control" value="{{ old('nom') }}" required />
         </div>
 
         <div class="mb-3">
-            <label for="email" class="form-label">Email</label>
+            <label for="email" class="form-label"><i class="fas fa-envelope me-2"></i>Email</label>
             <input type="email" name="email" id="email" class="form-control" value="{{ old('email') }}" required />
         </div>
 
-        <div class="mb-3">
-            <label for="telephone" class="form-label">Téléphone</label>
-            <input type="tel" name="telephone" id="telephone" class="form-control" value="{{ old('telephone') }}" placeholder="+243 812345678" required />
+
+
+        <div class="mb-3" id="adresse-group">
+            <label for="adresse" class="form-label"><i class="fas fa-map-marker-alt me-2"></i>Adresse</label>
+            <textarea name="adresse" id="adresse" rows="2" class="form-control">{{ old('adresse') }}</textarea>
         </div>
 
-        <div class="mb-3">
-            <label for="adresse" class="form-label">Adresse</label>
-            <textarea name="adresse" id="adresse" rows="2" class="form-control" required>{{ old('adresse') }}</textarea>
+        {{-- Champs spécifiques hôpital, pharmacie, banque_sang, centre --}}
+        <div class="mb-3" id="logo-group">
+            <label for="logo" class="form-label"><i class="fas fa-file-image me-2"></i>Logo (optionnel)</label>
+            <input type="file" name="logo" id="logo" class="form-control" accept="image/*" />
         </div>
 
-        <div class="mb-3">
-            <label for="type_hopital" class="form-label">Type d'hôpital</label>
-            <select name="type_hopital" id="type_hopital" class="form-control" required>
-                <option value="" disabled {{ old('type_hopital') ? '' : 'selected' }}>Sélectionnez un type</option>
+        <div class="mb-3" id="type_hopital-group">
+            <label for="type_hopital" class="form-label"><i class="fas fa-clinic-medical me-2"></i>Type d'hôpital</label>
+            <select name="type_hopital" id="type_hopital" class="form-select">
+                <option value="" disabled selected>Sélectionnez un type</option>
                 <option value="Général" {{ old('type_hopital') == 'Général' ? 'selected' : '' }}>Général</option>
                 <option value="Spécialisé" {{ old('type_hopital') == 'Spécialisé' ? 'selected' : '' }}>Spécialisé</option>
                 <option value="Clinique" {{ old('type_hopital') == 'Clinique' ? 'selected' : '' }}>Clinique</option>
@@ -68,17 +74,33 @@
             </select>
         </div>
 
+        {{-- Champs spécifiques patients --}}
+        <div class="mb-3" id="date_naissance-group" style="display:none;">
+            <label for="date_naissance" class="form-label"><i class="fas fa-birthday-cake me-2"></i>Date de naissance</label>
+            <input type="date" name="date_naissance" id="date_naissance" class="form-control" value="{{ old('date_naissance') }}" />
+        </div>
+
+        <div class="mb-3" id="sexe-group" style="display:none;">
+            <label for="sexe" class="form-label"><i class="fas fa-venus-mars me-2"></i>Sexe</label>
+            <select name="sexe" id="sexe" class="form-select">
+                <option value="" disabled selected>Sélectionnez</option>
+                <option value="masculin" {{ old('sexe') == 'masculin' ? 'selected' : '' }}>Masculin</option>
+                <option value="feminin" {{ old('sexe') == 'feminin' ? 'selected' : '' }}>Féminin</option>
+            </select>
+        </div>
+
+        {{-- Champs communs mot de passe --}}
         <div class="mb-3">
-            <label for="password" class="form-label">Mot de passe administrateur</label>
+            <label for="password" class="form-label"><i class="fas fa-lock me-2"></i>Mot de passe</label>
             <input type="password" name="password" id="password" class="form-control" required />
         </div>
 
         <div class="mb-3">
-            <label for="password_confirmation" class="form-label">Confirmer le mot de passe</label>
+            <label for="password_confirmation" class="form-label"><i class="fas fa-lock me-2"></i>Confirmer le mot de passe</label>
             <input type="password" name="password_confirmation" id="password_confirmation" class="form-control" required />
         </div>
 
-        <button type="submit" class="btn-register">S'inscrire</button>
+        <button type="submit" class="btn btn-primary w-100">S'inscrire</button>
     </form>
 
     <p class="text-center mt-3">
@@ -86,8 +108,40 @@
     </p>
 </div>
 
-<!-- Bootstrap JS -->
-<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+<script>
+    function toggleFields() {
+        const type = document.getElementById('type_entite').value;
+        // Champs spécifiques
+        const logoGroup = document.getElementById('logo-group');
+        const typeHopitalGroup = document.getElementById('type_hopital-group');
+        const dateNaissanceGroup = document.getElementById('date_naissance-group');
+        const sexeGroup = document.getElementById('sexe-group');
+        const adresseGroup = document.getElementById('adresse-group');
 
+        // Cacher tout par défaut
+        logoGroup.style.display = 'none';
+        typeHopitalGroup.style.display = 'none';
+        dateNaissanceGroup.style.display = 'none';
+        sexeGroup.style.display = 'none';
+        adresseGroup.style.display = 'none';
+
+        // Montrer selon entité
+        if (type === 'hopital' || type === 'pharmacie' || type === 'banque_sang' || type === 'centre') {
+            logoGroup.style.display = 'block';
+            adresseGroup.style.display = 'block';
+            if(type === 'hopital'){
+                typeHopitalGroup.style.display = 'block';
+            }
+        } else if(type === 'patient') {
+            dateNaissanceGroup.style.display = 'block';
+            sexeGroup.style.display = 'block';
+        }
+    }
+
+    // Appeler au chargement pour gérer la sélection précédente
+    document.addEventListener('DOMContentLoaded', toggleFields);
+</script>
+
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
 </body>
 </html>
