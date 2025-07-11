@@ -16,13 +16,14 @@ class Utilisateur extends Authenticatable
         'nom',
         'email',
         'mot_de_passe',
-        'role',         // rôle : hopital, pharmacie, patient, etc.
+        'role',
+        'type_utilisateur',
         'entite_id',
     ];
 
     protected $hidden = [
         'mot_de_passe',
-        'remember_token', // si tu veux activer la session persistante
+        'remember_token',
     ];
 
     public $timestamps = false;

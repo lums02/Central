@@ -12,7 +12,6 @@ class Hopital extends Model
         'nom',
         'email',
         'adresse',
-        'telephone',
         'type_hopital',
         'nombre_lits',
         'logo',

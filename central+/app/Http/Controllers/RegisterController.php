@@ -112,7 +112,7 @@ class RegisterController extends Controller
             'mot_de_passe' => Hash::make($validated['password']),
             'role' => 'admin',
             'type_utilisateur' => $type,
-            'hopital_id' => $entite_id,
+            'entite_id' => $entite_id,
         ]);
 
         DB::commit();
