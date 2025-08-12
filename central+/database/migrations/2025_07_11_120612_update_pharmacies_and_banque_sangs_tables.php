@@ -1,8 +1,11 @@
+<?php
+
 use Illuminate\Database\Migrations\Migration;
 use Illuminate\Database\Schema\Blueprint;
 use Illuminate\Support\Facades\Schema;
 
-return new class extends Migration {
+class UpdatePharmaciesAndBanqueSangsTables extends Migration
+{
     public function up(): void
     {
         Schema::table('pharmacies', function (Blueprint $table) {
@@ -39,11 +42,11 @@ return new class extends Migration {
     public function down(): void
     {
         Schema::table('pharmacies', function (Blueprint $table) {
-            $table->dropColumn(['nom', 'adresse', 'logo']);
+            $table->dropColumn(['nom', 'email', 'adresse', 'logo']);
         });
 
         Schema::table('banque_sangs', function (Blueprint $table) {
             $table->dropColumn(['nom', 'email', 'adresse', 'logo']);
         });
     }
-};
+}

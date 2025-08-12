@@ -18,9 +18,11 @@ class RegisterController extends Controller
     {
         return view('auth.register');
     }
-
-    public function submit(Request $request)
+public function submit(Request $request)
 {
+    // Debug : afficher toutes les données envoyées par le formulaire
+    dd($request->all());
+
     // 1. Validation dynamique
     $rules = [
         'type_entite' => 'required|in:hopital,pharmacie,banque_sang,centre,patient',
@@ -105,6 +107,16 @@ class RegisterController extends Controller
         }
 
         $entite_id = $entite->id;
+        
+    dd([
+        'nom' => $validated['nom'],
+        'email' => $validated['email'],
+        'mot_de_passe' => Hash::make($validated['password']),
+        'role' => 'admin',
+        'type_utilisateur' => $type,
+        'entite_id' => $entite_id,
+    ]);
+
 
         Utilisateur::create([
             'nom' => $validated['nom'],
@@ -123,5 +135,6 @@ class RegisterController extends Controller
         return back()->withErrors(['error' => 'Erreur : ' . $e->getMessage()])->withInput();
     }
 }
+
 
 }

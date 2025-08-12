@@ -54,5 +54,3 @@ Route::middleware(['auth', 'check.type:patient'])->group(function () {
         return view('patient.dashboard');
     })->name('patient.dashboard');
 });
-
-

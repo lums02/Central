@@ -44,9 +44,11 @@ class Kernel extends HttpKernel
         'auth' => \App\Http\Middleware\Authenticate::class,
         'guest' => \App\Http\Middleware\RedirectIfAuthenticated::class,
         'verified' => \Illuminate\Auth\Middleware\EnsureEmailIsVerified::class,
-        'check.type' => \App\Http\Middleware\CheckTypeUtilisateur::class,
+        'check.type' => \App\Http\Middleware\CheckType::class,
 
         // Ajoute ici tes middlewares personnalisés
         // 'check.role' => \App\Http\Middleware\CheckRole::class,
     ];
+
+    
 }
