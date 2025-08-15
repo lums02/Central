@@ -20,8 +20,7 @@ class RegisterController extends Controller
     }
 public function submit(Request $request)
 {
-    // Debug : afficher toutes les données envoyées par le formulaire
-    dd($request->all());
+    
 
     // 1. Validation dynamique
     $rules = [
@@ -108,14 +107,6 @@ public function submit(Request $request)
 
         $entite_id = $entite->id;
         
-    dd([
-        'nom' => $validated['nom'],
-        'email' => $validated['email'],
-        'mot_de_passe' => Hash::make($validated['password']),
-        'role' => 'admin',
-        'type_utilisateur' => $type,
-        'entite_id' => $entite_id,
-    ]);
 
 
         Utilisateur::create([

@@ -17,7 +17,7 @@ class CheckType
      */
     public function handle($request, Closure $next, $type)
     {
-        if (!Auth::check() || Auth::utilisateur()->type_utilisateur !== $type) {
+        if (!Auth::check() || Auth::user()->type_utilisateur !== $type) {
             abort(403, 'Accès interdit.');
         }
 
