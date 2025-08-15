@@ -1,0 +1,142 @@
+
+ .hospital-logo {
+            width: 60px;
+            height: 60px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            background-color: var(--primary-color);
+            margin-bottom: 10px;
+            overflow: hidden;
+        }
+        .hospital-logo span {
+            color: white;
+            font-size: 24px;
+            font-weight: bold;
+        }
+        .hospital-logo img { 
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+        }
+
+        .user-avatar {
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            background-color: var(--primary-color);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-weight: 500;
+            margin-right: 10px;
+        }
+
+        .patient-avatar {
+            width: 60px;
+            height: 60px;
+            border-radius: 50%;
+            background-color: var(--secondary-color);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-size: 24px;
+            font-weight: 500;
+        }
+
+        .btn-lg {
+            padding: 1rem;
+            text-align: left;
+        }
+
+        .btn-lg small {
+            font-size: 0.85rem;
+            opacity: 0.8;
+        }
+
+        .form-select-lg {
+            padding: 0.75rem;
+            font-size: 1rem;
+        }
+
+        .result-item {
+            background-color: white;
+            border-radius: 8px;
+            padding: 20px;
+            margin-bottom: 20px;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+        }
+
+        .result-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 15px;
+            padding-bottom: 15px;
+            border-bottom: 1px solid #eee;
+        }
+
+        .result-date {
+            color: #666;
+            font-size: 0.9rem;
+            font-weight: 500;
+        }
+
+        .result-type {
+            color: var(--primary-color);
+            font-weight: 500;
+        }
+
+        .result-details {
+            margin-bottom: 20px;
+        }
+
+        .result-row {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 10px;
+            background-color: #f8f9fa;
+            margin-bottom: 8px;
+            border-radius: 4px;
+        }
+
+        .result-label {
+            font-weight: 500;
+            color: #666;
+            flex: 1;
+        }
+
+        .result-value {
+            font-weight: 600;
+            color: var(--primary-color);
+            margin: 0 20px;
+        }
+
+        .result-range {
+            color: #666;
+            font-size: 0.9rem;
+            flex: 1;
+            text-align: right;
+        }
+
+        .result-comment {
+            background-color: #f8f9fa;
+            padding: 15px;
+            border-radius: 4px;
+            margin-top: 15px;
+        }
+
+        .result-comment strong {
+            color: var(--primary-color);
+            display: block;
+            margin-bottom: 5px;
+        }
+
+        .result-comment p {
+            margin: 0;
+            color: #666;
+        }

@@ -3,6 +3,7 @@
 use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\RegisterController;
 use App\Http\Controllers\Auth\LoginController;
+use App\Http\Controllers\DashboardController;
 
 // Page d'accueil
 Route::get('/', function () {
@@ -20,37 +21,12 @@ Route::post('/login', [LoginController::class, 'login'])->name('login.submit');
 // Déconnexion
 Route::post('/logout', [LoginController::class, 'logout'])->name('logout');
 
-// 🔐 Espace Hôpital
-Route::middleware(['auth', 'check.type:hopital'])->group(function () {
-    Route::get('/hopital/dashboard', function () {
-        return view('hopital.dashboard');
-    })->name('hopital.dashboard');
+// 🔐 Dashboards protégés
+Route::middleware(['auth'])->group(function () {
+    Route::get('/hopital/dashboard', [DashboardController::class, 'hopitalDashboard'])->name('hopital.dashboard');
+    Route::get('/pharmacie/dashboard', [DashboardController::class, 'pharmacieDashboard'])->name('pharmacie.dashboard');
+    Route::get('/banque/dashboard', [DashboardController::class, 'banqueSangDashboard'])->name('banque.dashboard');
+    Route::get('/centre/dashboard', [DashboardController::class, 'centreDashboard'])->name('centre.dashboard');
+    Route::get('/patient/dashboard', [DashboardController::class, 'patientDashboard'])->name('patient.dashboard');
 });
 
-// 🔐 Espace Pharmacie
-Route::middleware(['auth', 'check.type:pharmacie'])->group(function () {
-    Route::get('/pharmacie/dashboard', function () {
-        return view('pharmacie.dashboard');
-    })->name('pharmacie.dashboard');
-});
-
-// 🔐 Espace Banque de Sang
-Route::middleware(['auth', 'check.type:banque_sang'])->group(function () {
-    Route::get('/banque/dashboard', function () {
-        return view('banque.dashboard');
-    })->name('banque.dashboard');
-});
-
-// 🔐 Espace Centre Médical
-Route::middleware(['auth', 'check.type:centre'])->group(function () {
-    Route::get('/centre/dashboard', function () {
-        return view('centre.dashboard');
-    })->name('centre.dashboard');
-});
-
-// 🔐 Espace Patient
-Route::middleware(['auth', 'check.type:patient'])->group(function () {
-    Route::get('/patient/dashboard', function () {
-        return view('patient.dashboard');
-    })->name('patient.dashboard');
-});
