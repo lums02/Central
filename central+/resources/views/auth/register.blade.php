@@ -8,7 +8,7 @@
 
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet" />
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet" />
-    @vite('resources/css/register.css')
+    <link href="{{ asset('css/register.css') }}" rel="stylesheet">
 </head>
 <body>
 <div class="register-container mx-auto p-4 mt-5 bg-white rounded shadow" style="max-width: 500px;">
@@ -28,14 +28,14 @@
         @csrf
 
         <div class="mb-3">
-            <label for="type_entite" class="form-label"><i class="fas fa-building me-2"></i>Type d'entité</label>
-            <select name="type_entite" id="type_entite" class="form-select" required onchange="toggleFields()">
+            <label for="type_utilisateur" class="form-label"><i class="fas fa-building me-2"></i>Type d'entité</label>
+            <select name="type_utilisateur" id="type_utilisateur" class="form-select" required onchange="toggleFields()">
                 <option value="" disabled selected>-- Sélectionnez une entité --</option>
-                <option value="hopital" {{ old('type_entite') == 'hopital' ? 'selected' : '' }}>Hôpital</option>
-                <option value="pharmacie" {{ old('type_entite') == 'pharmacie' ? 'selected' : '' }}>Pharmacie</option>
-                <option value="banque_sang" {{ old('type_entite') == 'banque_sang' ? 'selected' : '' }}>Banque de sang</option>
-                <option value="centre" {{ old('type_entite') == 'centre' ? 'selected' : '' }}>Centre médical</option>
-                <option value="patient" {{ old('type_entite') == 'patient' ? 'selected' : '' }}>Patient</option>
+                <option value="hopital" {{ old('type_utilisateur') == 'hopital' ? 'selected' : '' }}>Hôpital</option>
+                <option value="pharmacie" {{ old('type_utilisateur') == 'pharmacie' ? 'selected' : '' }}>Pharmacie</option>
+                <option value="banque_sang" {{ old('type_utilisateur') == 'banque_sang' ? 'selected' : '' }}>Banque de sang</option>
+                <option value="centre" {{ old('type_utilisateur') == 'centre' ? 'selected' : '' }}>Centre médical</option>
+                <option value="patient" {{ old('type_utilisateur') == 'patient' ? 'selected' : '' }}>Patient</option>
             </select>
         </div>
 
@@ -110,7 +110,7 @@
 
 <script>
     function toggleFields() {
-        const type = document.getElementById('type_entite').value;
+        const type = document.getElementById('type_utilisateur').value;
         // Champs spécifiques
         const logoGroup = document.getElementById('logo-group');
         const typeHopitalGroup = document.getElementById('type_hopital-group');

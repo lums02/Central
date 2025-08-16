@@ -20,23 +20,24 @@ class RegisterController extends Controller
     }
 public function submit(Request $request)
 {
-    
+    // Debug : afficher toutes les données envoyées par le formulaire
+    dd($request->all());
 
     // 1. Validation dynamique
     $rules = [
-        'type_entite' => 'required|in:hopital,pharmacie,banque_sang,centre,patient',
+        'type_utilisateur' => 'required|in:hopital,pharmacie,banque_sang,centre,patient',
         'nom' => 'required|string|max:255',
         'email' => 'required|email|unique:utilisateurs,email',
         'password' => 'required|string|min:8|confirmed',
         'logo' => 'nullable|image|mimes:jpeg,png,jpg,gif|max:2048',
     ];
 
-    if (in_array($request->type_entite, ['hopital', 'pharmacie', 'banque_sang', 'centre'])) {
+    if (in_array($request->type_utilisateur , ['hopital', 'pharmacie', 'banque_sang', 'centre'])) {
         $rules['adresse'] = 'required|string';
-        if ($request->type_entite === 'hopital') {
+        if ($request->type_utilisateur === 'hopital') {
             $rules['type_hopital'] = 'required|string';
         }
-    } elseif ($request->type_entite === 'patient') {
+    } elseif ($request->type_utilisateur === 'patient') {
         $rules['date_naissance'] = 'required|date';
         $rules['sexe'] = 'required|in:masculin,feminin';
     }
@@ -51,7 +52,7 @@ public function submit(Request $request)
         }
 
         $entite_id = null;
-        $type = $validated['type_entite'];
+        $type = $validated['type_utilisateur'];
 
         switch ($type) {
             case 'hopital':
@@ -107,6 +108,14 @@ public function submit(Request $request)
 
         $entite_id = $entite->id;
         
+    dd([
+        'nom' => $validated['nom'],
+        'email' => $validated['email'],
+        'mot_de_passe' => Hash::make($validated['password']),
+        'role' => 'admin',
+        'type_utilisateur' => $type,
+        'entite_id' => $entite_id,
+    ]);
 
 
         Utilisateur::create([

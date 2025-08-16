@@ -56,89 +56,10 @@
     </div>
 </div>
 
-<style>
-    /* Sidebar active link */
-    .sidebar .nav-link.active {
-        font-weight: 600;
-        color: white !important;
-    }
-
-    /* Hover effect */
-    .sidebar .nav-link:hover {
-        background-color: #0b5ed7;
-        color: white !important;
-        border-radius: 5px;
-    }
-
-    /* Large screens: sidebar visible */
-    @media (min-width: 768px) {
-        #sidebarToggle {
-            display: none !important;
-        }
-
-        #sidebar {
-            transform: translateX(0) !important;
-            position: fixed;
-        }
-
-        body {
-            margin-left: 250px; /* espace pour sidebar */
-            transition: margin-left 0.3s ease;
-        }
-    }
-
-    /* Small screens: sidebar hidden by default */
-    @media (max-width: 767.98px) {
-        #sidebar {
-            position: fixed;
-            top: 0;
-            left: 0;
-            height: 100vh;
-            z-index: 1050;
-            transform: translateX(-260px);
-            box-shadow: 2px 0 5px rgba(0, 0, 0, 0.3);
-        }
-
-        #sidebar.show {
-            transform: translateX(0);
-            transition: transform 0.3s ease;
-        }
-
-        /* Optional: overlay to close sidebar */
-        #sidebarOverlay {
-            position: fixed;
-            top: 0;
-            left: 0;
-            width: 100vw;
-            height: 100vh;
-            background: rgba(0,0,0,0.5);
-            z-index: 1040;
-            display: none;
-        }
-
-        #sidebarOverlay.show {
-            display: block;
-        }
-    }
-</style>
 
 <!-- Overlay to close sidebar on mobile -->
 <div id="sidebarOverlay"></div>
 
 <script>
-    document.addEventListener('DOMContentLoaded', function () {
-        const sidebar = document.getElementById('sidebar');
-        const toggleBtn = document.getElementById('sidebarToggle');
-        const overlay = document.getElementById('sidebarOverlay');
-
-        toggleBtn.addEventListener('click', function () {
-            sidebar.classList.toggle('show');
-            overlay.classList.toggle('show');
-        });
-
-        overlay.addEventListener('click', function () {
-            sidebar.classList.remove('show');
-            overlay.classList.remove('show');
-        });
-    });
+    
 </script>

@@ -3,8 +3,8 @@
 @section('title', 'Dashboard - Hôpital')
 
 @section('content')
-    @include('dashboard.partials.welcome')
-    @include('dashboard.partials.stats')
-    @include('dashboard.partials.activities')
-    @include('dashboard.partials.modals')
+                @include('layouts.partials.welcome') 
+                @include('layouts.partials.stats') 
+                @include('layouts.partials.activities')
+                @include('layouts.partials.modal')
 @endsection
