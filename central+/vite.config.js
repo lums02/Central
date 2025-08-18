@@ -8,7 +8,9 @@ export default defineConfig({
                 app: 'resources/js/app.js',
                 home: 'resources/js/home.js',
                 dashboard: 'resources/js/dashboard.js',
-                styles: 'resources/css/dashboard.css' // ajout CSS direct
+                dashboardCSS: 'resources/css/dashboard.css', // CSS dashboard
+                loginCSS: 'resources/css/login.css',           // CSS login
+                registerCSS: 'resources/css/register.css'           // CSS register
             }
         }
     },
@@ -18,4 +20,3 @@ export default defineConfig({
         }
     }
 });
-

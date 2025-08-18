@@ -20,13 +20,12 @@
 
     <div class="container-fluid">
         <div class="row">
-            {{-- Sidebar --}}
-            @include('layouts.partials.leftsidebar')
-
-            {{-- Contenu principal --}}
-            <main class="col-md-10 ms-sm-auto col-lg-10 px-md-4">
+            <div class="sidebar me-3"> <!-- "me-3" = margin-end 1rem -->
+                 @include('layouts.partials.leftsidebar')
+            </div>
+            <div class="main-content">
                 @yield('content')
-            </main>
+            </div>
         </div>
     </div>
 
