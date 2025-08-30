@@ -5,10 +5,11 @@ namespace App\Models;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
+use Spatie\Permission\Traits\HasRoles;
 
 class Utilisateur extends Authenticatable
 {
-    use HasFactory, Notifiable;
+    use HasFactory, Notifiable, HasRoles;
 
     protected $table = 'utilisateurs'; // Nom de la table
 
@@ -19,6 +20,8 @@ class Utilisateur extends Authenticatable
         'role',
         'type_utilisateur',
         'entite_id',
+        'status',
+        'rejection_reason',
     ];
 
     protected $hidden = [
@@ -26,7 +29,7 @@ class Utilisateur extends Authenticatable
         'remember_token',
     ];
 
-    public $timestamps = false;
+    public $timestamps = true; // Activé pour la compatibilité avec Spatie
 
     /**
      * Pour que Laravel sache que le mot de passe est "mot_de_passe"
@@ -62,5 +65,69 @@ class Utilisateur extends Authenticatable
     public function scopePatient($query)
     {
         return $query->where('role', 'patient');
+    }
+
+    /**
+     * Vérifier si l'utilisateur a un rôle spécifique
+     */
+    public function hasRole($role)
+    {
+        return $this->role === $role;
+    }
+
+    /**
+     * Vérifier si l'utilisateur a un type spécifique
+     */
+    public function hasType($type)
+    {
+        return $this->type_utilisateur === $type;
+    }
+
+    // Constantes pour les statuts
+    const STATUS_PENDING = 'pending';
+    const STATUS_APPROVED = 'approved';
+    const STATUS_REJECTED = 'rejected';
+
+    /**
+     * Vérifier si l'utilisateur est en attente d'approbation
+     */
+    public function isPending()
+    {
+        return $this->status === self::STATUS_PENDING;
+    }
+
+    /**
+     * Vérifier si l'utilisateur est approuvé
+     */
+    public function isApproved()
+    {
+        return $this->status === self::STATUS_APPROVED;
+    }
+
+    /**
+     * Vérifier si l'utilisateur est rejeté
+     */
+    public function isRejected()
+    {
+        return $this->status === self::STATUS_REJECTED;
+    }
+
+    /**
+     * Approuver l'utilisateur
+     */
+    public function approve()
+    {
+        $this->update(['status' => self::STATUS_APPROVED]);
+    }
+
+    /**
+     * Rejeter l'utilisateur
+     */
+    public function reject($reason = null)
+    {
+        $this->update([
+            'status' => self::STATUS_REJECTED,
+            'rejection_reason' => $reason
+        ]);
     }
 }

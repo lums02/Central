@@ -107,16 +107,6 @@ public function submit(Request $request)
         }
 
         $entite_id = $entite->id;
-        
-    dd([
-        'nom' => $validated['nom'],
-        'email' => $validated['email'],
-        'mot_de_passe' => Hash::make($validated['password']),
-        'role' => 'admin',
-        'type_utilisateur' => $type,
-        'entite_id' => $entite_id,
-    ]);
-
 
         Utilisateur::create([
             'nom' => $validated['nom'],
@@ -125,11 +115,12 @@ public function submit(Request $request)
             'role' => 'admin',
             'type_utilisateur' => $type,
             'entite_id' => $entite_id,
+            'status' => 'pending', // Nouvel utilisateur en attente d'approbation
         ]);
 
         DB::commit();
 
-        return redirect()->route('login')->with('success', 'Inscription réussie !');
+        return redirect()->route('login')->with('success', 'Inscription réussie ! Votre compte est en attente d\'approbation par l\'administrateur.');
     } catch (\Exception $e) {
         DB::rollBack();
         return back()->withErrors(['error' => 'Erreur : ' . $e->getMessage()])->withInput();

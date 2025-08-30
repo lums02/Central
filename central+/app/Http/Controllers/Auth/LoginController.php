@@ -21,20 +21,34 @@ class LoginController extends Controller
         $credentials = $request->validate([
             'email'            => ['required', 'email'],
             'mot_de_passe'     => ['required'],
-            'type_utilisateur' => ['required'], // entité
         ]);
 
-        // On récupère l'utilisateur par email + type_utilisateur
-        $utilisateur = Utilisateur::where('email', $request->email)
-                                  ->where('type_utilisateur', $request->type_utilisateur)
-                                  ->first();
+        // On récupère l'utilisateur par email uniquement
+        $utilisateur = Utilisateur::where('email', $request->email)->first();
 
         // Vérification du mot de passe
         if ($utilisateur && Hash::check($request->mot_de_passe, $utilisateur->mot_de_passe)) {
+            // Vérifier le statut de l'utilisateur
+            if ($utilisateur->status === 'pending') {
+                return back()->withErrors([
+                    'email' => 'Votre compte est en attente d\'approbation par l\'administrateur.',
+                ])->withInput();
+            }
+
+            if ($utilisateur->status === 'rejected') {
+                $reason = $utilisateur->rejection_reason ? " Raison : {$utilisateur->rejection_reason}" : '';
+                return back()->withErrors([
+                    'email' => 'Votre compte a été rejeté.' . $reason,
+                ])->withInput();
+            }
+
+            // Si l'utilisateur est approuvé, procéder à la connexion
             Auth::login($utilisateur);
 
             // Rediriger selon le type_utilisateur (entité)
             switch ($utilisateur->type_utilisateur) {
+                case 'admin':
+                    return redirect()->intended(route('admin.dashboard'));
                 case 'hopital':
                     return redirect()->intended('/hopital/dashboard');
                 case 'pharmacie':
@@ -46,13 +60,13 @@ class LoginController extends Controller
                 case 'patient':
                     return redirect()->intended('/patient/dashboard');
                 default:
-                    return redirect()->intended('/dashboard');
+                    return redirect()->intended('/admin/dashboard');
             }
         }
 
         // Si les identifiants sont incorrects
         return back()->withErrors([
-            'email' => 'Email, mot de passe ou entité incorrect.',
+            'email' => 'Email ou mot de passe incorrect.',
         ])->withInput();
     }
 

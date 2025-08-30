@@ -28,17 +28,9 @@
         <form method="POST" action="{{ route('login.submit') }}">
             @csrf
 
-            <div class="form-group">
-                <label for="type_utilisateur"><i class="fas fa-user-tag"></i> Type d'entité</label>
-                <select class="form-control" id="type_utilisateur" name="type_utilisateur" required>
-                    <option value="">-- Sélectionnez --</option>
-                    <option value="hopital">Hôpital</option>
-                    <option value="pharmacie">Pharmacie</option>
-                    <option value="banque_sang">Banque de sang</option>
-                    <option value="centre">Centre médical</option>
-                    <option value="patient">Patient</option>
-                </select>
-            </div>
+
+
+            
 
             <div class="form-group">
                 <label for="email"><i class="fas fa-envelope"></i> Email</label>
