@@ -144,7 +144,13 @@ class UserController extends Controller
             ->orderBy('created_at', 'desc')
             ->get();
             
-        return response()->json($pendingUsers);
+        // Si c'est une requête AJAX, retourner JSON
+        if (request()->ajax() || request()->wantsJson()) {
+            return response()->json($pendingUsers);
+        }
+        
+        // Sinon, retourner la vue
+        return view('admin.users.pending', compact('pendingUsers'));
     }
 
     // Crée un nouvel utilisateur (optionnel)

@@ -307,6 +307,9 @@
 </style>
 
 <script>
+// Récupérer le token CSRF depuis la meta tag
+const csrfToken = document.querySelector('meta[name="csrf-token"]').getAttribute('content');
+
 function openPermissionsModal(userId, userName) {
     document.getElementById('userId').value = userId;
     document.getElementById('userName').textContent = userName;
@@ -333,19 +336,31 @@ function loadUserPermissions(userId) {
     // Ici tu peux faire un appel AJAX pour charger les permissions actuelles
     // Pour l'instant, on affiche toutes les permissions disponibles
     fetch(`/admin/users/${userId}/permissions`)
-        .then(response => response.json())
+        .then(response => {
+            if (!response.ok) {
+                throw new Error('Erreur réseau');
+            }
+            return response.json();
+        })
         .then(data => {
             displayPermissions(data.permissions, data.userPermissions);
         })
         .catch(error => {
             console.error('Erreur:', error);
+            // Afficher un message d'erreur à l'utilisateur
+            alert('Erreur lors du chargement des permissions');
         });
 }
 
 function loadUserInfo(userId) {
     // Charger les informations de l'utilisateur pour les modals
     fetch(`/admin/users/${userId}`)
-        .then(response => response.json())
+        .then(response => {
+            if (!response.ok) {
+                throw new Error('Erreur réseau');
+            }
+            return response.json();
+        })
         .then(data => {
             document.getElementById('editUserId').value = data.id;
             document.getElementById('editUserName').value = data.nom;
@@ -356,6 +371,7 @@ function loadUserInfo(userId) {
         })
         .catch(error => {
             console.error('Erreur:', error);
+            alert('Erreur lors du chargement des informations utilisateur');
         });
 }
 
@@ -363,8 +379,13 @@ function displayPermissions(allPermissions, userPermissions) {
     const container = document.getElementById('permissionsList');
     container.innerHTML = '';
     
+    if (!allPermissions || allPermissions.length === 0) {
+        container.innerHTML = '<p class="text-muted">Aucune permission disponible</p>';
+        return;
+    }
+    
     allPermissions.forEach(permission => {
-        const isChecked = userPermissions.includes(permission.id);
+        const isChecked = userPermissions && userPermissions.includes(permission.id);
         const div = document.createElement('div');
         div.className = 'form-check mb-2';
         div.innerHTML = `
@@ -386,17 +407,22 @@ function saveUserPermissions() {
         method: 'POST',
         body: formData,
         headers: {
-            'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').getAttribute('content')
+            'X-CSRF-TOKEN': csrfToken
         }
     })
-    .then(response => response.json())
+    .then(response => {
+        if (!response.ok) {
+            throw new Error('Erreur réseau');
+        }
+        return response.json();
+    })
     .then(data => {
         if (data.success) {
             alert('Permissions mises à jour avec succès !');
             bootstrap.Modal.getInstance(document.getElementById('permissionsModal')).hide();
             location.reload(); // Recharger la page pour voir les changements
         } else {
-            alert('Erreur lors de la mise à jour des permissions');
+            alert('Erreur lors de la mise à jour des permissions: ' + (data.message || 'Erreur inconnue'));
         }
     })
     .catch(error => {
@@ -408,22 +434,28 @@ function saveUserPermissions() {
 function updateUser() {
     const form = document.getElementById('editUserForm');
     const formData = new FormData(form);
+    const userId = document.getElementById('editUserId').value;
     
-    fetch(`/admin/users/${document.getElementById('editUserId').value}`, {
+    fetch(`/admin/users/${userId}`, {
         method: 'POST',
         body: formData,
         headers: {
-            'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').getAttribute('content')
+            'X-CSRF-TOKEN': csrfToken
         }
     })
-    .then(response => response.json())
+    .then(response => {
+        if (!response.ok) {
+            throw new Error('Erreur réseau');
+        }
+        return response.json();
+    })
     .then(data => {
         if (data.success) {
             alert('Utilisateur mis à jour avec succès !');
             bootstrap.Modal.getInstance(document.getElementById('editUserModal')).hide();
             location.reload();
         } else {
-            alert('Erreur lors de la mise à jour de l\'utilisateur');
+            alert('Erreur lors de la mise à jour de l\'utilisateur: ' + (data.message || 'Erreur inconnue'));
         }
     })
     .catch(error => {
@@ -437,16 +469,21 @@ function deleteUser(userId) {
         fetch(`/admin/users/${userId}`, {
             method: 'DELETE',
             headers: {
-                'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').getAttribute('content')
+                'X-CSRF-TOKEN': csrfToken
             }
         })
-        .then(response => response.json())
+        .then(response => {
+            if (!response.ok) {
+                throw new Error('Erreur réseau');
+            }
+            return response.json();
+        })
         .then(data => {
             if (data.success) {
                 alert('Utilisateur supprimé avec succès !');
                 location.reload();
             } else {
-                alert('Erreur lors de la suppression de l\'utilisateur');
+                alert('Erreur lors de la suppression de l\'utilisateur: ' + (data.message || 'Erreur inconnue'));
             }
         })
         .catch(error => {
@@ -463,11 +500,16 @@ document.addEventListener('DOMContentLoaded', function() {
 
 function loadPendingCount() {
     fetch('{{ route("admin.users.pending") }}')
-        .then(response => response.json())
+        .then(response => {
+            if (!response.ok) {
+                throw new Error('Erreur réseau');
+            }
+            return response.json();
+        })
         .then(data => {
             const pendingBadge = document.getElementById('pendingBadge');
             if (pendingBadge) {
-                pendingBadge.textContent = data.length;
+                pendingBadge.textContent = data.length || 0;
                 // Masquer le badge s'il n'y a pas d'utilisateurs en attente
                 if (data.length === 0) {
                     pendingBadge.style.display = 'none';
@@ -478,6 +520,11 @@ function loadPendingCount() {
         })
         .catch(error => {
             console.error('Erreur:', error);
+            // En cas d'erreur, masquer le badge
+            const pendingBadge = document.getElementById('pendingBadge');
+            if (pendingBadge) {
+                pendingBadge.style.display = 'none';
+            }
         });
 }
 </script>
