@@ -15,49 +15,49 @@
                 </div>
             </div>
 
-             <!-- Tableau des rôles -->
-             <div class="card shadow-sm border-0">
-                 <div class="card-body p-0">
-                     <div class="table-responsive">
-                         <table class="table table-hover mb-0">
-                             <thead style="background: #f8f9fa;">
-                                 <tr>
-                                     <th style="border: none; padding: 1rem; color: #003366; font-weight: 600;">#</th>
-                                     <th style="border: none; padding: 1rem; color: #003366; font-weight: 600;">Nom du Rôle</th>
-                                     <th style="border: none; padding: 1rem; color: #003366; font-weight: 600;">Créé le</th>
-                                     <th style="border: none; padding: 1rem; color: #003366; font-weight: 600;">Actions</th>
-                                 </tr>
-                             </thead>
-                             <tbody>
-                                 @forelse($roles as $role)
-                                 <tr style="border-bottom: 1px solid #e9ecef;">
-                                     <td style="padding: 1rem; vertical-align: middle;">{{ $loop->iteration }}</td>
-                                     <td style="padding: 1rem; vertical-align: middle; font-weight: 500;">{{ $role->name }}</td>
-                                     <td style="padding: 1rem; vertical-align: middle; color: #6c757d;">{{ $role->created_at->format('d/m/Y') }}</td>
-                                     <td style="padding: 1rem; vertical-align: middle;">
-                                         <div class="action-buttons">
-                                             <button class="btn btn-icon btn-edit" onclick="editRole({{ $role->id }}, '{{ $role->name }}')" title="Modifier le rôle">
-                                                 <i class="fas fa-edit"></i>
-                                             </button>
-                                             <button class="btn btn-icon btn-delete" onclick="deleteRole({{ $role->id }})" title="Supprimer le rôle">
-                                                 <i class="fas fa-trash"></i>
-                                             </button>
-                                         </div>
-                                     </td>
-                                 </tr>
-                                 @empty
-                                 <tr>
-                                     <td colspan="4" class="text-center py-4" style="color: #6c757d;">
-                                         Aucun rôle créé pour le moment. 
-                                         <span style="color: #003366;">Utilisez le bouton "Nouveau Rôle" ci-dessus pour créer votre premier rôle</span>
-                                     </td>
-                                 </tr>
-                                 @endforelse
-                             </tbody>
-                         </table>
-                     </div>
-                 </div>
-             </div>
+            <!-- Tableau des rôles -->
+            <div class="card shadow-sm border-0">
+                <div class="card-body p-0">
+                    <div class="table-responsive">
+                        <table class="table table-hover mb-0">
+                            <thead style="background: #f8f9fa;">
+                                <tr>
+                                    <th style="border: none; padding: 1rem; color: #003366; font-weight: 600;">#</th>
+                                    <th style="border: none; padding: 1rem; color: #003366; font-weight: 600;">Nom du Rôle</th>
+                                    <th style="border: none; padding: 1rem; color: #003366; font-weight: 600;">Créé le</th>
+                                    <th style="border: none; padding: 1rem; color: #003366; font-weight: 600;">Actions</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                @forelse($roles as $role)
+                                <tr style="border-bottom: 1px solid #e9ecef;">
+                                    <td style="padding: 1rem; vertical-align: middle;">{{ $loop->iteration }}</td>
+                                    <td style="padding: 1rem; vertical-align: middle; font-weight: 500;">{{ $role->name }}</td>
+                                    <td style="padding: 1rem; vertical-align: middle; color: #6c757d;">{{ $role->created_at->format('d/m/Y') }}</td>
+                                    <td style="padding: 1rem; vertical-align: middle;">
+                                        <div class="action-buttons">
+                                            <button class="btn btn-icon btn-edit"
+                                                onclick="editRole('{{ $role->id }}', '{{ $role->name }}')"
+                                                title="Modifier le rôle">
+                                                <i class="fas fa-edit"></i>
+                                            </button>
+
+                                        </div>
+                                    </td>
+                                </tr>
+                                @empty
+                                <tr>
+                                    <td colspan="4" class="text-center py-4" style="color: #6c757d;">
+                                        Aucun rôle créé pour le moment.
+                                        <span style="color: #003366;">Utilisez le bouton "Nouveau Rôle" ci-dessus pour créer votre premier rôle</span>
+                                    </td>
+                                </tr>
+                                @endforelse
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
         </div>
     </div>
 </div>
@@ -70,14 +70,14 @@
                 <h5 class="modal-title" id="createRoleModalLabel">Créer un Nouveau Rôle</h5>
                 <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
             </div>
-                         <div class="modal-body">
-                 <form id="createRoleForm">
-                     @csrf
-                     <div class="mb-3">
-                         <label for="roleName" class="form-label">Nom du rôle</label>
-                         <input type="text" class="form-control" id="roleName" name="name" placeholder="Ex: manager_hopital" required>
-                     </div>
-                 </form>
+            <div class="modal-body">
+                <form id="createRoleForm">
+                    @csrf
+                    <div class="mb-3">
+                        <label for="roleName" class="form-label">Nom du rôle</label>
+                        <input type="text" class="form-control" id="roleName" name="name" placeholder="Ex: manager_hopital" required>
+                    </div>
+                </form>
             </div>
             <div class="modal-footer">
                 <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Annuler</button>
@@ -99,17 +99,17 @@
                 <form id="editRoleForm">
                     @csrf
                     <input type="hidden" id="editRoleId" name="role_id">
-                    
+
                     <!-- Nom du rôle -->
                     <div class="mb-3">
                         <label for="editRoleNameInput" class="form-label">Nom du rôle</label>
                         <input type="text" class="form-control" id="editRoleNameInput" name="name" required>
                     </div>
-                    
+
                     <!-- Permissions -->
                     <div class="mb-3">
                         <label class="form-label fw-bold">Attribuer des Permissions</label>
-                        
+
                         <!-- En-tête des actions CRUD -->
                         <div class="row mb-2">
                             <div class="col-md-3">
@@ -128,7 +128,7 @@
                                 <strong>Supprimer</strong>
                             </div>
                         </div>
-                        
+
                         <!-- Gérer les Rôles et Permissions -->
                         <div class="row mb-3 align-items-center">
                             <div class="col-md-3">
@@ -147,7 +147,7 @@
                                 <input class="form-check-input" type="checkbox" name="permissions[]" value="delete_roles" id="perm_delete_roles">
                             </div>
                         </div>
-                        
+
                         <!-- Gérer les Utilisateurs -->
                         <div class="row mb-3 align-items-center">
                             <div class="col-md-3">
@@ -166,7 +166,7 @@
                                 <input class="form-check-input" type="checkbox" name="permissions[]" value="delete_users" id="perm_delete_users">
                             </div>
                         </div>
-                        
+
                         <!-- Gérer les Patients -->
                         <div class="row mb-3 align-items-center">
                             <div class="col-md-3">
@@ -185,7 +185,7 @@
                                 <input class="form-check-input" type="checkbox" name="permissions[]" value="delete_patients" id="perm_delete_patients">
                             </div>
                         </div>
-                        
+
                         <!-- Gérer les Rendez-vous -->
                         <div class="row mb-3 align-items-center">
                             <div class="col-md-3">
@@ -204,7 +204,7 @@
                                 <input class="form-check-input" type="checkbox" name="permissions[]" value="delete_appointments" id="perm_delete_appointments">
                             </div>
                         </div>
-                        
+
                         <!-- Gérer les Dossiers Médicaux -->
                         <div class="row mb-3 align-items-center">
                             <div class="col-md-3">
@@ -223,7 +223,7 @@
                                 <input class="form-check-input" type="checkbox" name="permissions[]" value="delete_medical_records" id="perm_delete_medical_records">
                             </div>
                         </div>
-                        
+
                         <!-- Gérer les Prescriptions -->
                         <div class="row mb-3 align-items-center">
                             <div class="col-md-3">
@@ -242,7 +242,7 @@
                                 <input class="form-check-input" type="checkbox" name="permissions[]" value="delete_prescriptions" id="perm_delete_prescriptions">
                             </div>
                         </div>
-                        
+
                         <!-- Gérer les Factures -->
                         <div class="row mb-3 align-items-center">
                             <div class="col-md-3">
@@ -261,7 +261,7 @@
                                 <input class="form-check-input" type="checkbox" name="permissions[]" value="delete_invoices" id="perm_delete_invoices">
                             </div>
                         </div>
-                        
+
                         <!-- Gérer les Rapports -->
                         <div class="row mb-3 align-items-center">
                             <div class="col-md-3">
@@ -280,7 +280,7 @@
                                 <input class="form-check-input" type="checkbox" name="permissions[]" value="delete_reports" id="perm_delete_reports">
                             </div>
                         </div>
-                        
+
                         <!-- Gérer les Médicaments -->
                         <div class="row mb-3 align-items-center">
                             <div class="col-md-3">
@@ -299,7 +299,7 @@
                                 <input class="form-check-input" type="checkbox" name="permissions[]" value="delete_medicines" id="perm_delete_medicines">
                             </div>
                         </div>
-                        
+
                         <!-- Gérer les Stocks -->
                         <div class="row mb-3 align-items-center">
                             <div class="col-md-3">
@@ -318,7 +318,7 @@
                                 <input class="form-check-input" type="checkbox" name="permissions[]" value="delete_stocks" id="perm_delete_stocks">
                             </div>
                         </div>
-                        
+
                         <!-- Gérer les Donneurs de Sang -->
                         <div class="row mb-3 align-items-center">
                             <div class="col-md-3">
@@ -337,7 +337,7 @@
                                 <input class="form-check-input" type="checkbox" name="permissions[]" value="delete_donors" id="perm_delete_donors">
                             </div>
                         </div>
-                        
+
                         <!-- Gérer les Réserves de Sang -->
                         <div class="row mb-3 align-items-center">
                             <div class="col-md-3">
@@ -356,7 +356,7 @@
                                 <input class="form-check-input" type="checkbox" name="permissions[]" value="delete_blood_reserves" id="perm_delete_blood_reserves">
                             </div>
                         </div>
-                        
+
                         <!-- Gérer les Services -->
                         <div class="row mb-3 align-items-center">
                             <div class="col-md-3">
@@ -375,7 +375,7 @@
                                 <input class="form-check-input" type="checkbox" name="permissions[]" value="delete_services" id="perm_delete_services">
                             </div>
                         </div>
-                        
+
                         <!-- Gérer les Consultations -->
                         <div class="row mb-3 align-items-center">
                             <div class="col-md-3">
@@ -406,158 +406,158 @@
 </div>
 
 <style>
-.table th {
-    font-weight: 600;
-    color: #003366;
-}
+    .table th {
+        font-weight: 600;
+        color: #003366;
+    }
 
-.table tbody tr:hover {
-    background-color: #f8f9fa;
-}
+    .table tbody tr:hover {
+        background-color: #f8f9fa;
+    }
 
-.btn-outline-warning:hover {
-    background-color: #ffc107;
-    border-color: #ffc107;
-    color: #000;
-}
+    .btn-outline-warning:hover {
+        background-color: #ffc107;
+        border-color: #ffc107;
+        color: #000;
+    }
 
-.btn-outline-danger:hover {
-    background-color: #dc3545;
-    border-color: #dc3545;
-    color: #fff;
-}
+    .btn-outline-danger:hover {
+        background-color: #dc3545;
+        border-color: #dc3545;
+        color: #fff;
+    }
 </style>
 
 <script>
-function createRole() {
-     const form = document.getElementById('createRoleForm');
-     const formData = new FormData(form);
-     
-     fetch('{{ route("admin.permissions.store") }}', {
-         method: 'POST',
-         body: formData,
-         headers: {
-             'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').getAttribute('content')
-         }
-     })
-     .then(response => response.json())
-     .then(data => {
-         if (data.success) {
-             alert('Rôle créé avec succès !');
-             // Fermer le modal
-             const modal = bootstrap.Modal.getInstance(document.getElementById('createRoleModal'));
-             modal.hide();
-             // Recharger la page pour voir le nouveau rôle
-             location.reload();
-         } else {
-             alert('Erreur lors de la création du rôle : ' + data.message);
-         }
-     })
-     .catch(error => {
-         console.error('Erreur:', error);
-         alert('Erreur lors de la création du rôle');
-     });
- }
+    function createRole() {
+        const form = document.getElementById('createRoleForm');
+        const formData = new FormData(form);
 
-// Réinitialiser le formulaire quand le modal se ferme
-document.getElementById('createRoleModal').addEventListener('hidden.bs.modal', function () {
-    document.getElementById('createRoleForm').reset();
-});
-
-// Fonction pour éditer un rôle
-function editRole(roleId, roleName) {
-    // Remplir le modal avec les données du rôle
-    document.getElementById('editRoleId').value = roleId;
-    document.getElementById('editRoleName').textContent = roleName;
-    document.getElementById('editRoleNameInput').value = roleName;
-    
-    // Réinitialiser toutes les checkboxes
-    const checkboxes = document.querySelectorAll('#editRoleForm input[type="checkbox"]');
-    checkboxes.forEach(checkbox => {
-        checkbox.checked = false;
-    });
-    
-    // Charger les permissions actuelles du rôle (à implémenter plus tard)
-    // loadRolePermissions(roleId);
-    
-    // Ouvrir le modal
-    const editModal = new bootstrap.Modal(document.getElementById('editRoleModal'));
-    editModal.show();
-}
-
-// Fonction pour mettre à jour un rôle
-function updateRole() {
-    const form = document.getElementById('editRoleForm');
-    const formData = new FormData(form);
-    
-    // Récupérer les permissions sélectionnées
-    const selectedPermissions = [];
-    const checkboxes = form.querySelectorAll('input[name="permissions[]"]:checked');
-    checkboxes.forEach(checkbox => {
-        selectedPermissions.push(checkbox.value);
-    });
-    
-    // Ajouter les permissions au formData
-    formData.append('permissions', JSON.stringify(selectedPermissions));
-    
-    fetch('{{ route("admin.permissions.update", ":id") }}'.replace(':id', document.getElementById('editRoleId').value), {
-        method: 'PUT',
-        body: formData,
-        headers: {
-            'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').getAttribute('content')
-        }
-    })
-    .then(response => response.json())
-    .then(data => {
-        if (data.success) {
-            alert('Rôle mis à jour avec succès !');
-            // Fermer le modal
-            const modal = bootstrap.Modal.getInstance(document.getElementById('editRoleModal'));
-            modal.hide();
-            // Recharger la page pour voir les changements
-            location.reload();
-        } else {
-            alert('Erreur lors de la mise à jour du rôle : ' + data.message);
-        }
-    })
-    .catch(error => {
-        console.error('Erreur:', error);
-        alert('Erreur lors de la mise à jour du rôle');
-    });
-}
-
-// Fonction pour supprimer un rôle
-function deleteRole(roleId) {
-    if (confirm('Êtes-vous sûr de vouloir supprimer ce rôle ?')) {
-        fetch('{{ route("admin.permissions.destroy", ":id") }}'.replace(':id', roleId), {
-            method: 'DELETE',
-            headers: {
-                'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').getAttribute('content'),
-                'Accept': 'application/json',
-                'Content-Type': 'application/json'
-            }
-        })
-        .then(response => response.json())
-        .then(data => {
-            if (data.success) {
-                alert('Rôle supprimé avec succès !');
-                // Recharger la page pour voir les changements
-                location.reload();
-            } else {
-                alert('Erreur lors de la suppression : ' + data.message);
-            }
-        })
-        .catch(error => {
-            console.error('Erreur:', error);
-            alert('Erreur lors de la suppression du rôle');
-        });
+        fetch('{{ route("admin.permissions.store") }}', {
+                method: 'POST',
+                body: formData,
+                headers: {
+                    'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').getAttribute('content')
+                }
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    alert('Rôle créé avec succès !');
+                    // Fermer le modal
+                    const modal = bootstrap.Modal.getInstance(document.getElementById('createRoleModal'));
+                    modal.hide();
+                    // Recharger la page pour voir le nouveau rôle
+                    location.reload();
+                } else {
+                    alert('Erreur lors de la création du rôle : ' + data.message);
+                }
+            })
+            .catch(error => {
+                console.error('Erreur:', error);
+                alert('Erreur lors de la création du rôle');
+            });
     }
-}
 
-// Ajouter le CSS pour les boutons d'action
-document.addEventListener('DOMContentLoaded', function() {
-    const style = document.createElement('style');
-    style.textContent = `
+    // Réinitialiser le formulaire quand le modal se ferme
+    document.getElementById('createRoleModal').addEventListener('hidden.bs.modal', function() {
+        document.getElementById('createRoleForm').reset();
+    });
+
+    // Fonction pour éditer un rôle
+    function editRole(roleId, roleName) {
+        // Remplir le modal avec les données du rôle
+        document.getElementById('editRoleId').value = roleId;
+        document.getElementById('editRoleName').textContent = roleName;
+        document.getElementById('editRoleNameInput').value = roleName;
+
+        // Réinitialiser toutes les checkboxes
+        const checkboxes = document.querySelectorAll('#editRoleForm input[type="checkbox"]');
+        checkboxes.forEach(checkbox => {
+            checkbox.checked = false;
+        });
+
+        // Charger les permissions actuelles du rôle (à implémenter plus tard)
+        // loadRolePermissions(roleId);
+
+        // Ouvrir le modal
+        const editModal = new bootstrap.Modal(document.getElementById('editRoleModal'));
+        editModal.show();
+    }
+
+    // Fonction pour mettre à jour un rôle
+    function updateRole() {
+        const form = document.getElementById('editRoleForm');
+        const formData = new FormData(form);
+
+        // Récupérer les permissions sélectionnées
+        const selectedPermissions = [];
+        const checkboxes = form.querySelectorAll('input[name="permissions[]"]:checked');
+        checkboxes.forEach(checkbox => {
+            selectedPermissions.push(checkbox.value);
+        });
+
+        // Ajouter les permissions au formData
+        formData.append('permissions', JSON.stringify(selectedPermissions));
+
+        fetch('{{ route("admin.permissions.update", ":id") }}'.replace(':id', document.getElementById('editRoleId').value), {
+                method: 'PUT',
+                body: formData,
+                headers: {
+                    'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').getAttribute('content')
+                }
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    alert('Rôle mis à jour avec succès !');
+                    // Fermer le modal
+                    const modal = bootstrap.Modal.getInstance(document.getElementById('editRoleModal'));
+                    modal.hide();
+                    // Recharger la page pour voir les changements
+                    location.reload();
+                } else {
+                    alert('Erreur lors de la mise à jour du rôle : ' + data.message);
+                }
+            })
+            .catch(error => {
+                console.error('Erreur:', error);
+                alert('Erreur lors de la mise à jour du rôle');
+            });
+    }
+
+    // Fonction pour supprimer un rôle
+    function deleteRole(roleId) {
+        if (confirm('Êtes-vous sûr de vouloir supprimer ce rôle ?')) {
+            fetch('{{ route("admin.permissions.destroy", ":id") }}'.replace(':id', roleId), {
+                    method: 'DELETE',
+                    headers: {
+                        'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').getAttribute('content'),
+                        'Accept': 'application/json',
+                        'Content-Type': 'application/json'
+                    }
+                })
+                .then(response => response.json())
+                .then(data => {
+                    if (data.success) {
+                        alert('Rôle supprimé avec succès !');
+                        // Recharger la page pour voir les changements
+                        location.reload();
+                    } else {
+                        alert('Erreur lors de la suppression : ' + data.message);
+                    }
+                })
+                .catch(error => {
+                    console.error('Erreur:', error);
+                    alert('Erreur lors de la suppression du rôle');
+                });
+        }
+    }
+
+    // Ajouter le CSS pour les boutons d'action
+    document.addEventListener('DOMContentLoaded', function() {
+        const style = document.createElement('style');
+        style.textContent = `
         /* Boutons d'action stylisés */
         .action-buttons {
             display: flex;
@@ -640,7 +640,7 @@ document.addEventListener('DOMContentLoaded', function() {
             }
         }
     `;
-    document.head.appendChild(style);
-});
+        document.head.appendChild(style);
+    });
 </script>
 @endsection
