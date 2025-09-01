@@ -13,8 +13,15 @@ Route::get('/', function () {
 });
 
 // Enregistrement (Inscription)
+// Routes d'inscription avec adaptation automatique
 Route::get('/register', [RegisterController::class, 'showRegistrationForm'])->name('register.form');
+Route::get('/register/{entity}', [RegisterController::class, 'showRegistrationForm'])->name('register.entity');
 Route::post('/register', [RegisterController::class, 'submit'])->name('register.submit');
+
+// Pages d'accueil des entités (exemples)
+Route::get('/hopital', function() {
+    return view('entities.hopital.home');
+})->name('entity.hopital');
 
 // Connexion
 Route::get('/login', [LoginController::class, 'showLoginForm'])->name('login');
@@ -28,8 +35,7 @@ Route::get('/admin', function () {
     return redirect()->route('login');
 })->name('admin.redirect');
 
-// Route simple pour users/pending (accessible directement)
-Route::get('/users/pending', [App\Http\Controllers\Admin\UserController::class, 'pendingUsers'])->name('users.pending');
+
 
 // 🔐 Dashboards protégés
 Route::middleware(['auth'])->group(function () {
@@ -59,19 +65,19 @@ Route::prefix('admin')->name('admin.')->middleware(['auth'])->group(function () 
     
     Route::resource('permissions', PermissionController::class);
     
-    // Gestion des utilisateurs
+    // Gestion des utilisateurs - Routes spécifiques en premier
     Route::get('/users', [UserController::class, 'index'])->name('users.index');
+    Route::get('/users/pending', [UserController::class, 'pendingUsers'])->name('users.pending');
+    Route::get('/users/stats', [UserController::class, 'stats'])->name('users.stats');
+    Route::post('/users/permissions', [UserController::class, 'updatePermissions'])->name('users.updatePermissions');
+    
+    // Routes avec paramètres en dernier
     Route::get('/users/{id}', [UserController::class, 'show'])->name('users.show');
     Route::post('/users/{id}', [UserController::class, 'update'])->name('users.update');
-    Route::delete('/users/{id}', [UserController::class, 'destroy'])->name('users.destroy');
+    Route::delete('/users/{id}', [UserController::class, 'destroy'])->name('users.destroy')->middleware('superadmin.protection');
     Route::get('/users/{id}/permissions', [UserController::class, 'showPermissions'])->name('users.permissions');
-    Route::post('/users/permissions', [UserController::class, 'updatePermissions'])->name('users.updatePermissions');
-    Route::get('/users/stats', [UserController::class, 'stats'])->name('users.stats');
-    
-    // Gestion de l'approbation des utilisateurs
-    Route::get('/users/pending', [UserController::class, 'pendingUsers'])->name('users.pending');
-    Route::post('/users/{id}/approve', [UserController::class, 'approve'])->name('users.approve');
-    Route::post('/users/{id}/reject', [UserController::class, 'reject'])->name('users.reject');
+    Route::post('/users/{id}/approve', [UserController::class, 'approveUser'])->name('users.approve');
+    Route::post('/users/{id}/reject', [UserController::class, 'rejectUser'])->name('users.reject');
     
     // Route en français pour la compatibilité
     Route::get('/utilisateurs', [UserController::class, 'index'])->name('utilisateurs.index');

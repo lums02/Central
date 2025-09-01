@@ -83,12 +83,12 @@
 </div>
 
 <!-- Modal pour rejeter un utilisateur -->
-<div class="modal fade" id="rejectUserModal" tabindex="-1">
+<div class="modal fade" id="rejectUserModal" tabindex="-1" aria-labelledby="rejectUserModalLabel" aria-hidden="true">
     <div class="modal-dialog">
         <div class="modal-content">
             <div class="modal-header" style="background: #dc3545; color: white;">
-                <h5 class="modal-title">Rejeter l'utilisateur</h5>
-                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+                <h5 class="modal-title" id="rejectUserModalLabel">Rejeter l'utilisateur</h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
             </div>
             <div class="modal-body">
                 <form id="rejectUserForm">
@@ -103,13 +103,399 @@
             </div>
             <div class="modal-footer">
                 <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Annuler</button>
-                <button type="button" class="btn btn-danger" onclick="confirmRejectUser()">Rejeter</button>
+                <button type="button" class="btn btn-danger" onclick="confirmRejectUser()">
+                    <i class="fas fa-times me-2"></i>Rejeter
+                </button>
             </div>
         </div>
     </div>
 </div>
 
+<!-- Modal pour les permissions (format tableau CRUD) -->
+<div class="modal fade" id="permissionsModal" tabindex="-1" aria-labelledby="permissionsModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-xl">
+        <div class="modal-content">
+            <div class="modal-header" style="background: #003366; color: white;">
+                <h5 class="modal-title" id="permissionsModalLabel">Attribuer les Permissions - <span id="userName"></span></h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <form id="permissionsForm">
+                    @csrf
+                    <input type="hidden" id="userId" name="user_id">
+                    
+                    <!-- Informations de l'utilisateur -->
+                    <div class="row mb-4">
+                        <div class="col-md-6">
+                            <div class="mb-3">
+                                <label class="form-label fw-bold">Rôle de l'utilisateur</label>
+                                                            <select name="role" id="userRole" class="form-select">
+                                <option value="user">Utilisateur</option>
+                                <option value="admin">Administrateur</option>
+                                <option value="manager">Manager</option>
+                                <option value="moderator">Modérateur</option>
+                                <option value="superadmin">Super Administrateur</option>
+                            </select>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="mb-3">
+                                <label class="form-label fw-bold">Type d'utilisateur</label>
+                                <select name="type_utilisateur" id="userType" class="form-select">
+                                    <option value="hopital">Hôpital</option>
+                                    <option value="pharmacie">Pharmacie</option>
+                                    <option value="banque_sang">Banque de Sang</option>
+                                    <option value="centre">Centre</option>
+                                    <option value="patient">Patient</option>
+                                </select>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Permissions -->
+                    <div class="mb-3">
+                        <label class="form-label fw-bold">Attribuer des Permissions</label>
+
+                        <!-- En-tête des actions CRUD -->
+                        <div class="row mb-2">
+                            <div class="col-md-3">
+                                <strong>Module</strong>
+                            </div>
+                            <div class="col-md-2 text-center">
+                                <strong>Voir</strong>
+                            </div>
+                            <div class="col-md-2 text-center">
+                                <strong>Créer</strong>
+                            </div>
+                            <div class="col-md-2 text-center">
+                                <strong>Modifier</strong>
+                            </div>
+                            <div class="col-md-2 text-center">
+                                <strong>Supprimer</strong>
+                            </div>
+                        </div>
+
+                        <!-- Gérer les Rôles et Permissions -->
+                        <div class="row mb-3 align-items-center">
+                            <div class="col-md-3">
+                                <strong>Gérer les Rôles et Permissions</strong>
+                            </div>
+                            <div class="col-md-2 text-center">
+                                <input class="form-check-input" type="checkbox" name="permissions[]" value="view_roles" id="perm_view_roles">
+                            </div>
+                            <div class="col-md-2 text-center">
+                                <input class="form-check-input" type="checkbox" name="permissions[]" value="create_roles" id="perm_create_roles">
+                            </div>
+                            <div class="col-md-2 text-center">
+                                <input class="form-check-input" type="checkbox" name="permissions[]" value="edit_roles" id="perm_edit_roles">
+                            </div>
+                            <div class="col-md-2 text-center">
+                                <input class="form-check-input" type="checkbox" name="permissions[]" value="delete_roles" id="perm_delete_roles">
+                            </div>
+                        </div>
+
+                        <!-- Gérer les Utilisateurs -->
+                        <div class="row mb-3 align-items-center">
+                            <div class="col-md-3">
+                                <strong>Gérer les Utilisateurs</strong>
+                            </div>
+                            <div class="col-md-2 text-center">
+                                <input class="form-check-input" type="checkbox" name="permissions[]" value="view_users" id="perm_view_users">
+                            </div>
+                            <div class="col-md-2 text-center">
+                                <input class="form-check-input" type="checkbox" name="permissions[]" value="create_users" id="perm_create_users">
+                            </div>
+                            <div class="col-md-2 text-center">
+                                <input class="form-check-input" type="checkbox" name="permissions[]" value="edit_users" id="perm_edit_users">
+                            </div>
+                            <div class="col-md-2 text-center">
+                                <input class="form-check-input" type="checkbox" name="permissions[]" value="delete_users" id="perm_delete_users">
+                            </div>
+                        </div>
+
+                        <!-- Gérer les Patients -->
+                        <div class="row mb-3 align-items-center">
+                            <div class="col-md-3">
+                                <strong>Gérer les Patients</strong>
+                            </div>
+                            <div class="col-md-2 text-center">
+                                <input class="form-check-input" type="checkbox" name="permissions[]" value="view_patients" id="perm_view_patients">
+                            </div>
+                            <div class="col-md-2 text-center">
+                                <input class="form-check-input" type="checkbox" name="permissions[]" value="create_patients" id="perm_create_patients">
+                            </div>
+                            <div class="col-md-2 text-center">
+                                <input class="form-check-input" type="checkbox" name="permissions[]" value="edit_patients" id="perm_edit_patients">
+                            </div>
+                            <div class="col-md-2 text-center">
+                                <input class="form-check-input" type="checkbox" name="permissions[]" value="delete_patients" id="perm_delete_patients">
+                            </div>
+                        </div>
+
+                        <!-- Gérer les Rendez-vous -->
+                        <div class="row mb-3 align-items-center">
+                            <div class="col-md-3">
+                                <strong>Gérer les Rendez-vous</strong>
+                            </div>
+                            <div class="col-md-2 text-center">
+                                <input class="form-check-input" type="checkbox" name="permissions[]" value="view_appointments" id="perm_view_appointments">
+                            </div>
+                            <div class="col-md-2 text-center">
+                                <input class="form-check-input" type="checkbox" name="permissions[]" value="create_appointments" id="perm_create_appointments">
+                            </div>
+                            <div class="col-md-2 text-center">
+                                <input class="form-check-input" type="checkbox" name="permissions[]" value="edit_appointments" id="perm_edit_appointments">
+                            </div>
+                            <div class="col-md-2 text-center">
+                                <input class="form-check-input" type="checkbox" name="permissions[]" value="delete_appointments" id="perm_delete_appointments">
+                            </div>
+                        </div>
+
+                        <!-- Gérer les Dossiers Médicaux -->
+                        <div class="row mb-3 align-items-center">
+                            <div class="col-md-3">
+                                <strong>Gérer les Dossiers Médicaux</strong>
+                            </div>
+                            <div class="col-md-2 text-center">
+                                <input class="form-check-input" type="checkbox" name="permissions[]" value="view_medical_records" id="perm_view_medical_records">
+                            </div>
+                            <div class="col-md-2 text-center">
+                                <input class="form-check-input" type="checkbox" name="permissions[]" value="create_medical_records" id="perm_create_medical_records">
+                            </div>
+                            <div class="col-md-2 text-center">
+                                <input class="form-check-input" type="checkbox" name="permissions[]" value="edit_medical_records" id="perm_edit_medical_records">
+                            </div>
+                            <div class="col-md-2 text-center">
+                                <input class="form-check-input" type="checkbox" name="permissions[]" value="delete_medical_records" id="perm_delete_medical_records">
+                            </div>
+                        </div>
+
+                        <!-- Gérer les Prescriptions -->
+                        <div class="row mb-3 align-items-center">
+                            <div class="col-md-3">
+                                <strong>Gérer les Prescriptions</strong>
+                            </div>
+                            <div class="col-md-2 text-center">
+                                <input class="form-check-input" type="checkbox" name="permissions[]" value="view_prescriptions" id="perm_view_prescriptions">
+                            </div>
+                            <div class="col-md-2 text-center">
+                                <input class="form-check-input" type="checkbox" name="permissions[]" value="create_prescriptions" id="perm_create_prescriptions">
+                            </div>
+                            <div class="col-md-2 text-center">
+                                <input class="form-check-input" type="checkbox" name="permissions[]" value="edit_prescriptions" id="perm_edit_prescriptions">
+                            </div>
+                            <div class="col-md-2 text-center">
+                                <input class="form-check-input" type="checkbox" name="permissions[]" value="delete_prescriptions" id="perm_delete_prescriptions">
+                            </div>
+                        </div>
+
+                        <!-- Gérer les Factures -->
+                        <div class="row mb-3 align-items-center">
+                            <div class="col-md-3">
+                                <strong>Gérer les Factures</strong>
+                            </div>
+                            <div class="col-md-2 text-center">
+                                <input class="form-check-input" type="checkbox" name="permissions[]" value="view_invoices" id="perm_view_invoices">
+                            </div>
+                            <div class="col-md-2 text-center">
+                                <input class="form-check-input" type="checkbox" name="permissions[]" value="create_invoices" id="perm_create_invoices">
+                            </div>
+                            <div class="col-md-2 text-center">
+                                <input class="form-check-input" type="checkbox" name="permissions[]" value="edit_invoices" id="perm_edit_invoices">
+                            </div>
+                            <div class="col-md-2 text-center">
+                                <input class="form-check-input" type="checkbox" name="permissions[]" value="delete_invoices" id="perm_delete_invoices">
+                            </div>
+                        </div>
+
+                        <!-- Gérer les Rapports -->
+                        <div class="row mb-3 align-items-center">
+                            <div class="col-md-3">
+                                <strong>Gérer les Rapports</strong>
+                            </div>
+                            <div class="col-md-2 text-center">
+                                <input class="form-check-input" type="checkbox" name="permissions[]" value="view_reports" id="perm_view_reports">
+                            </div>
+                            <div class="col-md-2 text-center">
+                                <input class="form-check-input" type="checkbox" name="permissions[]" value="create_reports" id="perm_create_reports">
+                            </div>
+                            <div class="col-md-2 text-center">
+                                <input class="form-check-input" type="checkbox" name="permissions[]" value="edit_reports" id="perm_edit_reports">
+                            </div>
+                            <div class="col-md-2 text-center">
+                                <input class="form-check-input" type="checkbox" name="permissions[]" value="delete_reports" id="perm_delete_reports">
+                            </div>
+                        </div>
+
+                        <!-- Gérer les Médicaments -->
+                        <div class="row mb-3 align-items-center">
+                            <div class="col-md-3">
+                                <strong>Gérer les Médicaments</strong>
+                            </div>
+                            <div class="col-md-2 text-center">
+                                <input class="form-check-input" type="checkbox" name="permissions[]" value="view_medicines" id="perm_view_medicines">
+                            </div>
+                            <div class="col-md-2 text-center">
+                                <input class="form-check-input" type="checkbox" name="permissions[]" value="create_medicines" id="perm_create_medicines">
+                            </div>
+                            <div class="col-md-2 text-center">
+                                <input class="form-check-input" type="checkbox" name="permissions[]" value="edit_medicines" id="perm_edit_medicines">
+                            </div>
+                            <div class="col-md-2 text-center">
+                                <input class="form-check-input" type="checkbox" name="permissions[]" value="delete_medicines" id="perm_delete_medicines">
+                            </div>
+                        </div>
+
+                        <!-- Gérer les Stocks -->
+                        <div class="row mb-3 align-items-center">
+                            <div class="col-md-3">
+                                <strong>Gérer les Stocks</strong>
+                            </div>
+                            <div class="col-md-2 text-center">
+                                <input class="form-check-input" type="checkbox" name="permissions[]" value="view_stocks" id="perm_view_stocks">
+                            </div>
+                            <div class="col-md-2 text-center">
+                                <input class="form-check-input" type="checkbox" name="permissions[]" value="create_stocks" id="perm_create_stocks">
+                            </div>
+                            <div class="col-md-2 text-center">
+                                <input class="form-check-input" type="checkbox" name="permissions[]" value="edit_stocks" id="perm_edit_stocks">
+                            </div>
+                            <div class="col-md-2 text-center">
+                                <input class="form-check-input" type="checkbox" name="permissions[]" value="delete_stocks" id="perm_delete_stocks">
+                            </div>
+                        </div>
+
+                        <!-- Gérer les Donneurs de Sang -->
+                        <div class="row mb-3 align-items-center">
+                            <div class="col-md-3">
+                                <strong>Gérer les Donneurs de Sang</strong>
+                            </div>
+                            <div class="col-md-2 text-center">
+                                <input class="form-check-input" type="checkbox" name="permissions[]" value="view_donors" id="perm_view_donors">
+                            </div>
+                            <div class="col-md-2 text-center">
+                                <input class="form-check-input" type="checkbox" name="permissions[]" value="create_donors" id="perm_create_donors">
+                            </div>
+                            <div class="col-md-2 text-center">
+                                <input class="form-check-input" type="checkbox" name="permissions[]" value="edit_donors" id="perm_edit_donors">
+                            </div>
+                            <div class="col-md-2 text-center">
+                                <input class="form-check-input" type="checkbox" name="permissions[]" value="delete_donors" id="perm_delete_donors">
+                            </div>
+                        </div>
+
+                        <!-- Gérer les Réserves de Sang -->
+                        <div class="row mb-3 align-items-center">
+                            <div class="col-md-3">
+                                <strong>Gérer les Réserves de Sang</strong>
+                            </div>
+                            <div class="col-md-2 text-center">
+                                <input class="form-check-input" type="checkbox" name="permissions[]" value="view_blood_reserves" id="perm_view_blood_reserves">
+                            </div>
+                            <div class="col-md-2 text-center">
+                                <input class="form-check-input" type="checkbox" name="permissions[]" value="create_blood_reserves" id="perm_create_blood_reserves">
+                            </div>
+                            <div class="col-md-2 text-center">
+                                <input class="form-check-input" type="checkbox" name="permissions[]" value="edit_blood_reserves" id="perm_edit_blood_reserves">
+                            </div>
+                            <div class="col-md-2 text-center">
+                                <input class="form-check-input" type="checkbox" name="permissions[]" value="delete_blood_reserves" id="perm_delete_blood_reserves">
+                            </div>
+                        </div>
+
+                        <!-- Gérer les Services -->
+                        <div class="row mb-3 align-items-center">
+                            <div class="col-md-3">
+                                <strong>Gérer les Services</strong>
+                            </div>
+                            <div class="col-md-2 text-center">
+                                <input class="form-check-input" type="checkbox" name="permissions[]" value="view_services" id="perm_view_services">
+                            </div>
+                            <div class="col-md-2 text-center">
+                                <input class="form-check-input" type="checkbox" name="permissions[]" value="create_services" id="perm_create_services">
+                            </div>
+                            <div class="col-md-2 text-center">
+                                <input class="form-check-input" type="checkbox" name="permissions[]" value="edit_services" id="perm_edit_services">
+                            </div>
+                            <div class="col-md-2 text-center">
+                                <input class="form-check-input" type="checkbox" name="permissions[]" value="delete_services" id="perm_delete_services">
+                            </div>
+                        </div>
+
+                        <!-- Gérer les Consultations -->
+                        <div class="row mb-3 align-items-center">
+                            <div class="col-md-3">
+                                <strong>Gérer les Consultations</strong>
+                            </div>
+                            <div class="col-md-2 text-center">
+                                <input class="form-check-input" type="checkbox" name="permissions[]" value="view_consultations" id="perm_view_consultations">
+                            </div>
+                            <div class="col-md-2 text-center">
+                                <input class="form-check-input" type="checkbox" name="permissions[]" value="create_consultations" id="perm_create_consultations">
+                            </div>
+                            <div class="col-md-2 text-center">
+                                <input class="form-check-input" type="checkbox" name="permissions[]" value="edit_consultations" id="perm_edit_consultations">
+                            </div>
+                            <div class="col-md-2 text-center">
+                                <input class="form-check-input" type="checkbox" name="permissions[]" value="delete_consultations" id="perm_delete_consultations">
+                            </div>
+                        </div>
+                    </div>
+                </form>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Fermer</button>
+                <button type="button" class="btn" style="background: #003366; color: white; border: none;" onclick="saveUserPermissions()" id="savePermissionsBtn">
+                    Enregistrer
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+
+
 <style>
+/* Styles pour les modales Bootstrap 5 */
+.modal {
+    display: none;
+}
+
+.modal.show {
+    display: block;
+}
+
+.modal-backdrop {
+    position: fixed;
+    top: 0;
+    left: 0;
+    z-index: 1040;
+    width: 100vw;
+    height: 100vh;
+    background-color: rgba(0, 0, 0, 0.5);
+}
+
+.modal-dialog {
+    position: relative;
+    width: auto;
+    margin: 0.5rem;
+    pointer-events: none;
+}
+
+.modal-content {
+    position: relative;
+    display: flex;
+    flex-direction: column;
+    width: 100%;
+    pointer-events: auto;
+    background-color: #fff;
+    background-clip: padding-box;
+    border: 1px solid rgba(0, 0, 0, 0.2);
+    border-radius: 0.3rem;
+    outline: 0;
+}
+
+/* Styles pour le tableau */
 .table th {
     font-weight: 600;
     color: #003366;
@@ -215,48 +601,101 @@
         font-size: 0.8rem;
     }
 }
+
+/* Styles pour le modal des permissions */
+.modal-xl {
+    max-width: 1200px;
+}
+
+.form-check-input {
+    cursor: pointer;
+}
+
+.form-check-input:checked {
+    background-color: #003366;
+    border-color: #003366;
+}
+
+.row.align-items-center {
+    border-bottom: 1px solid #f0f0f0;
+    padding: 0.5rem 0;
+}
+
+.row.align-items-center:hover {
+    background-color: #f8f9fa;
+}
+
+.row.align-items-center:last-child {
+    border-bottom: none;
+}
+
+
 </style>
 
 <script>
+// Récupérer le token CSRF depuis la meta tag
+const csrfToken = document.querySelector('meta[name="csrf-token"]').getAttribute('content');
+
+// Variables globales
 let currentRejectUserId = null;
 
 // Charger les utilisateurs en attente au chargement de la page
 document.addEventListener('DOMContentLoaded', function() {
+    console.log('DOM chargé - Chargement des utilisateurs en attente');
     loadPendingUsers();
-    loadUserStats();
+    loadStats();
+    
+    // Remettre le bouton à son état normal quand le modal se ferme
+    document.getElementById('permissionsModal').addEventListener('hidden.bs.modal', function () {
+        resetPermissionsButton();
+    });
+    
+    // Événements pour mettre à jour les permissions par défaut
+    document.getElementById('userRole').addEventListener('change', setDefaultPermissions);
+    document.getElementById('userType').addEventListener('change', setDefaultPermissions);
 });
 
 // Charger les utilisateurs en attente
 function loadPendingUsers() {
-    fetch('{{ route("admin.users.pending") }}')
-        .then(response => response.json())
+    fetch('{{ route("admin.users.pending") }}', {
+        method: 'GET',
+        headers: {
+            'Accept': 'application/json',
+            'X-Requested-With': 'XMLHttpRequest'
+        }
+    })
+    .then(response => {
+        console.log('Response status:', response.status);
+        if (!response.ok) {
+            throw new Error('Erreur réseau: ' + response.status);
+        }
+        return response.json();
+    })
         .then(data => {
+        console.log('Data received:', data);
             displayPendingUsers(data);
         })
         .catch(error => {
             console.error('Erreur:', error);
+        document.getElementById('pendingUsersTable').innerHTML = 
+            '<tr><td colspan="6" class="text-center py-4 text-danger">Erreur lors du chargement des utilisateurs: ' + error.message + '</td></tr>';
         });
 }
 
 // Afficher les utilisateurs en attente
 function displayPendingUsers(users) {
     const tbody = document.getElementById('pendingUsersTable');
-    tbody.innerHTML = '';
-
-    if (users.length === 0) {
-        tbody.innerHTML = `
-            <tr>
-                <td colspan="6" class="text-center py-4" style="color: #6c757d;">
-                    <i class="fas fa-check-circle text-success me-2"></i>
-                    Aucun utilisateur en attente d'approbation
-                </td>
-            </tr>
-        `;
+    
+    if (!users || users.length === 0) {
+        tbody.innerHTML = '<tr><td colspan="6" class="text-center py-4" style="color: #6c757d;">Aucun utilisateur en attente d\'approbation</td></tr>';
         return;
     }
+    
+    tbody.innerHTML = '';
 
     users.forEach((user, index) => {
         const row = document.createElement('tr');
+        row.setAttribute('data-user-id', user.id);
         row.style.borderBottom = '1px solid #e9ecef';
         
         row.innerHTML = `
@@ -290,32 +729,39 @@ function displayPendingUsers(users) {
     });
 }
 
-// Approuver un utilisateur
+// Approuver un utilisateur - Ouvre le modal des permissions avec format tableau CRUD
 function approveUser(userId) {
-    if (confirm('Êtes-vous sûr de vouloir approuver cet utilisateur ?')) {
-        fetch(`{{ route("admin.users.approve", ":id") }}`.replace(':id', userId), {
-            method: 'POST',
-            headers: {
-                'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').getAttribute('content'),
-                'Accept': 'application/json',
-                'Content-Type': 'application/json'
-            }
-        })
-        .then(response => response.json())
-        .then(data => {
-            if (data.success) {
-                alert('Utilisateur approuvé avec succès !');
-                loadPendingUsers();
-                loadUserStats();
-            } else {
-                alert('Erreur lors de l\'approbation : ' + data.message);
-            }
-        })
-        .catch(error => {
-            console.error('Erreur:', error);
-            alert('Erreur lors de l\'approbation de l\'utilisateur');
-        });
+    // Trouver l'utilisateur dans la liste pour récupérer ses informations
+    const userRow = document.querySelector(`tr[data-user-id="${userId}"]`);
+    if (!userRow) {
+        alert('Erreur: Utilisateur non trouvé');
+        return;
     }
+    
+    // Récupérer les informations de l'utilisateur
+    const userName = userRow.querySelector('td:nth-child(2)').textContent;
+    const userEmail = userRow.querySelector('td:nth-child(3)').textContent;
+    const userType = userRow.querySelector('td:nth-child(4) .badge').textContent.toLowerCase();
+    
+    // Pré-remplir le modal avec les informations de l'utilisateur
+    document.getElementById('userName').textContent = userName;
+    document.getElementById('userId').value = userId;
+    document.getElementById('userRole').value = 'admin'; // Par défaut admin
+    document.getElementById('userType').value = userType;
+    
+    // Changer le texte du bouton pour indiquer qu'il s'agit d'une approbation
+    document.getElementById('savePermissionsBtn').innerHTML = '<i class="fas fa-check me-2"></i>Approuver avec Permissions';
+    document.getElementById('savePermissionsBtn').style.background = '#28a745';
+    
+    // Charger les permissions par défaut selon le type d'entité
+    loadUserPermissions(userId);
+    
+    // Charger les informations actuelles de l'utilisateur
+    loadUserInfo(userId);
+    
+    // Ouvrir le modal
+    const modal = new bootstrap.Modal(document.getElementById('permissionsModal'));
+    modal.show();
 }
 
 // Rejeter un utilisateur
@@ -327,33 +773,34 @@ function rejectUser(userId) {
 
 // Confirmer le rejet d'un utilisateur
 function confirmRejectUser() {
-    if (!currentRejectUserId) return;
-
-    const form = document.getElementById('rejectUserForm');
-    const formData = new FormData(form);
+    const reason = document.getElementById('rejectionReason').value;
     
     fetch(`{{ route("admin.users.reject", ":id") }}`.replace(':id', currentRejectUserId), {
         method: 'POST',
-        body: formData,
         headers: {
-            'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').getAttribute('content')
-        }
+            'X-CSRF-TOKEN': csrfToken,
+            'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({
+            rejection_reason: reason
+        })
     })
-    .then(response => response.json())
+    .then(response => {
+        if (!response.ok) {
+            throw new Error('Erreur réseau');
+        }
+        return response.json();
+    })
     .then(data => {
         if (data.success) {
             alert('Utilisateur rejeté avec succès !');
-            // Fermer le modal
-            const modal = bootstrap.Modal.getInstance(document.getElementById('rejectUserModal'));
-            modal.hide();
-            // Recharger les données
-            loadPendingUsers();
-            loadUserStats();
-            // Réinitialiser le formulaire
-            form.reset();
+            bootstrap.Modal.getInstance(document.getElementById('rejectUserModal')).hide();
+            document.getElementById('rejectionReason').value = '';
             currentRejectUserId = null;
+            loadPendingUsers();
+            loadStats();
         } else {
-            alert('Erreur lors du rejet : ' + data.message);
+            alert('Erreur lors du rejet: ' + (data.message || 'Erreur inconnue'));
         }
     })
     .catch(error => {
@@ -364,41 +811,410 @@ function confirmRejectUser() {
 
 // Voir les détails d'un utilisateur
 function viewUserDetails(userId) {
-    // Rediriger vers la page de gestion des utilisateurs
+    // Rediriger vers la page de détails de l'utilisateur
     window.location.href = `{{ route("admin.users.index") }}?user=${userId}`;
 }
 
-// Charger les statistiques des utilisateurs
-function loadUserStats() {
+// Actualiser la liste
+function refreshPendingUsers() {
+    loadPendingUsers();
+    loadStats();
+}
+
+// Charger les statistiques
+function loadStats() {
     fetch('{{ route("admin.users.stats") }}')
-        .then(response => response.json())
+        .then(response => {
+            if (!response.ok) {
+                throw new Error('Erreur réseau');
+            }
+            return response.json();
+        })
         .then(data => {
-            document.getElementById('totalCount').textContent = data.total;
-            
-            // Compter les utilisateurs par statut
-            const pendingCount = data.par_status.find(item => item.status === 'pending')?.total || 0;
-            const approvedCount = data.par_status.find(item => item.status === 'approved')?.total || 0;
-            const rejectedCount = data.par_status.find(item => item.status === 'rejected')?.total || 0;
-            
-            document.getElementById('pendingCount').textContent = pendingCount;
-            document.getElementById('approvedCount').textContent = approvedCount;
-            document.getElementById('rejectedCount').textContent = rejectedCount;
+            // Mettre à jour les compteurs
+            document.getElementById('pendingCount').textContent = data.pending || 0;
+            document.getElementById('approvedCount').textContent = data.approved || 0;
+            document.getElementById('rejectedCount').textContent = data.rejected || 0;
+            document.getElementById('totalCount').textContent = data.total || 0;
         })
         .catch(error => {
             console.error('Erreur:', error);
         });
 }
 
-// Actualiser la liste des utilisateurs en attente
-function refreshPendingUsers() {
+// Fonction pour approuver avec permissions (utilise le modal existant)
+function approveWithPermissions() {
+    const userId = document.getElementById('userId').value;
+    const role = document.getElementById('userRole').value;
+    const typeUtilisateur = document.getElementById('userType').value;
+    
+    if (!role || !typeUtilisateur) {
+        alert('Veuillez sélectionner un rôle et un type d\'entité');
+        return;
+    }
+    
+    // Pour le superadmin, toutes les permissions sont automatiquement attribuées
+    let selectedPermissions = [];
+    if (role === 'superadmin') {
+        // Récupérer toutes les permissions disponibles
+        selectedPermissions = Array.from(document.querySelectorAll('input[name="permissions[]"]'))
+            .map(checkbox => checkbox.value);
+    } else {
+        // Récupérer les permissions sélectionnées pour les autres rôles
+        selectedPermissions = Array.from(document.querySelectorAll('input[name="permissions[]"]:checked'))
+            .map(checkbox => checkbox.value);
+    }
+    
+    // D'abord approuver l'utilisateur
+    fetch(`{{ route("admin.users.approve", ":id") }}`.replace(':id', userId), {
+        method: 'POST',
+        headers: {
+            'X-CSRF-TOKEN': csrfToken
+        }
+    })
+    .then(response => {
+        if (!response.ok) {
+            throw new Error('Erreur réseau');
+        }
+        return response.json();
+    })
+    .then(data => {
+        if (data.success) {
+            // Ensuite mettre à jour les permissions
+            return fetch('{{ route("admin.users.updatePermissions") }}', {
+                method: 'POST',
+                headers: {
+                    'X-CSRF-TOKEN': csrfToken,
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({
+                    user_id: userId,
+                    role: role,
+                    type_utilisateur: typeUtilisateur,
+                    permissions: selectedPermissions
+                })
+            });
+        } else {
+            throw new Error(data.message || 'Erreur lors de l\'approbation');
+        }
+    })
+    .then(response => {
+        if (!response.ok) {
+            throw new Error('Erreur réseau');
+        }
+        return response.json();
+    })
+    .then(data => {
+        if (data.success) {
+            const message = role === 'superadmin' 
+                ? 'Super Administrateur approuvé avec succès et toutes les permissions attribuées !'
+                : 'Utilisateur approuvé avec succès et permissions attribuées !';
+            alert(message);
+            bootstrap.Modal.getInstance(document.getElementById('permissionsModal')).hide();
+            resetPermissionsButton(); // Remettre le bouton à son état normal
     loadPendingUsers();
-    loadUserStats();
+            loadStats();
+        } else {
+            alert('Erreur lors de l\'attribution des permissions: ' + (data.message || 'Erreur inconnue'));
+        }
+    })
+    .catch(error => {
+        console.error('Erreur:', error);
+        alert('Erreur lors de l\'approbation: ' + error.message);
+    });
 }
 
-// Réinitialiser le formulaire quand le modal se ferme
-document.getElementById('rejectUserModal').addEventListener('hidden.bs.modal', function () {
-    document.getElementById('rejectUserForm').reset();
-    currentRejectUserId = null;
-});
+// Fonctions pour le modal des permissions avec format tableau CRUD
+function loadUserPermissions(userId) {
+    // Pour le nouveau format, on peut pré-sélectionner certaines permissions par défaut
+    // ou charger depuis l'API si nécessaire
+    setDefaultPermissions();
+}
+
+function loadUserInfo(userId) {
+    fetch(`{{ route("admin.users.show", ":id") }}`.replace(':id', userId))
+        .then(response => {
+            if (!response.ok) {
+                throw new Error('Erreur réseau');
+            }
+            return response.json();
+        })
+        .then(data => {
+            document.getElementById('userRole').value = data.role || 'admin';
+            document.getElementById('userType').value = data.type_utilisateur || 'hopital';
+        })
+        .catch(error => {
+            console.error('Erreur:', error);
+            alert('Erreur lors du chargement des informations utilisateur');
+        });
+}
+
+// Fonction pour définir les permissions par défaut selon le type d'entité
+function setDefaultPermissions() {
+    const userType = document.getElementById('userType').value;
+    const userRole = document.getElementById('userRole').value;
+    
+    // Réinitialiser toutes les checkboxes
+    const checkboxes = document.querySelectorAll('input[name="permissions[]"]');
+    checkboxes.forEach(checkbox => {
+        checkbox.checked = false;
+    });
+    
+    // Si c'est un superadmin, cocher toutes les permissions
+    if (userRole === 'superadmin') {
+        checkboxes.forEach(checkbox => {
+            checkbox.checked = true;
+            checkbox.disabled = true; // Désactiver les checkboxes pour le superadmin
+        });
+        
+        // Afficher un message informatif
+        const permissionsSection = document.querySelector('.mb-3');
+        let infoDiv = document.getElementById('superadmin-info');
+        if (!infoDiv) {
+            infoDiv = document.createElement('div');
+            infoDiv.id = 'superadmin-info';
+            infoDiv.className = 'alert alert-info mt-3';
+            infoDiv.innerHTML = '<i class="fas fa-shield-alt me-2"></i>Le Super Administrateur a automatiquement toutes les permissions.';
+            permissionsSection.appendChild(infoDiv);
+        }
+        infoDiv.style.display = 'block';
+        
+        return;
+    } else {
+        // Masquer le message informatif pour les autres rôles
+        const infoDiv = document.getElementById('superadmin-info');
+        if (infoDiv) {
+            infoDiv.style.display = 'none';
+        }
+        
+        // Réactiver toutes les checkboxes
+        checkboxes.forEach(checkbox => {
+            checkbox.disabled = false;
+        });
+    }
+    
+    // Permissions par défaut pour un administrateur
+    if (userRole === 'admin') {
+        // Permissions de base pour tous les administrateurs
+        const defaultPermissions = [
+            'view_users', 'create_users', 'edit_users',
+            'view_patients', 'create_patients', 'edit_patients',
+            'view_appointments', 'create_appointments', 'edit_appointments',
+            'view_medical_records', 'create_medical_records', 'edit_medical_records',
+            'view_prescriptions', 'create_prescriptions', 'edit_prescriptions',
+            'view_reports', 'create_reports'
+        ];
+        
+        // Permissions spécifiques selon le type d'entité
+        switch(userType) {
+            case 'hopital':
+                defaultPermissions.push(
+                    'view_consultations', 'create_consultations', 'edit_consultations',
+                    'view_services', 'create_services', 'edit_services'
+                );
+                break;
+            case 'pharmacie':
+                defaultPermissions.push(
+                    'view_medicines', 'create_medicines', 'edit_medicines',
+                    'view_stocks', 'create_stocks', 'edit_stocks',
+                    'view_invoices', 'create_invoices', 'edit_invoices'
+                );
+                break;
+            case 'banque_sang':
+                defaultPermissions.push(
+                    'view_donors', 'create_donors', 'edit_donors',
+                    'view_blood_reserves', 'create_blood_reserves', 'edit_blood_reserves'
+                );
+                break;
+        }
+        
+        // Cocher les permissions par défaut
+        defaultPermissions.forEach(permission => {
+            const checkbox = document.getElementById(`perm_${permission}`);
+            if (checkbox) {
+                checkbox.checked = true;
+            }
+        });
+    }
+}
+
+// Surcharger la fonction saveUserPermissions pour l'approbation
+function saveUserPermissions() {
+    // Si on est dans le contexte d'approbation, utiliser approveWithPermissions
+    const userId = document.getElementById('userId').value;
+    const isPendingUser = document.querySelector(`tr[data-user-id="${userId}"]`) !== null;
+    
+    if (isPendingUser) {
+        approveWithPermissions();
+    } else {
+        // Utiliser la fonction normale pour les utilisateurs existants
+        const form = document.getElementById('permissionsForm');
+        const formData = new FormData(form);
+        
+        // Récupérer les permissions sélectionnées
+        const selectedPermissions = [];
+        const checkboxes = form.querySelectorAll('input[name="permissions[]"]:checked');
+        checkboxes.forEach(checkbox => {
+            selectedPermissions.push(checkbox.value);
+        });
+        
+        // Ajouter les permissions au formData
+        formData.append('permissions', JSON.stringify(selectedPermissions));
+        
+        fetch('{{ route("admin.users.updatePermissions") }}', {
+            method: 'POST',
+            body: formData
+        })
+        .then(response => {
+            if (!response.ok) {
+                throw new Error('Erreur réseau');
+            }
+            return response.json();
+        })
+        .then(data => {
+            if (data.success) {
+                alert('Permissions mises à jour avec succès !');
+                bootstrap.Modal.getInstance(document.getElementById('permissionsModal')).hide();
+            } else {
+                alert('Erreur lors de la mise à jour: ' + (data.message || 'Erreur inconnue'));
+            }
+        })
+        .catch(error => {
+            console.error('Erreur:', error);
+            alert('Erreur lors de la sauvegarde des permissions');
+        });
+    }
+}
+
+// Fonction pour approuver un utilisateur avec ses permissions
+function approveWithPermissions() {
+    const userId = document.getElementById('userId').value;
+    const userRole = document.getElementById('userRole').value;
+    const userType = document.getElementById('userType').value;
+    
+    // Récupérer les permissions sélectionnées
+    const selectedPermissions = [];
+    const checkboxes = document.querySelectorAll('#permissionsModal input[name="permissions[]"]:checked');
+    checkboxes.forEach(checkbox => {
+        selectedPermissions.push(checkbox.value);
+    });
+    
+    // Créer les données pour l'approbation
+    const formData = new FormData();
+    formData.append('permissions', JSON.stringify(selectedPermissions));
+    formData.append('role', userRole);
+    formData.append('type_utilisateur', userType);
+    
+    // Approuver l'utilisateur
+    fetch(`/admin/users/${userId}/approve`, {
+        method: 'POST',
+        body: formData,
+        headers: {
+            'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').getAttribute('content')
+        }
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            // Fermer le modal
+            bootstrap.Modal.getInstance(document.getElementById('permissionsModal')).hide();
+            
+            // Afficher un message de succès
+            Swal.fire({
+                icon: 'success',
+                title: 'Utilisateur approuvé !',
+                text: data.message,
+                confirmButtonText: 'OK'
+            }).then(() => {
+                // Recharger la page pour mettre à jour la liste
+                window.location.reload();
+            });
+        } else {
+            Swal.fire({
+                icon: 'error',
+                title: 'Erreur',
+                text: data.message || 'Erreur lors de l\'approbation',
+                confirmButtonText: 'OK'
+            });
+        }
+    })
+    .catch(error => {
+        console.error('Erreur:', error);
+        Swal.fire({
+            icon: 'error',
+            title: 'Erreur',
+            text: 'Erreur lors de l\'approbation',
+            confirmButtonText: 'OK'
+        });
+    });
+}
+
+// Fonction pour rejeter un utilisateur
+function rejectUser(userId) {
+    Swal.fire({
+        title: 'Rejeter l\'utilisateur',
+        input: 'text',
+        inputLabel: 'Raison du rejet',
+        inputPlaceholder: 'Entrez la raison du rejet...',
+        inputValidator: (value) => {
+            if (!value) {
+                return 'Vous devez entrer une raison pour le rejet';
+            }
+        },
+        showCancelButton: true,
+        confirmButtonText: 'Rejeter',
+        cancelButtonText: 'Annuler',
+        confirmButtonColor: '#dc3545'
+    }).then((result) => {
+        if (result.isConfirmed) {
+            const formData = new FormData();
+            formData.append('rejection_reason', result.value);
+            
+            fetch(`/admin/users/${userId}/reject`, {
+                method: 'POST',
+                body: formData,
+                headers: {
+                    'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').getAttribute('content')
+                }
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    Swal.fire({
+                        icon: 'success',
+                        title: 'Utilisateur rejeté',
+                        text: data.message,
+                        confirmButtonText: 'OK'
+                    }).then(() => {
+                        window.location.reload();
+                    });
+                } else {
+                    Swal.fire({
+                        icon: 'error',
+                        title: 'Erreur',
+                        text: data.message || 'Erreur lors du rejet',
+                        confirmButtonText: 'OK'
+                    });
+                }
+            })
+            .catch(error => {
+                console.error('Erreur:', error);
+                Swal.fire({
+                    icon: 'error',
+                    title: 'Erreur',
+                    text: 'Erreur lors du rejet',
+                    confirmButtonText: 'OK'
+                });
+            });
+        }
+    });
+}
+
+// Fonction pour remettre le bouton à son état normal
+function resetPermissionsButton() {
+    document.getElementById('savePermissionsBtn').innerHTML = 'Enregistrer';
+    document.getElementById('savePermissionsBtn').style.background = '#003366';
+}
 </script>
 @endsection
+

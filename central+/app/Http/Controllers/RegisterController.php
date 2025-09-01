@@ -14,15 +14,21 @@ use App\Models\Patient;
 
 class RegisterController extends Controller
 {
-    public function showRegistrationForm()
+    public function showRegistrationForm($entity = null)
     {
-        return view('auth.register');
+        // Déterminer l'entité à partir du paramètre ou de la session
+        $entityTypes = ['hopital', 'pharmacie', 'banque_sang', 'centre', 'patient'];
+        
+        if ($entity && in_array($entity, $entityTypes)) {
+            $selectedEntity = $entity;
+        } else {
+            $selectedEntity = null;
+        }
+        
+        return view('auth.register', compact('selectedEntity'));
     }
 public function submit(Request $request)
 {
-    // Debug : afficher toutes les données envoyées par le formulaire
-    dd($request->all());
-
     // 1. Validation dynamique
     $rules = [
         'type_utilisateur' => 'required|in:hopital,pharmacie,banque_sang,centre,patient',
@@ -108,11 +114,19 @@ public function submit(Request $request)
 
         $entite_id = $entite->id;
 
+        // Vérifier si c'est le premier utilisateur de ce type d'entité dans toute l'application
+        $isFirstUserOfType = !Utilisateur::where('type_utilisateur', $type)
+            ->where('status', 'approved') // Seulement les utilisateurs déjà approuvés
+            ->exists();
+
+        // Déterminer le rôle : admin si premier utilisateur de ce type, sinon user
+        $userRole = $isFirstUserOfType ? 'admin' : 'user';
+
         Utilisateur::create([
             'nom' => $validated['nom'],
             'email' => $validated['email'],
             'mot_de_passe' => Hash::make($validated['password']),
-            'role' => 'admin',
+            'role' => $userRole,
             'type_utilisateur' => $type,
             'entite_id' => $entite_id,
             'status' => 'pending', // Nouvel utilisateur en attente d'approbation
@@ -120,7 +134,11 @@ public function submit(Request $request)
 
         DB::commit();
 
-        return redirect()->route('login')->with('success', 'Inscription réussie ! Votre compte est en attente d\'approbation par l\'administrateur.');
+        $roleMessage = $isFirstUserOfType 
+            ? 'Inscription réussie ! Vous êtes le premier utilisateur de ce type d\'entité et serez administrateur. Votre compte est en attente d\'approbation.'
+            : 'Inscription réussie ! Votre compte est en attente d\'approbation par l\'administrateur.';
+
+        return redirect()->route('login')->with('success', $roleMessage);
     } catch (\Exception $e) {
         DB::rollBack();
         return back()->withErrors(['error' => 'Erreur : ' . $e->getMessage()])->withInput();

@@ -130,4 +130,104 @@ class Utilisateur extends Authenticatable
             'rejection_reason' => $reason
         ]);
     }
+
+    /**
+     * Vérifier si l'utilisateur est un superadmin
+     */
+    public function isSuperAdmin()
+    {
+        return $this->role === 'superadmin' || $this->email === 'admin@central.com';
+    }
+
+    /**
+     * Vérifier si l'utilisateur peut être supprimé
+     */
+    public function canBeDeleted()
+    {
+        return !$this->isSuperAdmin();
+    }
+
+    /**
+     * Vérifier si l'utilisateur peut être modifié
+     */
+    public function canBeModified()
+    {
+        // Le superadmin peut être modifié mais pas supprimé
+        return true;
+    }
+
+    /**
+     * Attribuer toutes les permissions au superadmin
+     */
+    public function assignAllPermissions()
+    {
+        if ($this->isSuperAdmin()) {
+            $allPermissions = \Spatie\Permission\Models\Permission::all();
+            $this->syncPermissions($allPermissions);
+            
+            // S'assurer que le rôle superadmin existe
+            $superAdminRole = \Spatie\Permission\Models\Role::firstOrCreate([
+                'name' => 'superadmin',
+                'guard_name' => 'web'
+            ]);
+            
+            $this->assignRole($superAdminRole);
+        }
+    }
+
+    /**
+     * Boot method pour automatiquement attribuer toutes les permissions au superadmin
+     */
+    protected static function boot()
+    {
+        parent::boot();
+
+        static::created(function ($utilisateur) {
+            if ($utilisateur->isSuperAdmin()) {
+                $utilisateur->assignAllPermissions();
+            }
+        });
+
+        static::updated(function ($utilisateur) {
+            if ($utilisateur->isSuperAdmin()) {
+                $utilisateur->assignAllPermissions();
+            }
+        });
+    }
+
+    /**
+     * Vérifier si l'utilisateur connecté est le superadmin
+     */
+    public static function isCurrentUserSuperAdmin()
+    {
+        return auth()->check() && auth()->user()->isSuperAdmin();
+    }
+
+    /**
+     * Obtenir le superadmin
+     */
+    public static function getSuperAdmin()
+    {
+        return static::where('email', 'admin@central.com')->first();
+    }
+
+    /**
+     * Vérifier si l'utilisateur est le premier de son type d'entité
+     */
+    public function isFirstOfEntityType()
+    {
+        return !static::where('type_utilisateur', $this->type_utilisateur)
+            ->where('status', 'approved')
+            ->where('id', '!=', $this->id)
+            ->exists();
+    }
+
+    /**
+     * Vérifier si l'utilisateur peut être promu admin
+     */
+    public function canBePromotedToAdmin()
+    {
+        // Seulement si c'est le premier de son type d'entité
+        return $this->isFirstOfEntityType();
+    }
 }
