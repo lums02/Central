@@ -89,7 +89,7 @@
 
 <!-- Modal pour éditer un rôle et attribuer des permissions -->
 <div class="modal fade" id="editRoleModal" tabindex="-1" aria-labelledby="editRoleModalLabel" aria-hidden="true">
-    <div class="modal-dialog modal-lg">
+    <div class="modal-dialog modal-xl">
         <div class="modal-content">
             <div class="modal-header" style="background: #003366; color: white;">
                 <h5 class="modal-title" id="editRoleModalLabel">Modifier le Rôle: <span id="editRoleName"></span></h5>
@@ -129,277 +129,18 @@
                             </div>
                         </div>
 
-                        <!-- Gérer les Rôles et Permissions -->
-                        <div class="row mb-3 align-items-center">
-                            <div class="col-md-3">
-                                <strong>Gérer les Rôles et Permissions</strong>
-                            </div>
-                            <div class="col-md-2 text-center">
-                                <input class="form-check-input" type="checkbox" name="permissions[]" value="view_roles" id="perm_view_roles">
-                            </div>
-                            <div class="col-md-2 text-center">
-                                <input class="form-check-input" type="checkbox" name="permissions[]" value="create_roles" id="perm_create_roles">
-                            </div>
-                            <div class="col-md-2 text-center">
-                                <input class="form-check-input" type="checkbox" name="permissions[]" value="edit_roles" id="perm_edit_roles">
-                            </div>
-                            <div class="col-md-2 text-center">
-                                <input class="form-check-input" type="checkbox" name="permissions[]" value="delete_roles" id="perm_delete_roles">
-                            </div>
-                        </div>
-
-                        <!-- Gérer les Utilisateurs -->
-                        <div class="row mb-3 align-items-center">
-                            <div class="col-md-3">
-                                <strong>Gérer les Utilisateurs</strong>
-                            </div>
-                            <div class="col-md-2 text-center">
-                                <input class="form-check-input" type="checkbox" name="permissions[]" value="view_users" id="perm_view_users">
-                            </div>
-                            <div class="col-md-2 text-center">
-                                <input class="form-check-input" type="checkbox" name="permissions[]" value="create_users" id="perm_create_users">
-                            </div>
-                            <div class="col-md-2 text-center">
-                                <input class="form-check-input" type="checkbox" name="permissions[]" value="edit_users" id="perm_edit_users">
-                            </div>
-                            <div class="col-md-2 text-center">
-                                <input class="form-check-input" type="checkbox" name="permissions[]" value="delete_users" id="perm_delete_users">
-                            </div>
-                        </div>
-
-                        <!-- Gérer les Patients -->
-                        <div class="row mb-3 align-items-center">
-                            <div class="col-md-3">
-                                <strong>Gérer les Patients</strong>
-                            </div>
-                            <div class="col-md-2 text-center">
-                                <input class="form-check-input" type="checkbox" name="permissions[]" value="view_patients" id="perm_view_patients">
-                            </div>
-                            <div class="col-md-2 text-center">
-                                <input class="form-check-input" type="checkbox" name="permissions[]" value="create_patients" id="perm_create_patients">
-                            </div>
-                            <div class="col-md-2 text-center">
-                                <input class="form-check-input" type="checkbox" name="permissions[]" value="edit_patients" id="perm_edit_patients">
-                            </div>
-                            <div class="col-md-2 text-center">
-                                <input class="form-check-input" type="checkbox" name="permissions[]" value="delete_patients" id="perm_delete_patients">
-                            </div>
-                        </div>
-
-                        <!-- Gérer les Rendez-vous -->
-                        <div class="row mb-3 align-items-center">
-                            <div class="col-md-3">
-                                <strong>Gérer les Rendez-vous</strong>
-                            </div>
-                            <div class="col-md-2 text-center">
-                                <input class="form-check-input" type="checkbox" name="permissions[]" value="view_appointments" id="perm_view_appointments">
-                            </div>
-                            <div class="col-md-2 text-center">
-                                <input class="form-check-input" type="checkbox" name="permissions[]" value="create_appointments" id="perm_create_appointments">
-                            </div>
-                            <div class="col-md-2 text-center">
-                                <input class="form-check-input" type="checkbox" name="permissions[]" value="edit_appointments" id="perm_edit_appointments">
-                            </div>
-                            <div class="col-md-2 text-center">
-                                <input class="form-check-input" type="checkbox" name="permissions[]" value="delete_appointments" id="perm_delete_appointments">
-                            </div>
-                        </div>
-
-                        <!-- Gérer les Dossiers Médicaux -->
-                        <div class="row mb-3 align-items-center">
-                            <div class="col-md-3">
-                                <strong>Gérer les Dossiers Médicaux</strong>
-                            </div>
-                            <div class="col-md-2 text-center">
-                                <input class="form-check-input" type="checkbox" name="permissions[]" value="view_medical_records" id="perm_view_medical_records">
-                            </div>
-                            <div class="col-md-2 text-center">
-                                <input class="form-check-input" type="checkbox" name="permissions[]" value="create_medical_records" id="perm_create_medical_records">
-                            </div>
-                            <div class="col-md-2 text-center">
-                                <input class="form-check-input" type="checkbox" name="permissions[]" value="edit_medical_records" id="perm_edit_medical_records">
-                            </div>
-                            <div class="col-md-2 text-center">
-                                <input class="form-check-input" type="checkbox" name="permissions[]" value="delete_medical_records" id="perm_delete_medical_records">
-                            </div>
-                        </div>
-
-                        <!-- Gérer les Prescriptions -->
-                        <div class="row mb-3 align-items-center">
-                            <div class="col-md-3">
-                                <strong>Gérer les Prescriptions</strong>
-                            </div>
-                            <div class="col-md-2 text-center">
-                                <input class="form-check-input" type="checkbox" name="permissions[]" value="view_prescriptions" id="perm_view_prescriptions">
-                            </div>
-                            <div class="col-md-2 text-center">
-                                <input class="form-check-input" type="checkbox" name="permissions[]" value="create_prescriptions" id="perm_create_prescriptions">
-                            </div>
-                            <div class="col-md-2 text-center">
-                                <input class="form-check-input" type="checkbox" name="permissions[]" value="edit_prescriptions" id="perm_edit_prescriptions">
-                            </div>
-                            <div class="col-md-2 text-center">
-                                <input class="form-check-input" type="checkbox" name="permissions[]" value="delete_prescriptions" id="perm_delete_prescriptions">
-                            </div>
-                        </div>
-
-                        <!-- Gérer les Factures -->
-                        <div class="row mb-3 align-items-center">
-                            <div class="col-md-3">
-                                <strong>Gérer les Factures</strong>
-                            </div>
-                            <div class="col-md-2 text-center">
-                                <input class="form-check-input" type="checkbox" name="permissions[]" value="view_invoices" id="perm_view_invoices">
-                            </div>
-                            <div class="col-md-2 text-center">
-                                <input class="form-check-input" type="checkbox" name="permissions[]" value="create_invoices" id="perm_create_invoices">
-                            </div>
-                            <div class="col-md-2 text-center">
-                                <input class="form-check-input" type="checkbox" name="permissions[]" value="edit_invoices" id="perm_edit_invoices">
-                            </div>
-                            <div class="col-md-2 text-center">
-                                <input class="form-check-input" type="checkbox" name="permissions[]" value="delete_invoices" id="perm_delete_invoices">
-                            </div>
-                        </div>
-
-                        <!-- Gérer les Rapports -->
-                        <div class="row mb-3 align-items-center">
-                            <div class="col-md-3">
-                                <strong>Gérer les Rapports</strong>
-                            </div>
-                            <div class="col-md-2 text-center">
-                                <input class="form-check-input" type="checkbox" name="permissions[]" value="view_reports" id="perm_view_reports">
-                            </div>
-                            <div class="col-md-2 text-center">
-                                <input class="form-check-input" type="checkbox" name="permissions[]" value="create_reports" id="perm_create_reports">
-                            </div>
-                            <div class="col-md-2 text-center">
-                                <input class="form-check-input" type="checkbox" name="permissions[]" value="edit_reports" id="perm_edit_reports">
-                            </div>
-                            <div class="col-md-2 text-center">
-                                <input class="form-check-input" type="checkbox" name="permissions[]" value="delete_reports" id="perm_delete_reports">
-                            </div>
-                        </div>
-
-                        <!-- Gérer les Médicaments -->
-                        <div class="row mb-3 align-items-center">
-                            <div class="col-md-3">
-                                <strong>Gérer les Médicaments</strong>
-                            </div>
-                            <div class="col-md-2 text-center">
-                                <input class="form-check-input" type="checkbox" name="permissions[]" value="view_medicines" id="perm_view_medicines">
-                            </div>
-                            <div class="col-md-2 text-center">
-                                <input class="form-check-input" type="checkbox" name="permissions[]" value="create_medicines" id="perm_create_medicines">
-                            </div>
-                            <div class="col-md-2 text-center">
-                                <input class="form-check-input" type="checkbox" name="permissions[]" value="edit_medicines" id="perm_edit_medicines">
-                            </div>
-                            <div class="col-md-2 text-center">
-                                <input class="form-check-input" type="checkbox" name="permissions[]" value="delete_medicines" id="perm_delete_medicines">
-                            </div>
-                        </div>
-
-                        <!-- Gérer les Stocks -->
-                        <div class="row mb-3 align-items-center">
-                            <div class="col-md-3">
-                                <strong>Gérer les Stocks</strong>
-                            </div>
-                            <div class="col-md-2 text-center">
-                                <input class="form-check-input" type="checkbox" name="permissions[]" value="view_stocks" id="perm_view_stocks">
-                            </div>
-                            <div class="col-md-2 text-center">
-                                <input class="form-check-input" type="checkbox" name="permissions[]" value="create_stocks" id="perm_create_stocks">
-                            </div>
-                            <div class="col-md-2 text-center">
-                                <input class="form-check-input" type="checkbox" name="permissions[]" value="edit_stocks" id="perm_edit_stocks">
-                            </div>
-                            <div class="col-md-2 text-center">
-                                <input class="form-check-input" type="checkbox" name="permissions[]" value="delete_stocks" id="perm_delete_stocks">
-                            </div>
-                        </div>
-
-                        <!-- Gérer les Donneurs de Sang -->
-                        <div class="row mb-3 align-items-center">
-                            <div class="col-md-3">
-                                <strong>Gérer les Donneurs de Sang</strong>
-                            </div>
-                            <div class="col-md-2 text-center">
-                                <input class="form-check-input" type="checkbox" name="permissions[]" value="view_donors" id="perm_view_donors">
-                            </div>
-                            <div class="col-md-2 text-center">
-                                <input class="form-check-input" type="checkbox" name="permissions[]" value="create_donors" id="perm_create_donors">
-                            </div>
-                            <div class="col-md-2 text-center">
-                                <input class="form-check-input" type="checkbox" name="permissions[]" value="edit_donors" id="perm_edit_donors">
-                            </div>
-                            <div class="col-md-2 text-center">
-                                <input class="form-check-input" type="checkbox" name="permissions[]" value="delete_donors" id="perm_delete_donors">
-                            </div>
-                        </div>
-
-                        <!-- Gérer les Réserves de Sang -->
-                        <div class="row mb-3 align-items-center">
-                            <div class="col-md-3">
-                                <strong>Gérer les Réserves de Sang</strong>
-                            </div>
-                            <div class="col-md-2 text-center">
-                                <input class="form-check-input" type="checkbox" name="permissions[]" value="view_blood_reserves" id="perm_view_blood_reserves">
-                            </div>
-                            <div class="col-md-2 text-center">
-                                <input class="form-check-input" type="checkbox" name="permissions[]" value="create_blood_reserves" id="perm_create_blood_reserves">
-                            </div>
-                            <div class="col-md-2 text-center">
-                                <input class="form-check-input" type="checkbox" name="permissions[]" value="edit_blood_reserves" id="perm_edit_blood_reserves">
-                            </div>
-                            <div class="col-md-2 text-center">
-                                <input class="form-check-input" type="checkbox" name="permissions[]" value="delete_blood_reserves" id="perm_delete_blood_reserves">
-                            </div>
-                        </div>
-
-                        <!-- Gérer les Services -->
-                        <div class="row mb-3 align-items-center">
-                            <div class="col-md-3">
-                                <strong>Gérer les Services</strong>
-                            </div>
-                            <div class="col-md-2 text-center">
-                                <input class="form-check-input" type="checkbox" name="permissions[]" value="view_services" id="perm_view_services">
-                            </div>
-                            <div class="col-md-2 text-center">
-                                <input class="form-check-input" type="checkbox" name="permissions[]" value="create_services" id="perm_create_services">
-                            </div>
-                            <div class="col-md-2 text-center">
-                                <input class="form-check-input" type="checkbox" name="permissions[]" value="edit_services" id="perm_edit_services">
-                            </div>
-                            <div class="col-md-2 text-center">
-                                <input class="form-check-input" type="checkbox" name="permissions[]" value="delete_services" id="perm_delete_services">
-                            </div>
-                        </div>
-
-                        <!-- Gérer les Consultations -->
-                        <div class="row mb-3 align-items-center">
-                            <div class="col-md-3">
-                                <strong>Gérer les Consultations</strong>
-                            </div>
-                            <div class="col-md-2 text-center">
-                                <input class="form-check-input" type="checkbox" name="permissions[]" value="view_consultations" id="perm_view_consultations">
-                            </div>
-                            <div class="col-md-2 text-center">
-                                <input class="form-check-input" type="checkbox" name="permissions[]" value="create_consultations" id="perm_create_consultations">
-                            </div>
-                            <div class="col-md-2 text-center">
-                                <input class="form-check-input" type="checkbox" name="permissions[]" value="edit_consultations" id="perm_edit_consultations">
-                            </div>
-                            <div class="col-md-2 text-center">
-                                <input class="form-check-input" type="checkbox" name="permissions[]" value="delete_consultations" id="perm_delete_consultations">
-                            </div>
+                        <!-- Permissions dynamiques -->
+                        <div id="permissionsContainer">
+                            <!-- Les permissions seront générées dynamiquement ici -->
                         </div>
                     </div>
                 </form>
             </div>
             <div class="modal-footer">
-                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Annuler</button>
-                <button type="button" class="btn" style="background: #003366; color: white; border: none;" onclick="updateRole()">Mettre à jour</button>
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Fermer</button>
+                <button type="button" class="btn" style="background: #003366; color: white; border: none;" onclick="updateRole()">
+                    Mettre à jour
+                </button>
             </div>
         </div>
     </div>
@@ -471,24 +212,123 @@
         document.getElementById('editRoleName').textContent = roleName;
         document.getElementById('editRoleNameInput').value = roleName;
 
-        // Réinitialiser toutes les checkboxes
-        const checkboxes = document.querySelectorAll('#editRoleForm input[type="checkbox"]');
-        checkboxes.forEach(checkbox => {
-            checkbox.checked = false;
-        });
-
-        // Charger les permissions actuelles du rôle (à implémenter plus tard)
-        // loadRolePermissions(roleId);
+        // Charger les permissions dynamiquement
+        loadRolePermissions(roleId);
 
         // Ouvrir le modal
         const editModal = new bootstrap.Modal(document.getElementById('editRoleModal'));
         editModal.show();
     }
 
+    // Fonction pour charger les permissions d'un rôle
+    function loadRolePermissions(roleId) {
+        fetch(`/admin/permissions/${roleId}/permissions`, {
+            method: 'GET',
+            headers: {
+                'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').getAttribute('content'),
+                'Accept': 'application/json'
+            }
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                generatePermissionsUI(data.permissions, data.role_permissions);
+            } else {
+                console.error('Erreur lors du chargement des permissions:', data.message);
+            }
+        })
+        .catch(error => {
+            console.error('Erreur:', error);
+        });
+    }
+
+    // Fonction pour générer l'interface des permissions
+    function generatePermissionsUI(allPermissions, rolePermissions = []) {
+        const container = document.getElementById('permissionsContainer');
+        container.innerHTML = '';
+
+        // Grouper les permissions par module
+        const groupedPermissions = groupPermissionsByModule(allPermissions);
+
+        Object.keys(groupedPermissions).forEach(moduleName => {
+            const modulePermissions = groupedPermissions[moduleName];
+            const displayName = getModuleDisplayName(moduleName);
+
+            // Créer la ligne pour ce module
+            const moduleRow = document.createElement('div');
+            moduleRow.className = 'row mb-3 align-items-center';
+            moduleRow.innerHTML = `
+                <div class="col-md-3">
+                    <strong>${displayName}</strong>
+                </div>
+                <div class="col-md-2 text-center">
+                    <input class="form-check-input" type="checkbox" name="permissions[]" value="${moduleName}_view" id="perm_${moduleName}_view" ${rolePermissions.includes(moduleName + '_view') ? 'checked' : ''}>
+                </div>
+                <div class="col-md-2 text-center">
+                    <input class="form-check-input" type="checkbox" name="permissions[]" value="${moduleName}_create" id="perm_${moduleName}_create" ${rolePermissions.includes(moduleName + '_create') ? 'checked' : ''}>
+                </div>
+                <div class="col-md-2 text-center">
+                    <input class="form-check-input" type="checkbox" name="permissions[]" value="${moduleName}_edit" id="perm_${moduleName}_edit" ${rolePermissions.includes(moduleName + '_edit') ? 'checked' : ''}>
+                </div>
+                <div class="col-md-2 text-center">
+                    <input class="form-check-input" type="checkbox" name="permissions[]" value="${moduleName}_delete" id="perm_${moduleName}_delete" ${rolePermissions.includes(moduleName + '_delete') ? 'checked' : ''}>
+                </div>
+            `;
+
+            container.appendChild(moduleRow);
+        });
+    }
+
+    // Fonction pour grouper les permissions par module
+    function groupPermissionsByModule(permissions) {
+        const grouped = {};
+        
+        permissions.forEach(permission => {
+            const parts = permission.name.split('_');
+            if (parts.length >= 2) {
+                const action = parts[0]; // view, create, edit, delete
+                const module = parts.slice(1).join('_'); // le reste forme le nom du module
+                
+                if (!grouped[module]) {
+                    grouped[module] = [];
+                }
+                grouped[module].push(permission);
+            }
+        });
+
+        return grouped;
+    }
+
+    // Fonction pour obtenir le nom d'affichage d'un module
+    function getModuleDisplayName(moduleName) {
+        const displayNames = {
+            'roles': 'Gérer les Rôles et Permissions',
+            'users': 'Gérer les Utilisateurs',
+            'patients': 'Gérer les Patients',
+            'appointments': 'Gérer les Rendez-vous',
+            'medical_records': 'Gérer les Dossiers Médicaux',
+            'prescriptions': 'Gérer les Prescriptions',
+            'invoices': 'Gérer les Factures',
+            'reports': 'Gérer les Rapports',
+            'medicines': 'Gérer les Médicaments',
+            'stocks': 'Gérer les Stocks',
+            'donors': 'Gérer les Donneurs',
+            'consultations': 'Gérer les Consultations',
+            'hopital': 'Gérer les Hôpitaux',
+            'pharmacie': 'Gérer les Pharmacies',
+            'banque_sang': 'Gérer les Banques de Sang',
+            'centre': 'Gérer les Centres',
+            'patient': 'Gérer les Patients'
+        };
+
+        return displayNames[moduleName] || `Gérer les ${moduleName.charAt(0).toUpperCase() + moduleName.slice(1)}`;
+    }
+
     // Fonction pour mettre à jour un rôle
     function updateRole() {
         const form = document.getElementById('editRoleForm');
         const formData = new FormData(form);
+        const roleId = document.getElementById('editRoleId').value;
 
         // Récupérer les permissions sélectionnées
         const selectedPermissions = [];
@@ -500,15 +340,25 @@
         // Ajouter les permissions au formData
         formData.append('permissions', JSON.stringify(selectedPermissions));
 
-        fetch('{{ route("admin.permissions.update", ":id") }}'.replace(':id', document.getElementById('editRoleId').value), {
+        console.log('Mise à jour du rôle:', roleId);
+        console.log('Permissions sélectionnées:', selectedPermissions);
+
+        const url = '{{ route("admin.permissions.update", ":id") }}'.replace(':id', roleId);
+        console.log('URL:', url);
+
+        fetch(url, {
                 method: 'PUT',
                 body: formData,
                 headers: {
                     'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').getAttribute('content')
                 }
             })
-            .then(response => response.json())
+            .then(response => {
+                console.log('Response status:', response.status);
+                return response.json();
+            })
             .then(data => {
+                console.log('Response data:', data);
                 if (data.success) {
                     alert('Rôle mis à jour avec succès !');
                     // Fermer le modal

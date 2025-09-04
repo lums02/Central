@@ -162,8 +162,39 @@ class Utilisateur extends Authenticatable
     public function assignAllPermissions()
     {
         if ($this->isSuperAdmin()) {
-            $allPermissions = \Spatie\Permission\Models\Permission::all();
-            $this->syncPermissions($allPermissions);
+            // Permissions spécifiques du superadmin
+            $superAdminPermissions = [
+                // CRUD sur les entités
+                'view_hopital', 'create_hopital', 'edit_hopital', 'delete_hopital',
+                'view_pharmacie', 'create_pharmacie', 'edit_pharmacie', 'delete_pharmacie',
+                'view_banque_sang', 'create_banque_sang', 'edit_banque_sang', 'delete_banque_sang',
+                'view_centre', 'create_centre', 'edit_centre', 'delete_centre',
+                
+                // CRUD sur les utilisateurs
+                'view_users', 'create_users', 'edit_users', 'delete_users',
+                'manage_users', 'gérer_les_utilisateurs',
+                
+                // CRUD sur les rôles et permissions
+                'view_roles', 'create_roles', 'edit_roles', 'delete_roles',
+                'manage_permissions',
+                
+                // Permissions de gestion générale
+                'view_dashboard', 'view_reports', 'create_reports', 'edit_reports', 'delete_reports'
+            ];
+
+            // Créer les permissions si elles n'existent pas
+            foreach ($superAdminPermissions as $permissionName) {
+                \Spatie\Permission\Models\Permission::firstOrCreate([
+                    'name' => $permissionName,
+                    'guard_name' => 'web'
+                ]);
+            }
+
+            // Récupérer seulement les permissions spécifiques
+            $permissions = \Spatie\Permission\Models\Permission::whereIn('name', $superAdminPermissions)->get();
+            
+            // Supprimer toutes les permissions actuelles et attribuer seulement les spécifiques
+            $this->syncPermissions($permissions);
             
             // S'assurer que le rôle superadmin existe
             $superAdminRole = \Spatie\Permission\Models\Role::firstOrCreate([
@@ -189,7 +220,8 @@ class Utilisateur extends Authenticatable
         });
 
         static::updated(function ($utilisateur) {
-            if ($utilisateur->isSuperAdmin()) {
+            // Ne déclencher que si le rôle a changé vers superadmin
+            if ($utilisateur->isSuperAdmin() && $utilisateur->wasChanged('role')) {
                 $utilisateur->assignAllPermissions();
             }
         });

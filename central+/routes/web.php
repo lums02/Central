@@ -23,6 +23,11 @@ Route::get('/hopital', function() {
     return view('entities.hopital.home');
 })->name('entity.hopital');
 
+// Route de test pour le layout admin
+Route::get('/admin/test-layout', function () {
+    return view('admin.test-layout');
+})->name('admin.test-layout');
+
 // Connexion
 Route::get('/login', [LoginController::class, 'showLoginForm'])->name('login');
 Route::post('/login', [LoginController::class, 'login'])->name('login.submit');
@@ -54,9 +59,7 @@ Route::prefix('admin')->name('admin.')->middleware(['auth'])->group(function () 
     });
     
     // Dashboard admin
-    Route::get('/dashboard', function () {
-        return view('admin.dashboard');
-    })->name('dashboard');
+    Route::get('/dashboard', [\App\Http\Controllers\Admin\DashboardController::class, 'index'])->name('dashboard');
     
     // Page d'accueil admin
     Route::get('/index', function () {
@@ -64,6 +67,12 @@ Route::prefix('admin')->name('admin.')->middleware(['auth'])->group(function () 
     })->name('index');
     
     Route::resource('permissions', PermissionController::class);
+    
+    // Route pour récupérer les permissions d'un rôle
+    Route::get('/permissions/{id}/permissions', [PermissionController::class, 'getRolePermissions'])->name('permissions.getRolePermissions');
+    
+    // Route explicite pour la mise à jour des rôles
+    Route::put('/permissions/{id}', [PermissionController::class, 'update'])->name('permissions.update');
     
     // Gestion des utilisateurs - Routes spécifiques en premier
     Route::get('/users', [UserController::class, 'index'])->name('users.index');
@@ -92,4 +101,53 @@ Route::prefix('admin')->name('admin.')->middleware(['auth'])->group(function () 
     Route::get('/settings', function () {
         return view('admin.settings');
     })->name('settings');
+    
+    // Routes temporaires pour les modules (à remplacer par de vraies routes plus tard)
+    Route::get('/patients', function () {
+        return view('admin.modules.coming-soon', ['module' => 'Patients']);
+    })->name('patients.index');
+    
+    Route::get('/appointments', function () {
+        return view('admin.modules.coming-soon', ['module' => 'Rendez-vous']);
+    })->name('appointments.index');
+    
+    Route::get('/medical-records', function () {
+        return view('admin.modules.coming-soon', ['module' => 'Dossiers Médicaux']);
+    })->name('medical-records.index');
+    
+    Route::get('/prescriptions', function () {
+        return view('admin.modules.coming-soon', ['module' => 'Prescriptions']);
+    })->name('prescriptions.index');
+    
+    Route::get('/invoices', function () {
+        return view('admin.modules.coming-soon', ['module' => 'Factures']);
+    })->name('invoices.index');
+    
+    Route::get('/reports', function () {
+        return view('admin.modules.coming-soon', ['module' => 'Rapports']);
+    })->name('reports.index');
+    
+    Route::get('/medicines', function () {
+        return view('admin.modules.coming-soon', ['module' => 'Médicaments']);
+    })->name('medicines.index');
+    
+    Route::get('/stocks', function () {
+        return view('admin.modules.coming-soon', ['module' => 'Stocks']);
+    })->name('stocks.index');
+    
+    Route::get('/donors', function () {
+        return view('admin.modules.coming-soon', ['module' => 'Donneurs']);
+    })->name('donors.index');
+    
+    Route::get('/blood-reserves', function () {
+        return view('admin.modules.coming-soon', ['module' => 'Réserves de Sang']);
+    })->name('blood-reserves.index');
+    
+    Route::get('/services', function () {
+        return view('admin.modules.coming-soon', ['module' => 'Services']);
+    })->name('services.index');
+    
+    Route::get('/consultations', function () {
+        return view('admin.modules.coming-soon', ['module' => 'Consultations']);
+    })->name('consultations.index');
 });

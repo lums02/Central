@@ -21,24 +21,54 @@ class UserController extends Controller
     // Affiche la liste des utilisateurs
     public function index()
     {
-        // Afficher seulement les utilisateurs approuvés
-        $utilisateurs = Utilisateur::where('status', 'approved')
-            ->orderBy('created_at', 'desc')
-            ->get();
+        $user = auth()->user();
+        
+        if ($user->isSuperAdmin()) {
+            // Super admin voit tous les utilisateurs approuvés
+            $utilisateurs = Utilisateur::where('status', 'approved')
+                ->orderBy('created_at', 'desc')
+                ->get();
+        } else {
+            // Admin d'entité voit seulement les utilisateurs de son entité
+            $utilisateurs = Utilisateur::where('status', 'approved')
+                ->where('type_utilisateur', $user->type_utilisateur)
+                ->orderBy('created_at', 'desc')
+                ->get();
+        }
+        
         return view('admin.users', compact('utilisateurs'));
     }
 
     // Affiche un utilisateur spécifique
     public function show($id)
     {
+        $user = auth()->user();
         $utilisateur = Utilisateur::findOrFail($id);
+        
+        // Vérifier que l'admin d'entité ne peut voir que les utilisateurs de son entité
+        if (!$user->isSuperAdmin() && $utilisateur->type_utilisateur !== $user->type_utilisateur) {
+            return response()->json([
+                'success' => false, 
+                'message' => 'Accès non autorisé à cet utilisateur'
+            ], 403);
+        }
+        
         return response()->json($utilisateur);
     }
 
     // Met à jour un utilisateur
     public function update(Request $request, $id)
     {
+        $user = auth()->user();
         $utilisateur = Utilisateur::findOrFail($id);
+        
+        // Vérifier que l'admin d'entité ne peut modifier que les utilisateurs de son entité
+        if (!$user->isSuperAdmin() && $utilisateur->type_utilisateur !== $user->type_utilisateur) {
+            return response()->json([
+                'success' => false, 
+                'message' => 'Vous ne pouvez modifier que les utilisateurs de votre entité'
+            ], 403);
+        }
         
         $request->validate([
             'nom' => 'required|string|max:255',
@@ -58,53 +88,191 @@ class UserController extends Controller
     // Supprime un utilisateur
     public function destroy($id)
     {
-        $utilisateur = Utilisateur::findOrFail($id);
-        
-        // Vérifier que l'utilisateur n'est pas un superadmin
-        if (!$utilisateur->canBeDeleted()) {
-            return response()->json([
-                'success' => false, 
-                'message' => 'Impossible de supprimer le superadmin'
-            ]);
-        }
-        
-        // Vérifier que l'utilisateur n'est pas le dernier admin
-        if ($utilisateur->role === 'admin' && Utilisateur::where('role', 'admin')->count() <= 1) {
-            return response()->json([
-                'success' => false, 
-                'message' => 'Impossible de supprimer le dernier administrateur'
-            ]);
-        }
+        try {
+            $user = auth()->user();
+            $utilisateur = Utilisateur::findOrFail($id);
+            
+            // Vérifier que l'admin d'entité ne peut supprimer que les utilisateurs de son entité
+            if (!$user->isSuperAdmin() && $utilisateur->type_utilisateur !== $user->type_utilisateur) {
+                return response()->json([
+                    'success' => false, 
+                    'message' => 'Vous ne pouvez supprimer que les utilisateurs de votre entité'
+                ], 403);
+            }
+            
+            // Vérifier que l'utilisateur n'est pas un superadmin
+            if (!$utilisateur->canBeDeleted()) {
+                return response()->json([
+                    'success' => false, 
+                    'message' => 'Impossible de supprimer le superadmin'
+                ]);
+            }
+            
+            // Vérifier que l'utilisateur n'est pas le dernier admin
+            if ($utilisateur->role === 'admin' && Utilisateur::where('role', 'admin')->count() <= 1) {
+                return response()->json([
+                    'success' => false, 
+                    'message' => 'Impossible de supprimer le dernier administrateur'
+                ]);
+            }
 
-        $utilisateur->delete();
-        return response()->json(['success' => true, 'message' => 'Utilisateur supprimé avec succès']);
+            // Supprimer les permissions et rôles avant de supprimer l'utilisateur
+            $utilisateur->syncPermissions([]);
+            $utilisateur->syncRoles([]);
+            
+            $utilisateur->delete();
+            
+            return response()->json(['success' => true, 'message' => 'Utilisateur supprimé avec succès']);
+            
+        } catch (\Exception $e) {
+            \Log::error('Erreur lors de la suppression d\'utilisateur: ' . $e->getMessage());
+            return response()->json([
+                'success' => false, 
+                'message' => 'Erreur lors de la suppression: ' . $e->getMessage()
+            ], 500);
+        }
     }
 
     // Affiche les permissions d'un utilisateur
     public function showPermissions($id)
     {
+        $user = auth()->user();
         $utilisateur = Utilisateur::findOrFail($id);
-        $permissions = Permission::all();
-        $userPermissions = $utilisateur->permissions->pluck('id')->toArray();
+        
+        // Vérifier que l'admin d'entité ne peut voir que les utilisateurs de son entité
+        if (!$user->isSuperAdmin() && $utilisateur->type_utilisateur !== $user->type_utilisateur) {
+            return response()->json([
+                'success' => false, 
+                'message' => 'Accès non autorisé à cet utilisateur'
+            ], 403);
+        }
+        
+        // Filtrer les permissions selon l'entité de l'utilisateur connecté
+        if ($user->isSuperAdmin()) {
+            // Super admin voit toutes les permissions
+            $permissions = Permission::all();
+        } else {
+            // Admin d'entité voit seulement les permissions pertinentes pour son entité
+            $permissions = $this->getEntityRelevantPermissions($user->type_utilisateur);
+        }
+        
+        // Récupérer les permissions de l'utilisateur (directes + via les rôles)
+        $userPermissions = $utilisateur->getAllPermissions()->pluck('name')->toArray();
 
         return response()->json([
             'permissions' => $permissions,
-            'userPermissions' => $userPermissions
+            'userPermissions' => $userPermissions,
+            'user' => [
+                'id' => $utilisateur->id,
+                'nom' => $utilisateur->nom,
+                'email' => $utilisateur->email,
+                'role' => $utilisateur->role,
+                'type_utilisateur' => $utilisateur->type_utilisateur,
+                'status' => $utilisateur->status
+            ]
         ]);
+    }
+
+    private function getEntityRelevantPermissions($entityType)
+    {
+        // Permissions de base pour tous les admins d'entité
+        $basePermissions = [
+            'view_users', 'create_users', 'edit_users', 'delete_users',
+            'view_roles', 'create_roles', 'edit_roles', 'delete_roles',
+        ];
+        
+        // Permissions spécifiques selon le type d'entité
+        $entityPermissions = [];
+        switch ($entityType) {
+            case 'hopital':
+                $entityPermissions = [
+                    'view_patients', 'create_patients', 'edit_patients', 'delete_patients',
+                    'view_appointments', 'create_appointments', 'edit_appointments', 'delete_appointments',
+                    'view_medical_records', 'create_medical_records', 'edit_medical_records', 'delete_medical_records',
+                    'view_prescriptions', 'create_prescriptions', 'edit_prescriptions', 'delete_prescriptions',
+                    'view_consultations', 'create_consultations', 'edit_consultations', 'delete_consultations',
+                    'view_services', 'create_services', 'edit_services', 'delete_services',
+                    'view_invoices', 'create_invoices', 'edit_invoices', 'delete_invoices',
+                    'view_reports', 'create_reports', 'edit_reports', 'delete_reports',
+                ];
+                break;
+                
+            case 'pharmacie':
+                $entityPermissions = [
+                    'view_medicines', 'create_medicines', 'edit_medicines', 'delete_medicines',
+                    'view_stocks', 'create_stocks', 'edit_stocks', 'delete_stocks',
+                    'view_invoices', 'create_invoices', 'edit_invoices', 'delete_invoices',
+                    'view_reports', 'create_reports', 'edit_reports', 'delete_reports',
+                ];
+                break;
+                
+            case 'banque_sang':
+                $entityPermissions = [
+                    'view_donors', 'create_donors', 'edit_donors', 'delete_donors',
+                    'view_blood_reserves', 'create_blood_reserves', 'edit_blood_reserves', 'delete_blood_reserves',
+                    'view_reports', 'create_reports', 'edit_reports', 'delete_reports',
+                ];
+                break;
+                
+            case 'centre':
+                $entityPermissions = [
+                    'view_patients', 'create_patients', 'edit_patients', 'delete_patients',
+                    'view_consultations', 'create_consultations', 'edit_consultations', 'delete_consultations',
+                    'view_prescriptions', 'create_prescriptions', 'edit_prescriptions', 'delete_prescriptions',
+                    'view_reports', 'create_reports', 'edit_reports', 'delete_reports',
+                ];
+                break;
+        }
+        
+        // Combiner les permissions de base avec les permissions spécifiques à l'entité
+        $relevantPermissionNames = array_merge($basePermissions, $entityPermissions);
+        
+        // Récupérer les permissions existantes qui correspondent
+        return Permission::whereIn('name', $relevantPermissionNames)->get();
     }
 
     // Met à jour les permissions d'un utilisateur
     public function updatePermissions(Request $request)
     {
+        $user = auth()->user();
+        
         $request->validate([
             'user_id' => 'required|exists:utilisateurs,id',
-            'permissions' => 'array',
-            'permissions.*' => 'exists:permissions,id',
+            'permissions' => 'nullable|string', // Peut être JSON string
             'role' => 'required|string|in:user,admin,manager,moderator,superadmin',
-            'type_utilisateur' => 'required|string|in:hopital,pharmacie,banque_sang,centre,patient',
+            'type_utilisateur' => 'required|string|in:hopital,pharmacie,banque_sang,centre,patient,admin',
         ]);
 
         $utilisateur = Utilisateur::findOrFail($request->user_id);
+        
+        // Vérifier que l'admin d'entité ne peut modifier que les utilisateurs de son entité
+        if (!$user->isSuperAdmin() && $utilisateur->type_utilisateur !== $user->type_utilisateur) {
+            return response()->json([
+                'success' => false, 
+                'message' => 'Vous ne pouvez modifier que les utilisateurs de votre entité'
+            ], 403);
+        }
+        
+        // Récupérer les permissions
+        $permissions = $request->input('permissions', []);
+        
+        // Si les permissions sont envoyées en JSON, les décoder
+        if (is_string($permissions)) {
+            $permissions = json_decode($permissions, true) ?? [];
+        }
+        
+        // Vérifier que l'admin d'entité ne peut attribuer que des permissions pertinentes pour son entité
+        if (!$user->isSuperAdmin() && !empty($permissions)) {
+            $allowedPermissions = $this->getEntityRelevantPermissions($user->type_utilisateur)->pluck('name')->toArray();
+            $unauthorizedPermissions = array_diff($permissions, $allowedPermissions);
+            
+            if (!empty($unauthorizedPermissions)) {
+                return response()->json([
+                    'success' => false, 
+                    'message' => 'Vous ne pouvez attribuer que des permissions pertinentes pour votre entité'
+                ], 403);
+            }
+        }
         
         // Mettre à jour le rôle et le type
         $utilisateur->update([
@@ -112,13 +280,29 @@ class UserController extends Controller
             'type_utilisateur' => $request->type_utilisateur,
         ]);
 
+        // Attribuer le rôle approprié
+        $roleModel = \Spatie\Permission\Models\Role::firstOrCreate([
+            'name' => $request->role,
+            'guard_name' => 'web'
+        ]);
+        $utilisateur->assignRole($roleModel);
+
         // Si c'est un superadmin, lui attribuer automatiquement toutes les permissions
-        if ($utilisateur->isSuperAdmin()) {
+        if ($request->role === 'superadmin') {
             $utilisateur->assignAllPermissions();
         } else {
             // Mettre à jour les permissions pour les autres utilisateurs
-            if ($request->has('permissions')) {
-                $utilisateur->syncPermissions($request->permissions);
+            if (!empty($permissions)) {
+                // Convertir les noms de permissions en objets Permission
+                $permissionObjects = [];
+                foreach ($permissions as $permissionName) {
+                    $permission = \Spatie\Permission\Models\Permission::firstOrCreate([
+                        'name' => $permissionName,
+                        'guard_name' => 'web'
+                    ]);
+                    $permissionObjects[] = $permission;
+                }
+                $utilisateur->syncPermissions($permissionObjects);
             } else {
                 $utilisateur->syncPermissions([]);
             }
@@ -130,6 +314,7 @@ class UserController extends Controller
     // Approuve un utilisateur en attente
     public function approveUser(Request $request, $id)
     {
+        $user = auth()->user();
         $utilisateur = Utilisateur::findOrFail($id);
         
         // Vérifier que l'utilisateur est en attente
@@ -140,29 +325,79 @@ class UserController extends Controller
             ]);
         }
 
-        // Approuver l'utilisateur
+        // Vérifier que l'admin d'entité ne peut approuver que les utilisateurs de son entité
+        if (!$user->isSuperAdmin() && $utilisateur->type_utilisateur !== $user->type_utilisateur) {
+            return response()->json([
+                'success' => false, 
+                'message' => 'Vous ne pouvez approuver que les utilisateurs de votre entité'
+            ], 403);
+        }
+
+        // Récupérer les données du formulaire
+        $role = $request->input('role', 'user');
+        $typeUtilisateur = $request->input('type_utilisateur', $utilisateur->type_utilisateur);
+        $permissions = $request->input('permissions', []);
+
+        // Si les permissions sont envoyées en JSON, les décoder
+        if (is_string($permissions)) {
+            $permissions = json_decode($permissions, true) ?? [];
+        }
+
+        // Vérifier que l'admin d'entité ne peut attribuer que des permissions pertinentes pour son entité
+        if (!$user->isSuperAdmin() && !empty($permissions)) {
+            $allowedPermissions = $this->getEntityRelevantPermissions($user->type_utilisateur)->pluck('name')->toArray();
+            $unauthorizedPermissions = array_diff($permissions, $allowedPermissions);
+            
+            if (!empty($unauthorizedPermissions)) {
+                return response()->json([
+                    'success' => false, 
+                    'message' => 'Vous ne pouvez attribuer que des permissions pertinentes pour votre entité'
+                ], 403);
+            }
+        }
+
+        // Mettre à jour le rôle et le type d'utilisateur
         $utilisateur->update([
-            'status' => 'approved'
+            'status' => 'approved',
+            'role' => $role,
+            'type_utilisateur' => $typeUtilisateur
         ]);
 
-        // Si c'est le premier utilisateur de son type d'entité, le promouvoir admin
-        if ($utilisateur->isFirstOfEntityType()) {
-            $utilisateur->update(['role' => 'admin']);
-            
-            // Attribuer le rôle admin
-            $adminRole = \Spatie\Permission\Models\Role::firstOrCreate([
-                'name' => 'admin',
-                'guard_name' => 'web'
-            ]);
-            $utilisateur->assignRole($adminRole);
-            
-            // Attribuer les permissions appropriées selon le type d'entité
-            $this->assignEntityPermissions($utilisateur, $utilisateur->type_utilisateur);
+        // Attribuer le rôle approprié
+        $roleModel = \Spatie\Permission\Models\Role::firstOrCreate([
+            'name' => $role,
+            'guard_name' => 'web'
+        ]);
+        $utilisateur->assignRole($roleModel);
+
+        // Gérer les permissions
+        if ($role === 'superadmin') {
+            // Le superadmin a automatiquement toutes les permissions
+            $utilisateur->assignAllPermissions();
+        } else {
+            // Attribuer les permissions spécifiées
+            if (!empty($permissions)) {
+                // Convertir les noms de permissions en objets Permission
+                $permissionObjects = [];
+                foreach ($permissions as $permissionName) {
+                    $permission = \Spatie\Permission\Models\Permission::firstOrCreate([
+                        'name' => $permissionName,
+                        'guard_name' => 'web'
+                    ]);
+                    $permissionObjects[] = $permission;
+                }
+                $utilisateur->syncPermissions($permissionObjects);
+            } else {
+                // Si aucune permission n'est spécifiée, utiliser la logique automatique
+                if ($utilisateur->isFirstOfEntityType()) {
+                    $this->assignEntityPermissions($utilisateur, $typeUtilisateur);
+                }
+            }
         }
 
         return response()->json([
             'success' => true,
-            'message' => 'Utilisateur approuvé avec succès'
+            'message' => 'Utilisateur approuvé avec succès et permissions attribuées'
         ]);
     }
 
@@ -262,14 +497,20 @@ class UserController extends Controller
     // Obtenir les utilisateurs en attente d'approbation
     public function pendingUsers()
     {
-        // Temporairement moins restrictif pour le debug
-        // if (!auth()->check()) {
-        //     abort(403, 'Vous devez être connecté pour accéder à cette section.');
-        // }
+        $user = auth()->user();
         
-        $pendingUsers = Utilisateur::where('status', 'pending')
-            ->orderBy('created_at', 'desc')
-            ->get();
+        if ($user->isSuperAdmin()) {
+            // Super admin voit tous les utilisateurs en attente
+            $pendingUsers = Utilisateur::where('status', 'pending')
+                ->orderBy('created_at', 'desc')
+                ->get();
+        } else {
+            // Admin d'entité voit seulement les utilisateurs en attente de son entité
+            $pendingUsers = Utilisateur::where('status', 'pending')
+                ->where('type_utilisateur', $user->type_utilisateur)
+                ->orderBy('created_at', 'desc')
+                ->get();
+        }
             
         // Debug: Log pour voir ce qui se passe
         \Log::info('Pending users request', [
@@ -277,7 +518,9 @@ class UserController extends Controller
             'wants_json' => request()->wantsJson(),
             'accept' => request()->header('Accept'),
             'count' => $pendingUsers->count(),
-            'auth_check' => auth()->check()
+            'auth_check' => auth()->check(),
+            'user_type' => $user->type_utilisateur,
+            'is_superadmin' => $user->isSuperAdmin()
         ]);
             
         // Si c'est une requête AJAX, retourner JSON
@@ -314,22 +557,50 @@ class UserController extends Controller
     // Statistiques des utilisateurs
     public function stats()
     {
-        $stats = [
-            'total' => Utilisateur::count(),
-            'pending' => Utilisateur::where('status', 'pending')->count(),
-            'approved' => Utilisateur::where('status', 'approved')->count(),
-            'rejected' => Utilisateur::where('status', 'rejected')->count(),
-            'par_status' => Utilisateur::select('status', DB::raw('count(*) as total'))
-                ->groupBy('status')
-                ->get(),
-            'par_type' => Utilisateur::select('type_utilisateur', DB::raw('count(*) as total'))
-                ->groupBy('type_utilisateur')
-                ->get(),
-            'par_role' => Utilisateur::select('role', DB::raw('count(*) as total'))
-                ->groupBy('role')
-                ->get(),
-            'recent' => Utilisateur::where('created_at', '>=', now()->subDays(7))->count(),
-        ];
+        $user = auth()->user();
+        
+        if ($user->isSuperAdmin()) {
+            // Super admin voit toutes les statistiques
+            $stats = [
+                'total' => Utilisateur::count(),
+                'pending' => Utilisateur::where('status', 'pending')->count(),
+                'approved' => Utilisateur::where('status', 'approved')->count(),
+                'rejected' => Utilisateur::where('status', 'rejected')->count(),
+                'par_status' => Utilisateur::select('status', DB::raw('count(*) as total'))
+                    ->groupBy('status')
+                    ->get(),
+                'par_type' => Utilisateur::select('type_utilisateur', DB::raw('count(*) as total'))
+                    ->groupBy('type_utilisateur')
+                    ->get(),
+                'par_role' => Utilisateur::select('role', DB::raw('count(*) as total'))
+                    ->groupBy('role')
+                    ->get(),
+                'recent' => Utilisateur::where('created_at', '>=', now()->subDays(7))->count(),
+            ];
+        } else {
+            // Admin d'entité voit seulement les statistiques de son entité
+            $entityType = $user->type_utilisateur;
+            $stats = [
+                'total' => Utilisateur::where('type_utilisateur', $entityType)->count(),
+                'pending' => Utilisateur::where('status', 'pending')->where('type_utilisateur', $entityType)->count(),
+                'approved' => Utilisateur::where('status', 'approved')->where('type_utilisateur', $entityType)->count(),
+                'rejected' => Utilisateur::where('status', 'rejected')->where('type_utilisateur', $entityType)->count(),
+                'par_status' => Utilisateur::where('type_utilisateur', $entityType)
+                    ->select('status', DB::raw('count(*) as total'))
+                    ->groupBy('status')
+                    ->get(),
+                'par_type' => Utilisateur::where('type_utilisateur', $entityType)
+                    ->select('type_utilisateur', DB::raw('count(*) as total'))
+                    ->groupBy('type_utilisateur')
+                    ->get(),
+                'par_role' => Utilisateur::where('type_utilisateur', $entityType)
+                    ->select('role', DB::raw('count(*) as total'))
+                    ->groupBy('role')
+                    ->get(),
+                'recent' => Utilisateur::where('type_utilisateur', $entityType)
+                    ->where('created_at', '>=', now()->subDays(7))->count(),
+            ];
+        }
 
         return response()->json($stats);
     }

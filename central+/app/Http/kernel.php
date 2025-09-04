@@ -45,6 +45,7 @@ class Kernel extends HttpKernel
         'guest' => \App\Http\Middleware\RedirectIfAuthenticated::class,
         'verified' => \Illuminate\Auth\Middleware\EnsureEmailIsVerified::class,
         'superadmin.protection' => \App\Http\Middleware\SuperAdminProtection::class,
+        'permission' => \App\Http\Middleware\CheckPermission::class,
     ];
 
     

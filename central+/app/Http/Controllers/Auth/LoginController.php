@@ -45,22 +45,26 @@ class LoginController extends Controller
             // Si l'utilisateur est approuvé, procéder à la connexion
             Auth::login($utilisateur);
 
-            // Rediriger selon le type_utilisateur (entité)
-            switch ($utilisateur->type_utilisateur) {
-                case 'admin':
-                    return redirect()->intended(route('admin.dashboard'));
-                case 'hopital':
-                    return redirect()->intended('/hopital/dashboard');
-                case 'pharmacie':
-                    return redirect()->intended('/pharmacie/dashboard');
-                case 'banque_sang':
-                    return redirect()->intended('/banque/dashboard');
-                case 'centre':
-                    return redirect()->intended('/centre/dashboard');
-                case 'patient':
-                    return redirect()->intended('/patient/dashboard');
-                default:
-                    return redirect()->intended('/admin/dashboard');
+            // Rediriger selon le rôle et le type_utilisateur
+            if ($utilisateur->role === 'admin' || $utilisateur->role === 'superadmin') {
+                // Les admins vont toujours vers le dashboard admin
+                return redirect()->intended(route('admin.dashboard'));
+            } else {
+                // Les utilisateurs normaux vont vers leur dashboard spécifique
+                switch ($utilisateur->type_utilisateur) {
+                    case 'hopital':
+                        return redirect()->intended('/hopital/dashboard');
+                    case 'pharmacie':
+                        return redirect()->intended('/pharmacie/dashboard');
+                    case 'banque_sang':
+                        return redirect()->intended('/banque/dashboard');
+                    case 'centre':
+                        return redirect()->intended('/centre/dashboard');
+                    case 'patient':
+                        return redirect()->intended('/patient/dashboard');
+                    default:
+                        return redirect()->intended('/admin/dashboard');
+                }
             }
         }
 
@@ -68,6 +72,38 @@ class LoginController extends Controller
         return back()->withErrors([
             'email' => 'Email ou mot de passe incorrect.',
         ])->withInput();
+    }
+
+    /**
+     * Rediriger l'utilisateur après une connexion réussie
+     */
+    protected function authenticated($request, $user)
+    {
+        // Forcer la mise à jour des permissions du superadmin
+        if ($user->isSuperAdmin()) {
+            $user->assignAllPermissions();
+        }
+
+        // Redirection selon le rôle
+        if ($user->role === 'superadmin' || $user->role === 'admin') {
+            return redirect()->route('admin.dashboard');
+        } else {
+            // Redirection vers le dashboard spécifique à l'entité
+            switch ($user->type_utilisateur) {
+                case 'hopital':
+                    return redirect()->route('hopital.dashboard');
+                case 'pharmacie':
+                    return redirect()->route('pharmacie.dashboard');
+                case 'banque_sang':
+                    return redirect()->route('banque.dashboard');
+                case 'centre':
+                    return redirect()->route('centre.dashboard');
+                case 'patient':
+                    return redirect()->route('patient.dashboard');
+                default:
+                    return redirect()->route('admin.dashboard');
+            }
+        }
     }
 
     public function logout(Request $request)

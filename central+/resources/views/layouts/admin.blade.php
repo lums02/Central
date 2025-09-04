@@ -19,9 +19,7 @@
 
 <body>
     <!-- Sidebar -->
-    <div class="sidebar">
-        @include('layouts.partials.admin.leftsidebar')
-    </div>
+    @include('layouts.partials.admin.leftsidebar')
     
     <!-- Main Content Area -->
     <div class="main-content">
