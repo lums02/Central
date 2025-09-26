@@ -5,7 +5,9 @@
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
     <title>
-        @if($selectedEntity)
+        @if($userType === 'patient')
+            Mon Espace Personnel - Inscription Patient
+        @elseif($selectedEntity)
             Inscription {{ ucfirst($selectedEntity) }} - Plateforme Santé
         @else
             Inscription - Plateforme Santé
@@ -193,13 +195,27 @@
 <div class="register-container mx-auto">
     <div class="register-header">
         <h1>
-            @if($selectedEntity)
+            @if($userType === 'patient')
+                <i class="fas fa-heartbeat me-2"></i>Mon Espace Personnel
+            @elseif($userType === 'pharmacie')
+                <i class="fas fa-store me-2"></i>Mon Espace Pharmacie
+            @elseif($userType === 'banque_sang')
+                <i class="fas fa-tint me-2"></i>Mon Espace Banque de Sang
+            @elseif($selectedEntity)
                 Inscription {{ ucfirst($selectedEntity) }}
             @else
                 Inscription
             @endif
         </h1>
-        <p>Rejoignez la plateforme CENTRAL+ et commencez votre expérience</p>
+        <p>
+            @if($userType === 'patient')
+                Créez votre compte patient pour accéder à vos informations médicales
+            @elseif($userType === 'pharmacie')
+                Créez votre compte pharmacie pour gérer votre établissement
+            @else
+                Rejoignez la plateforme CENTRAL+ et commencez votre expérience
+            @endif
+        </p>
     </div>
     
     <div class="register-body">
@@ -241,8 +257,54 @@
     <form action="{{ route('register.submit') }}" method="POST" enctype="multipart/form-data" novalidate>
         @csrf
 
-        @if(!$selectedEntity)
-            {{-- Afficher le sélecteur seulement si aucune entité n'est présélectionnée --}}
+        {{-- Champs cachés pour le plan et paiement --}}
+        @if(isset($selectedPlan))
+            <input type="hidden" name="selected_plan" value="{{ $selectedPlan }}">
+            <input type="hidden" name="selected_period" value="{{ $selectedPeriod ?? 'monthly' }}">
+            <input type="hidden" name="payment_method" value="{{ $paymentMethod ?? '' }}">
+            <input type="hidden" name="amount" value="{{ $amount ?? '' }}">
+            
+            <div class="alert alert-success mb-4">
+                <i class="fas fa-check-circle me-2"></i>
+                <strong>Paiement confirmé !</strong> 
+                <div class="mt-2">
+                    <strong>Plan :</strong> {{ ucfirst($selectedPlan) }} 
+                    @if(isset($selectedPeriod))
+                        ({{ $selectedPeriod === 'yearly' ? 'Annuel' : 'Mensuel' }})
+                    @endif
+                    <br>
+                    @if(isset($paymentMethod))
+                        <strong>Mode de paiement :</strong> 
+                        @switch($paymentMethod)
+                            @case('orange-money')
+                                Orange Money
+                                @break
+                            @case('airtel-money')
+                                Airtel Money
+                                @break
+                            @case('mpesa')
+                                M-Pesa
+                                @break
+                            @case('visa')
+                                Visa
+                                @break
+                            @case('mastercard')
+                                Mastercard
+                                @break
+                            @default
+                                {{ ucfirst($paymentMethod) }}
+                        @endswitch
+                    @endif
+                    <br>
+                    @if(isset($amount))
+                        <strong>Montant :</strong> €{{ $amount }}
+                    @endif
+                </div>
+            </div>
+        @endif
+
+        @if(!$selectedEntity && $userType !== 'patient')
+            {{-- Afficher le sélecteur seulement si aucune entité n'est présélectionnée et ce n'est pas un patient --}}
             <div class="form-group">
                 <label for="type_utilisateur" class="form-label">Type d'entité</label>
                 <select name="type_utilisateur" id="type_utilisateur" class="form-select" required onchange="toggleFields()">
@@ -256,14 +318,14 @@
             </div>
         @else
             {{-- Entité présélectionnée - champ caché --}}
-            <input type="hidden" name="type_utilisateur" id="type_utilisateur" value="{{ $selectedEntity }}">
+            <input type="hidden" name="type_utilisateur" id="type_utilisateur" value="{{ $userType === 'patient' ? 'patient' : $selectedEntity }}">
             
             {{-- Afficher l'entité sélectionnée --}}
             <div class="form-group">
                 <label class="form-label">Type d'entité</label>
                 <div class="form-control-plaintext">
                     <strong>
-                        @switch($selectedEntity)
+                        @switch($userType === 'patient' ? 'patient' : $selectedEntity)
                             @case('hopital')
                                 Hôpital
                                 @break
@@ -369,10 +431,43 @@
         <div class="login-link">
             <p class="mb-0">
                 Déjà inscrit ? 
+            @if($userType === 'patient')
+                <a href="{{ route('login') }}?type=patient" class="fw-bold">
+                    Accéder à mon espace
+                </a>
+            @elseif($userType === 'pharmacie')
+                <a href="{{ route('login') }}?type=pharmacie" class="fw-bold">
+                    Accéder à mon espace
+                </a>
+            @elseif($userType === 'banque_sang')
+                <a href="{{ route('login') }}?type=banque_sang" class="fw-bold">
+                    Accéder à mon espace
+                </a>
+            @else
                 <a href="{{ route('login') }}" class="fw-bold">
                     Se connecter
                 </a>
+            @endif
             </p>
+            @if($userType === 'patient')
+                <p class="mb-0 mt-2">
+                    <a href="{{ route('patient.index') }}" class="fw-bold">
+                        ← Retour à l'accueil patient
+                    </a>
+                </p>
+            @elseif($userType === 'pharmacie')
+                <p class="mb-0 mt-2">
+                    <a href="{{ route('pharmacie.index') }}" class="fw-bold">
+                        ← Retour à l'accueil pharmacie
+                    </a>
+                </p>
+            @elseif($userType === 'banque_sang')
+                <p class="mb-0 mt-2">
+                    <a href="{{ route('banque.index') }}" class="fw-bold">
+                        ← Retour à l'accueil banque de sang
+                    </a>
+                </p>
+            @endif
         </div>
     </div>
 </div>
@@ -412,6 +507,12 @@
         // Si une entité est présélectionnée, afficher les champs appropriés
         @if($selectedEntity)
             toggleFieldsForEntity('{{ $selectedEntity }}');
+        @elseif($userType === 'patient')
+            toggleFieldsForEntity('patient');
+        @elseif($userType === 'pharmacie')
+            toggleFieldsForEntity('pharmacie');
+        @elseif($userType === 'banque_sang')
+            toggleFieldsForEntity('banque_sang');
         @else
             toggleFields();
         @endif

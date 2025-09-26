@@ -40,12 +40,33 @@ class Utilisateur extends Authenticatable
     }
 
     /**
-     * Relation avec la table hôpitaux
+     * Relation avec l'entité (hôpital, pharmacie, banque de sang, etc.)
      */
     public function entite()
     {
-        // Exemple avec relation classique
-        return $this->belongsTo(Hopital::class, 'entite_id');
+        switch ($this->type_utilisateur) {
+            case 'hopital':
+                return $this->belongsTo(Hopital::class, 'entite_id');
+            case 'pharmacie':
+                return $this->belongsTo(Pharmacie::class, 'entite_id');
+            case 'banque_sang':
+                return $this->belongsTo(BanqueSang::class, 'entite_id');
+            default:
+                return $this->belongsTo(Hopital::class, 'entite_id'); // Par défaut
+        }
+    }
+    
+    /**
+     * Obtenir le nom de l'entité
+     */
+    public function getEntiteName()
+    {
+        if ($this->isSuperAdmin()) {
+            return 'CENTRAL+';
+        }
+        
+        $entite = $this->entite;
+        return $entite ? $entite->nom : 'Entité inconnue';
     }
     
 
@@ -252,6 +273,29 @@ class Utilisateur extends Authenticatable
             ->where('status', 'approved')
             ->where('id', '!=', $this->id)
             ->exists();
+    }
+    
+    /**
+     * Vérifier si l'utilisateur est le premier de sa même entité spécifique
+     */
+    public function isFirstOfEntity()
+    {
+        return !static::where('entite_id', $this->entite_id)
+            ->where('status', 'approved')
+            ->where('id', '!=', $this->id)
+            ->exists();
+    }
+    
+    // Relation avec les dossiers médicaux (en tant que patient)
+    public function dossiers()
+    {
+        return $this->hasMany(DossierMedical::class, 'patient_id');
+    }
+    
+    // Relation avec les dossiers médicaux (en tant que médecin)
+    public function dossiersMedecin()
+    {
+        return $this->hasMany(DossierMedical::class, 'medecin_id');
     }
 
     /**

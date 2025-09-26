@@ -1,0 +1,163 @@
+@extends('layouts.medecin')
+
+@section('page-title', 'Mes Patients')
+
+@section('content')
+<div class="row">
+    <div class="col-12">
+        <div class="card">
+            <div class="card-header">
+                <h5 class="mb-0"><i class="fas fa-users me-2"></i>Mes Patients</h5>
+            </div>
+            <div class="card-body">
+                <div class="table-responsive">
+                    <table class="table table-hover">
+                        <thead>
+                            <tr>
+                                <th>Nom</th>
+                                <th>Email</th>
+                                <th>Téléphone</th>
+                                <th>Dernière Consultation</th>
+                                <th>Dossiers</th>
+                                <th>Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            @forelse($patients as $patient)
+                            <tr>
+                                <td>
+                                    <div class="d-flex align-items-center">
+                                        <div class="avatar-sm me-3">
+                                            <div class="avatar-title bg-primary rounded-circle">
+                                                {{ substr($patient->nom, 0, 1) }}
+                                            </div>
+                                        </div>
+                                        <div>
+                                            <h6 class="mb-0">{{ $patient->nom }}</h6>
+                                            <small class="text-muted">Patient</small>
+                                        </div>
+                                    </div>
+                                </td>
+                                <td>{{ $patient->email }}</td>
+                                <td>{{ $patient->telephone ?? 'Non renseigné' }}</td>
+                                <td>
+                                    @php
+                                        $dernierDossier = $patient->dossiers()->where('medecin_id', auth()->id())->latest()->first();
+                                    @endphp
+                                    @if($dernierDossier)
+                                        <span class="badge bg-success">{{ $dernierDossier->date_consultation->format('d/m/Y') }}</span>
+                                    @else
+                                        <span class="badge bg-secondary">Aucune</span>
+                                    @endif
+                                </td>
+                                <td>
+                                    <span class="badge bg-info">{{ $patient->dossiers()->where('medecin_id', auth()->id())->count() }} dossiers</span>
+                                </td>
+                                <td>
+                                    <div class="btn-group" role="group">
+                                        <a href="{{ route('admin.medecin.dossiers') }}?patient={{ $patient->id }}" class="btn btn-sm btn-primary">
+                                            <i class="fas fa-file-medical"></i> Dossiers
+                                        </a>
+                                        <button class="btn btn-sm btn-success" onclick="createDossier({{ $patient->id }}, '{{ $patient->nom }}')">
+                                            <i class="fas fa-plus"></i> Nouveau Dossier
+                                        </button>
+                                    </div>
+                                </td>
+                            </tr>
+                            @empty
+                            <tr>
+                                <td colspan="6" class="text-center py-4">
+                                    <div class="text-muted">
+                                        <i class="fas fa-users fa-3x mb-3"></i>
+                                        <p>Aucun patient trouvé</p>
+                                    </div>
+                                </td>
+                            </tr>
+                            @endforelse
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Modal pour créer un nouveau dossier -->
+<div class="modal fade" id="createDossierModal" tabindex="-1">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">Nouveau Dossier Médical</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <form id="createDossierForm">
+                @csrf
+                <div class="modal-body">
+                    <input type="hidden" id="patient_id" name="patient_id">
+                    <div class="mb-3">
+                        <label class="form-label">Patient</label>
+                        <input type="text" id="patient_name" class="form-control" readonly>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">Date de Consultation <span class="text-danger">*</span></label>
+                        <input type="date" name="date_consultation" class="form-control" value="{{ date('Y-m-d') }}" required>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">Diagnostic <span class="text-danger">*</span></label>
+                        <textarea name="diagnostic" class="form-control" rows="3" required placeholder="Décrivez le diagnostic..."></textarea>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">Traitement <span class="text-danger">*</span></label>
+                        <textarea name="traitement" class="form-control" rows="3" required placeholder="Décrivez le traitement prescrit..."></textarea>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">Observations</label>
+                        <textarea name="observations" class="form-control" rows="2" placeholder="Observations supplémentaires..."></textarea>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Annuler</button>
+                    <button type="submit" class="btn btn-primary">Créer le Dossier</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+@endsection
+
+@section('scripts')
+<script>
+function createDossier(patientId, patientName) {
+    document.getElementById('patient_id').value = patientId;
+    document.getElementById('patient_name').value = patientName;
+    new bootstrap.Modal(document.getElementById('createDossierModal')).show();
+}
+
+document.getElementById('createDossierForm').addEventListener('submit', function(e) {
+    e.preventDefault();
+    
+    const formData = new FormData(this);
+    
+    fetch('{{ route("admin.medecin.dossier.create") }}', {
+        method: 'POST',
+        body: formData,
+        headers: {
+            'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').getAttribute('content')
+        }
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            alert('Dossier médical créé avec succès !');
+            location.reload();
+        } else {
+            alert('Erreur lors de la création du dossier: ' + (data.message || 'Erreur inconnue'));
+        }
+    })
+    .catch(error => {
+        console.error('Erreur:', error);
+        alert('Erreur lors de la création du dossier');
+    });
+});
+</script>
+@endsection

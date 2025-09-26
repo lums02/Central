@@ -14,18 +14,46 @@ use App\Models\Patient;
 
 class RegisterController extends Controller
 {
-    public function showRegistrationForm($entity = null)
+    public function showRegistrationForm(Request $request, $entity = null)
     {
-        // Déterminer l'entité à partir du paramètre ou de la session
+        // Déterminer l'entité à partir du paramètre ou de la requête
         $entityTypes = ['hopital', 'pharmacie', 'banque_sang', 'centre', 'patient'];
         
-        if ($entity && in_array($entity, $entityTypes)) {
+        // Vérifier le paramètre 'type' dans la requête
+        $userType = $request->get('type');
+        
+        // Détection automatique si l'utilisateur vient d'une page spécifique
+        if (!$userType) {
+            $referer = $request->headers->get('referer');
+            if ($referer) {
+                if (str_contains($referer, '/patient')) {
+                    $userType = 'patient';
+                } elseif (str_contains($referer, '/pharmacie')) {
+                    $userType = 'pharmacie';
+                } elseif (str_contains($referer, '/banque')) {
+                    $userType = 'banque_sang';
+                }
+            }
+        }
+        
+        // Récupérer le plan sélectionné et les paramètres de paiement
+        $selectedPlan = $request->get('plan');
+        $selectedPeriod = $request->get('period');
+        $paymentMethod = $request->get('payment_method');
+        $amount = $request->get('amount');
+        
+        // Debug: Log pour vérifier
+        \Log::info('RegisterController - userType: ' . ($userType ?? 'null') . ', plan: ' . ($selectedPlan ?? 'null') . ', period: ' . ($selectedPeriod ?? 'null') . ', payment: ' . ($paymentMethod ?? 'null') . ', amount: ' . ($amount ?? 'null') . ', referer: ' . ($referer ?? 'null'));
+        
+        if ($userType && in_array($userType, $entityTypes)) {
+            $selectedEntity = $userType;
+        } elseif ($entity && in_array($entity, $entityTypes)) {
             $selectedEntity = $entity;
         } else {
             $selectedEntity = null;
         }
         
-        return view('auth.register', compact('selectedEntity'));
+        return view('auth.register', compact('selectedEntity', 'userType', 'selectedPlan', 'selectedPeriod', 'paymentMethod', 'amount'));
     }
 public function submit(Request $request)
 {
@@ -114,13 +142,12 @@ public function submit(Request $request)
 
         $entite_id = $entite->id;
 
-        // Vérifier si c'est le premier utilisateur de ce type d'entité dans toute l'application
-        $isFirstUserOfType = !Utilisateur::where('type_utilisateur', $type)
-            ->where('status', 'approved') // Seulement les utilisateurs déjà approuvés
+        // Vérifier si c'est le premier utilisateur de cette entité spécifique
+        $isFirstUserOfEntity = !Utilisateur::where('entite_id', $entite_id)
             ->exists();
 
-        // Déterminer le rôle : admin si premier utilisateur de ce type, sinon user
-        $userRole = $isFirstUserOfType ? 'admin' : 'user';
+        // Déterminer le rôle : admin si premier utilisateur de cette entité, sinon user
+        $userRole = $isFirstUserOfEntity ? 'admin' : 'user';
 
         Utilisateur::create([
             'nom' => $validated['nom'],
@@ -134,8 +161,8 @@ public function submit(Request $request)
 
         DB::commit();
 
-        $roleMessage = $isFirstUserOfType 
-            ? 'Inscription réussie ! Vous êtes le premier utilisateur de ce type d\'entité et serez administrateur. Votre compte est en attente d\'approbation.'
+        $roleMessage = $isFirstUserOfEntity 
+            ? 'Inscription réussie ! Vous êtes le premier utilisateur de cette entité et serez administrateur. Votre compte est en attente d\'approbation.'
             : 'Inscription réussie ! Votre compte est en attente d\'approbation par l\'administrateur.';
 
         return redirect()->route('login')->with('success', $roleMessage);

@@ -5,11 +5,26 @@
 <div class="container-fluid">
     <div class="row">
         <div class="col-12">
+            <!-- Messages de succès/erreur -->
+            @if(session('success'))
+                <div class="alert alert-success alert-dismissible fade show" role="alert">
+                    <i class="fas fa-check-circle me-2"></i>{{ session('success') }}
+                    <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+                </div>
+            @endif
+
+            @if(session('error'))
+                <div class="alert alert-danger alert-dismissible fade show" role="alert">
+                    <i class="fas fa-exclamation-circle me-2"></i>{{ session('error') }}
+                    <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+                </div>
+            @endif
+
             <!-- Entête simple -->
             <div class="page-header mb-4" style="background: #003366; padding: 1.5rem; border-radius: 8px;">
                 <div class="d-flex justify-content-between align-items-center">
                     <h1 style="color: white; margin: 0; font-size: 1.8rem; font-weight: 500;">Gestion des Rôles</h1>
-                    <button type="button" class="btn" style="background: white; color: #003366; border: none; padding: 0.75rem 1.5rem; border-radius: 4px; font-weight: 600;" data-bs-toggle="modal" data-bs-target="#createRoleModal">
+                    <button type="button" class="btn" style="background: white; color: #003366; border: none; padding: 0.75rem 1.5rem; border-radius: 4px; font-weight: 600;" data-bs-toggle="modal" data-bs-target="#createRoleModal" onclick="resetPermissions()">
                         + Nouveau Rôle
                     </button>
                 </div>
@@ -41,7 +56,11 @@
                                                 title="Modifier le rôle">
                                                 <i class="fas fa-edit"></i>
                                             </button>
-
+                                            <button class="btn btn-icon btn-delete"
+                                                onclick="deleteRole('{{ $role->id }}', '{{ $role->name }}')"
+                                                title="Supprimer le rôle">
+                                                <i class="fas fa-trash"></i>
+                                            </button>
                                         </div>
                                     </td>
                                 </tr>
@@ -96,8 +115,9 @@
                 <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
             </div>
             <div class="modal-body">
-                <form id="editRoleForm">
+                <form id="editRoleForm" method="POST" action="" onsubmit="return validateForm()">
                     @csrf
+                    @method('PUT')
                     <input type="hidden" id="editRoleId" name="role_id">
 
                     <!-- Nom du rôle -->
@@ -129,18 +149,164 @@
                             </div>
                         </div>
 
-                        <!-- Permissions dynamiques -->
+                        <!-- Permissions dynamiques depuis la base -->
+                        @php
+                            // On groupe les permissions par "module" avec normalisation
+                            $grouped = [];
+                            
+                            // Permissions qui existent vraiment dans votre base de données
+                            $existingPermissions = [
+                                'view_hopital', 'create_hopital', 'edit_hopital', 'delete_hopital', 'list_hopital',
+                                'view_pharmacie', 'create_pharmacie', 'edit_pharmacie', 'delete_pharmacie', 'list_pharmacie',
+                                'view_banque_sang', 'create_banque_sang', 'edit_banque_sang', 'delete_banque_sang', 'list_banque_sang',
+                                'view_centre', 'create_centre', 'edit_centre', 'delete_centre', 'list_centre',
+                                'view_patient', 'create_patient', 'edit_patient', 'delete_patient', 'list_patient',
+                                'view_dashboard', 'manage_users', 'manage_permissions', 'view_reports',
+                                'view_roles', 'create_roles', 'edit_roles', 'delete_roles',
+                                'view_users', 'create_users', 'edit_users', 'delete_users',
+                                'view_permissions', 'create_permissions', 'edit_permissions', 'delete_permissions',
+                                'gérer_les_utilisateurs',
+                                // Nouvelles permissions ajoutées
+                                'view_stocks', 'create_stocks', 'edit_stocks', 'delete_stocks', 'list_stocks',
+                                'view_sang', 'create_sang', 'edit_sang', 'delete_sang', 'list_sang',
+                                'view_prescriptions', 'create_prescriptions', 'edit_prescriptions', 'delete_prescriptions', 'list_prescriptions',
+                                'view_rendezvous', 'create_rendezvous', 'edit_rendezvous', 'delete_rendezvous', 'list_rendezvous'
+                            ];
+                            
+                            foreach($permissions as $permission) {
+                                // Ne traiter que les permissions qui existent vraiment
+                                if (!in_array($permission->name, $existingPermissions)) {
+                                    continue;
+                                }
+                                
+                                $parts = explode('_', $permission->name);
+                                if(count($parts) >= 2) {
+                                    $action = $parts[0]; // view, create, edit, delete, list, manage
+                                    $module = implode('_', array_slice($parts, 1));
+                                    
+                                    // Normaliser le nom du module selon votre base de données
+                                    $cleanModule = strtolower($module);
+                                    
+                                    // Mapping basé sur vos vraies permissions de la base
+                                    $moduleMapping = [
+                                        'hopital' => 'hopitals',
+                                        'pharmacie' => 'pharmacies', 
+                                        'banque_sang' => 'banque_sang',
+                                        'centre' => 'centres',
+                                        'patient' => 'patients',
+                                        'dashboard' => 'dashboard',
+                                        'permissions' => 'permissions',
+                                        'roles' => 'roles',
+                                        'reports' => 'reports',
+                                        'users' => 'users',
+                                        'utilisateurs' => 'users',
+                                        'les_utilisateurs' => 'users',
+                                        'gérer' => 'users', // pour gérer_les_utilisateurs
+                                        // Nouvelles permissions
+                                        'stocks' => 'stocks',
+                                        'sang' => 'sang',
+                                        'prescriptions' => 'prescriptions',
+                                        'rendezvous' => 'rendezvous'
+                                    ];
+                                    
+                                    if (isset($moduleMapping[$cleanModule])) {
+                                        $cleanModule = $moduleMapping[$cleanModule];
+                                    }
+                                    
+                                    // Ignorer les permissions trop génériques
+                                    if (in_array($cleanModule, ['view', 'create', 'edit', 'delete', 'list', 'manage'])) {
+                                        continue;
+                                    }
+                                    
+                                    $grouped[$cleanModule][$action] = $permission->name;
+                                }
+                            }
+                        @endphp
+                        
+                        @php
+                            // Fonction pour obtenir le nom d'affichage d'un module
+                            function getModuleDisplayName($moduleName) {
+                                $displayNames = [
+                                    'roles' => 'Gérer les Rôles et Permissions',
+                                    'users' => 'Gérer les Utilisateurs',
+                                    'patients' => 'Gérer les Patients',
+                                    'appointments' => 'Gérer les Rendez-vous',
+                                    'medical_records' => 'Gérer les Dossiers Médicaux',
+                                    'prescriptions' => 'Gérer les Prescriptions',
+                                    'invoices' => 'Gérer les Factures',
+                                    'reports' => 'Gérer les Rapports',
+                                    'medicines' => 'Gérer les Médicaments',
+                                    'stocks' => 'Gérer les Stocks de Médicaments',
+                                    'donors' => 'Gérer les Donneurs',
+                                    'consultations' => 'Gérer les Consultations',
+                                    'hopitals' => 'Gérer les Hôpitaux',
+                                    'pharmacies' => 'Gérer les Pharmacies',
+                                    'banque_sang' => 'Gérer les Banques de Sang',
+                                    'centres' => 'Gérer les Centres',
+                                    'permissions' => 'Gérer les Permissions',
+                                    'dashboard' => 'Gérer le Tableau de Bord',
+                                    'blood_reserves' => 'Gérer les Réserves de Sang',
+                                    'services' => 'Gérer les Services',
+                                    // Nouvelles permissions
+                                    'sang' => 'Gérer les Sangs',
+                                    'rendezvous' => 'Gérer les Rendez-vous'
+                                ];
+                                return $displayNames[$moduleName] ?? 'Gérer les ' . ucfirst(str_replace('_', ' ', $moduleName));
+                            }
+                        @endphp
+                        
+                        @php
+                            // Trier les modules par ordre alphabétique
+                            ksort($grouped);
+                        @endphp
+                        
                         <div id="permissionsContainer">
-                            <!-- Les permissions seront générées dynamiquement ici -->
+                            @foreach($grouped as $module => $actions)
+                                <div class="row mb-3 align-items-center">
+                                    <div class="col-md-3">
+                                        <strong>{{ getModuleDisplayName($module) }}</strong>
+                                    </div>
+                                    <div class="col-md-2 text-center">
+                                        @if(isset($actions['view']))
+                                            <input class="form-check-input" type="checkbox" name="permissions[]" value="{{ $actions['view'] }}" id="perm_{{ $actions['view'] }}">
+                                        @else
+                                            <span class="text-muted">-</span>
+                                        @endif
+                                    </div>
+                                    <div class="col-md-2 text-center">
+                                        @if(isset($actions['create']))
+                                            <input class="form-check-input" type="checkbox" name="permissions[]" value="{{ $actions['create'] }}" id="perm_{{ $actions['create'] }}">
+                                        @else
+                                            <span class="text-muted">-</span>
+                                        @endif
+                                    </div>
+                                    <div class="col-md-2 text-center">
+                                        @if(isset($actions['edit']))
+                                            <input class="form-check-input" type="checkbox" name="permissions[]" value="{{ $actions['edit'] }}" id="perm_{{ $actions['edit'] }}">
+                                        @else
+                                            <span class="text-muted">-</span>
+                                        @endif
+                                    </div>
+                                    <div class="col-md-2 text-center">
+                                        @if(isset($actions['delete']))
+                                            <input class="form-check-input" type="checkbox" name="permissions[]" value="{{ $actions['delete'] }}" id="perm_{{ $actions['delete'] }}">
+                                        @else
+                                            <span class="text-muted">-</span>
+                                        @endif
                         </div>
                     </div>
-                </form>
+                            @endforeach
+                        </div>
             </div>
+                    
+                    <!-- Boutons du formulaire -->
             <div class="modal-footer">
                 <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Fermer</button>
-                <button type="button" class="btn" style="background: #003366; color: white; border: none;" onclick="updateRole()">
+                        <button type="submit" class="btn" style="background: #003366; color: white; border: none;">
                     Mettre à jour
                 </button>
+                    </div>
+                </form>
             </div>
         </div>
     </div>
@@ -200,6 +366,13 @@
             });
     }
 
+    // Fonction pour décocher toutes les permissions lors de l'ouverture du modal de création
+    function resetPermissions() {
+        document.querySelectorAll('#permissionsContainer input[type="checkbox"]').forEach(checkbox => {
+            checkbox.checked = false;
+            });
+    }
+
     // Réinitialiser le formulaire quand le modal se ferme
     document.getElementById('createRoleModal').addEventListener('hidden.bs.modal', function() {
         document.getElementById('createRoleForm').reset();
@@ -207,10 +380,22 @@
 
     // Fonction pour éditer un rôle
     function editRole(roleId, roleName) {
+        console.log('=== ÉDITION DU RÔLE ===');
+        console.log('Role ID:', roleId);
+        console.log('Role Name:', roleName);
+        
+        // Définir l'action du formulaire
+        const form = document.getElementById('editRoleForm');
+        form.action = '{{ route("admin.permissions.update", ":id") }}'.replace(':id', roleId);
+        
         // Remplir le modal avec les données du rôle
         document.getElementById('editRoleId').value = roleId;
         document.getElementById('editRoleName').textContent = roleName;
         document.getElementById('editRoleNameInput').value = roleName;
+
+        // Vérifier que les champs sont bien remplis
+        console.log('editRoleId value:', document.getElementById('editRoleId').value);
+        console.log('editRoleNameInput value:', document.getElementById('editRoleNameInput').value);
 
         // Charger les permissions dynamiquement
         loadRolePermissions(roleId);
@@ -231,8 +416,35 @@
         })
         .then(response => response.json())
         .then(data => {
+            console.log('=== DEBUG PERMISSIONS ===');
+            console.log('Permissions du rôle:', data.role_permissions);
+            
             if (data.success) {
-                generatePermissionsUI(data.permissions, data.role_permissions);
+                console.log('=== CHARGEMENT DES PERMISSIONS ===');
+                console.log('Permissions du rôle à charger:', data.role_permissions);
+                
+                // Décocher toutes les cases d'abord
+                const allCheckboxes = document.querySelectorAll('#permissionsContainer input[type="checkbox"]');
+                console.log('Total checkboxes trouvées:', allCheckboxes.length);
+                
+                allCheckboxes.forEach(checkbox => {
+                    checkbox.checked = false;
+                });
+                
+                // Cocher les permissions du rôle
+                let permissionsCochees = 0;
+                data.role_permissions.forEach(permissionName => {
+                    const checkbox = document.getElementById(`perm_${permissionName}`);
+                    if (checkbox) {
+                        checkbox.checked = true;
+                        permissionsCochees++;
+                        console.log(`✅ Permission cochée: ${permissionName}`);
+                    } else {
+                        console.log(`❌ Checkbox non trouvée pour: ${permissionName}`);
+                    }
+                });
+                
+                console.log(`Permissions cochées: ${permissionsCochees}/${data.role_permissions.length}`);
             } else {
                 console.error('Erreur lors du chargement des permissions:', data.message);
             }
@@ -242,143 +454,22 @@
         });
     }
 
-    // Fonction pour générer l'interface des permissions
-    function generatePermissionsUI(allPermissions, rolePermissions = []) {
-        const container = document.getElementById('permissionsContainer');
-        container.innerHTML = '';
 
-        // Grouper les permissions par module
-        const groupedPermissions = groupPermissionsByModule(allPermissions);
 
-        Object.keys(groupedPermissions).forEach(moduleName => {
-            const modulePermissions = groupedPermissions[moduleName];
-            const displayName = getModuleDisplayName(moduleName);
 
-            // Créer la ligne pour ce module
-            const moduleRow = document.createElement('div');
-            moduleRow.className = 'row mb-3 align-items-center';
-            moduleRow.innerHTML = `
-                <div class="col-md-3">
-                    <strong>${displayName}</strong>
-                </div>
-                <div class="col-md-2 text-center">
-                    <input class="form-check-input" type="checkbox" name="permissions[]" value="${moduleName}_view" id="perm_${moduleName}_view" ${rolePermissions.includes(moduleName + '_view') ? 'checked' : ''}>
-                </div>
-                <div class="col-md-2 text-center">
-                    <input class="form-check-input" type="checkbox" name="permissions[]" value="${moduleName}_create" id="perm_${moduleName}_create" ${rolePermissions.includes(moduleName + '_create') ? 'checked' : ''}>
-                </div>
-                <div class="col-md-2 text-center">
-                    <input class="form-check-input" type="checkbox" name="permissions[]" value="${moduleName}_edit" id="perm_${moduleName}_edit" ${rolePermissions.includes(moduleName + '_edit') ? 'checked' : ''}>
-                </div>
-                <div class="col-md-2 text-center">
-                    <input class="form-check-input" type="checkbox" name="permissions[]" value="${moduleName}_delete" id="perm_${moduleName}_delete" ${rolePermissions.includes(moduleName + '_delete') ? 'checked' : ''}>
-                </div>
-            `;
-
-            container.appendChild(moduleRow);
-        });
-    }
-
-    // Fonction pour grouper les permissions par module
-    function groupPermissionsByModule(permissions) {
-        const grouped = {};
-        
-        permissions.forEach(permission => {
-            const parts = permission.name.split('_');
-            if (parts.length >= 2) {
-                const action = parts[0]; // view, create, edit, delete
-                const module = parts.slice(1).join('_'); // le reste forme le nom du module
-                
-                if (!grouped[module]) {
-                    grouped[module] = [];
-                }
-                grouped[module].push(permission);
-            }
-        });
-
-        return grouped;
-    }
-
-    // Fonction pour obtenir le nom d'affichage d'un module
-    function getModuleDisplayName(moduleName) {
-        const displayNames = {
-            'roles': 'Gérer les Rôles et Permissions',
-            'users': 'Gérer les Utilisateurs',
-            'patients': 'Gérer les Patients',
-            'appointments': 'Gérer les Rendez-vous',
-            'medical_records': 'Gérer les Dossiers Médicaux',
-            'prescriptions': 'Gérer les Prescriptions',
-            'invoices': 'Gérer les Factures',
-            'reports': 'Gérer les Rapports',
-            'medicines': 'Gérer les Médicaments',
-            'stocks': 'Gérer les Stocks',
-            'donors': 'Gérer les Donneurs',
-            'consultations': 'Gérer les Consultations',
-            'hopital': 'Gérer les Hôpitaux',
-            'pharmacie': 'Gérer les Pharmacies',
-            'banque_sang': 'Gérer les Banques de Sang',
-            'centre': 'Gérer les Centres',
-            'patient': 'Gérer les Patients'
-        };
-
-        return displayNames[moduleName] || `Gérer les ${moduleName.charAt(0).toUpperCase() + moduleName.slice(1)}`;
-    }
-
-    // Fonction pour mettre à jour un rôle
-    function updateRole() {
-        const form = document.getElementById('editRoleForm');
-        const formData = new FormData(form);
-        const roleId = document.getElementById('editRoleId').value;
-
-        // Récupérer les permissions sélectionnées
-        const selectedPermissions = [];
-        const checkboxes = form.querySelectorAll('input[name="permissions[]"]:checked');
-        checkboxes.forEach(checkbox => {
-            selectedPermissions.push(checkbox.value);
-        });
-
-        // Ajouter les permissions au formData
-        formData.append('permissions', JSON.stringify(selectedPermissions));
-
-        console.log('Mise à jour du rôle:', roleId);
-        console.log('Permissions sélectionnées:', selectedPermissions);
-
-        const url = '{{ route("admin.permissions.update", ":id") }}'.replace(':id', roleId);
-        console.log('URL:', url);
-
-        fetch(url, {
-                method: 'PUT',
-                body: formData,
-                headers: {
-                    'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').getAttribute('content')
-                }
-            })
-            .then(response => {
-                console.log('Response status:', response.status);
-                return response.json();
-            })
-            .then(data => {
-                console.log('Response data:', data);
-                if (data.success) {
-                    alert('Rôle mis à jour avec succès !');
-                    // Fermer le modal
-                    const modal = bootstrap.Modal.getInstance(document.getElementById('editRoleModal'));
-                    modal.hide();
-                    // Recharger la page pour voir les changements
-                    location.reload();
-                } else {
-                    alert('Erreur lors de la mise à jour du rôle : ' + data.message);
-                }
-            })
-            .catch(error => {
-                console.error('Erreur:', error);
-                alert('Erreur lors de la mise à jour du rôle');
-            });
+    // Fonction simple pour valider le formulaire avant soumission
+    function validateForm() {
+        const roleName = document.getElementById('editRoleNameInput').value;
+        if (!roleName || roleName.trim() === '') {
+            alert('Le nom du rôle est obligatoire');
+            return false;
+        }
+        return true;
     }
 
     // Fonction pour supprimer un rôle
-    function deleteRole(roleId) {
-        if (confirm('Êtes-vous sûr de vouloir supprimer ce rôle ?')) {
+    function deleteRole(roleId, roleName) {
+        if (confirm(`Êtes-vous sûr de vouloir supprimer le rôle "${roleName}" ?\n\nCette action est irréversible.`)) {
             fetch('{{ route("admin.permissions.destroy", ":id") }}'.replace(':id', roleId), {
                     method: 'DELETE',
                     headers: {

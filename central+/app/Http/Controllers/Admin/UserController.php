@@ -24,14 +24,14 @@ class UserController extends Controller
         $user = auth()->user();
         
         if ($user->isSuperAdmin()) {
-            // Super admin voit tous les utilisateurs approuvés
-            $utilisateurs = Utilisateur::where('status', 'approved')
+            // Super admin voit tous les utilisateurs (approuvés et désactivés)
+            $utilisateurs = Utilisateur::whereIn('status', ['approved', 'disabled'])
                 ->orderBy('created_at', 'desc')
                 ->get();
         } else {
-            // Admin d'entité voit seulement les utilisateurs de son entité
-            $utilisateurs = Utilisateur::where('status', 'approved')
-                ->where('type_utilisateur', $user->type_utilisateur)
+            // Admin d'entité voit seulement les utilisateurs de sa même entité spécifique (approuvés et désactivés)
+            $utilisateurs = Utilisateur::whereIn('status', ['approved', 'disabled'])
+                ->where('entite_id', $user->entite_id)
                 ->orderBy('created_at', 'desc')
                 ->get();
         }
@@ -45,8 +45,8 @@ class UserController extends Controller
         $user = auth()->user();
         $utilisateur = Utilisateur::findOrFail($id);
         
-        // Vérifier que l'admin d'entité ne peut voir que les utilisateurs de son entité
-        if (!$user->isSuperAdmin() && $utilisateur->type_utilisateur !== $user->type_utilisateur) {
+        // Vérifier que l'admin d'entité ne peut voir que les utilisateurs de sa même entité spécifique
+        if (!$user->isSuperAdmin() && $utilisateur->entite_id !== $user->entite_id) {
             return response()->json([
                 'success' => false, 
                 'message' => 'Accès non autorisé à cet utilisateur'
@@ -62,8 +62,8 @@ class UserController extends Controller
         $user = auth()->user();
         $utilisateur = Utilisateur::findOrFail($id);
         
-        // Vérifier que l'admin d'entité ne peut modifier que les utilisateurs de son entité
-        if (!$user->isSuperAdmin() && $utilisateur->type_utilisateur !== $user->type_utilisateur) {
+        // Vérifier que l'admin d'entité ne peut modifier que les utilisateurs de sa même entité spécifique
+        if (!$user->isSuperAdmin() && $utilisateur->entite_id !== $user->entite_id) {
             return response()->json([
                 'success' => false, 
                 'message' => 'Vous ne pouvez modifier que les utilisateurs de votre entité'
@@ -139,8 +139,8 @@ class UserController extends Controller
         $user = auth()->user();
         $utilisateur = Utilisateur::findOrFail($id);
         
-        // Vérifier que l'admin d'entité ne peut voir que les utilisateurs de son entité
-        if (!$user->isSuperAdmin() && $utilisateur->type_utilisateur !== $user->type_utilisateur) {
+        // Vérifier que l'admin d'entité ne peut voir que les utilisateurs de sa même entité spécifique
+        if (!$user->isSuperAdmin() && $utilisateur->entite_id !== $user->entite_id) {
             return response()->json([
                 'success' => false, 
                 'message' => 'Accès non autorisé à cet utilisateur'
@@ -245,8 +245,8 @@ class UserController extends Controller
 
         $utilisateur = Utilisateur::findOrFail($request->user_id);
         
-        // Vérifier que l'admin d'entité ne peut modifier que les utilisateurs de son entité
-        if (!$user->isSuperAdmin() && $utilisateur->type_utilisateur !== $user->type_utilisateur) {
+        // Vérifier que l'admin d'entité ne peut modifier que les utilisateurs de sa même entité spécifique
+        if (!$user->isSuperAdmin() && $utilisateur->entite_id !== $user->entite_id) {
             return response()->json([
                 'success' => false, 
                 'message' => 'Vous ne pouvez modifier que les utilisateurs de votre entité'
@@ -325,8 +325,8 @@ class UserController extends Controller
             ]);
         }
 
-        // Vérifier que l'admin d'entité ne peut approuver que les utilisateurs de son entité
-        if (!$user->isSuperAdmin() && $utilisateur->type_utilisateur !== $user->type_utilisateur) {
+        // Vérifier que l'admin d'entité ne peut approuver que les utilisateurs de sa même entité spécifique
+        if (!$user->isSuperAdmin() && $utilisateur->entite_id !== $user->entite_id) {
             return response()->json([
                 'success' => false, 
                 'message' => 'Vous ne pouvez approuver que les utilisateurs de votre entité'
@@ -334,7 +334,8 @@ class UserController extends Controller
         }
 
         // Récupérer les données du formulaire
-        $role = $request->input('role', 'user');
+        // Si l'utilisateur a déjà le rôle admin (premier de l'entité), le conserver
+        $role = $utilisateur->role === 'admin' ? 'admin' : $request->input('role', 'user');
         $typeUtilisateur = $request->input('type_utilisateur', $utilisateur->type_utilisateur);
         $permissions = $request->input('permissions', []);
 
@@ -389,7 +390,7 @@ class UserController extends Controller
                 $utilisateur->syncPermissions($permissionObjects);
             } else {
                 // Si aucune permission n'est spécifiée, utiliser la logique automatique
-                if ($utilisateur->isFirstOfEntityType()) {
+                if ($utilisateur->isFirstOfEntity()) {
                     $this->assignEntityPermissions($utilisateur, $typeUtilisateur);
                 }
             }
@@ -505,9 +506,9 @@ class UserController extends Controller
                 ->orderBy('created_at', 'desc')
                 ->get();
         } else {
-            // Admin d'entité voit seulement les utilisateurs en attente de son entité
+            // Admin d'entité voit seulement les utilisateurs en attente de sa même entité spécifique
             $pendingUsers = Utilisateur::where('status', 'pending')
-                ->where('type_utilisateur', $user->type_utilisateur)
+                ->where('entite_id', $user->entite_id)
                 ->orderBy('created_at', 'desc')
                 ->get();
         }
@@ -523,8 +524,8 @@ class UserController extends Controller
             'is_superadmin' => $user->isSuperAdmin()
         ]);
             
-        // Si c'est une requête AJAX, retourner JSON
-        if (request()->ajax() || request()->wantsJson()) {
+        // Si c'est une requête AJAX ou demande JSON, retourner JSON
+        if (request()->ajax() || request()->wantsJson() || request()->header('Accept') === 'application/json') {
             return response()->json($pendingUsers);
         }
         
@@ -532,26 +533,109 @@ class UserController extends Controller
         return view('admin.users.pending', compact('pendingUsers'));
     }
 
-    // Crée un nouvel utilisateur (optionnel)
+    // Crée un nouvel utilisateur
     public function store(Request $request)
     {
+        $user = auth()->user();
+        
+        // Validation des rôles selon le type d'entité
+        $entityType = $user->type_utilisateur;
+        $allowedRoles = [];
+        
+        switch ($entityType) {
+            case 'hopital':
+                $allowedRoles = ['medecin', 'infirmier', 'secretaire', 'technicien'];
+                break;
+            case 'pharmacie':
+                $allowedRoles = ['pharmacien', 'technicien', 'secretaire'];
+                break;
+            case 'banque_sang':
+                $allowedRoles = ['technicien', 'secretaire', 'manager'];
+                break;
+            default:
+                $allowedRoles = ['user', 'manager', 'moderator'];
+        }
+        
         $request->validate([
             'nom' => 'required|string|max:255',
             'email' => 'required|email|unique:utilisateurs,email',
-            'mot_de_passe' => 'required|string|min:8',
-            'role' => 'required|string|in:user,admin,manager,moderator',
+            'password' => 'required|string|min:8',
+            'role' => 'required|string|in:' . implode(',', $allowedRoles),
             'type_utilisateur' => 'required|string|in:hopital,pharmacie,banque_sang,centre,patient',
         ]);
+
+        // Vérifier que l'admin ne peut créer que des utilisateurs pour sa même entité
+        if (!$user->isSuperAdmin() && $request->type_utilisateur !== $user->type_utilisateur) {
+            return response()->json([
+                'success' => false, 
+                'message' => 'Vous ne pouvez créer que des utilisateurs pour votre entité'
+            ], 403);
+        }
 
         $utilisateur = Utilisateur::create([
             'nom' => $request->nom,
             'email' => $request->email,
-            'mot_de_passe' => Hash::make($request->mot_de_passe),
-            'role' => $request->role,
+            'mot_de_passe' => Hash::make($request->password),
+            'role' => $request->role, // Utiliser le rôle spécifié par l'admin
             'type_utilisateur' => $request->type_utilisateur,
+            'entite_id' => $user->entite_id, // Associer à la même entité que l'admin
+            'status' => 'approved', // Approuvé automatiquement car créé par un admin
         ]);
 
+        // Attribuer le rôle approprié
+        $roleModel = \Spatie\Permission\Models\Role::firstOrCreate([
+            'name' => $request->role,
+            'guard_name' => 'web'
+        ]);
+        $utilisateur->assignRole($roleModel);
+
         return response()->json(['success' => true, 'message' => 'Utilisateur créé avec succès', 'user' => $utilisateur]);
+    }
+
+    // Active/désactive un utilisateur
+    public function toggleStatus(Request $request, $id)
+    {
+        try {
+            $user = auth()->user();
+            $utilisateur = Utilisateur::findOrFail($id);
+            
+            // Vérifier que l'admin d'entité ne peut modifier que les utilisateurs de sa même entité spécifique
+            if (!$user->isSuperAdmin() && $utilisateur->entite_id !== $user->entite_id) {
+                return response()->json([
+                    'success' => false, 
+                    'message' => 'Vous ne pouvez modifier que les utilisateurs de votre entité'
+                ], 403);
+            }
+            
+            // Vérifier que ce n'est pas le superadmin
+            if ($utilisateur->isSuperAdmin()) {
+                return response()->json([
+                    'success' => false, 
+                    'message' => 'Le superadmin ne peut pas être désactivé'
+                ], 403);
+            }
+            
+            $request->validate([
+                'status' => 'required|string|in:approved,disabled'
+            ]);
+            
+            $utilisateur->update([
+                'status' => $request->status
+            ]);
+            
+            $action = $request->status === 'approved' ? 'activé' : 'désactivé';
+            
+            return response()->json([
+                'success' => true, 
+                'message' => "Utilisateur {$action} avec succès"
+            ]);
+        } catch (\Exception $e) {
+            \Log::error('Erreur toggleStatus: ' . $e->getMessage());
+            return response()->json([
+                'success' => false, 
+                'message' => 'Erreur serveur: ' . $e->getMessage()
+            ], 500);
+        }
     }
 
     // Statistiques des utilisateurs
@@ -578,26 +662,26 @@ class UserController extends Controller
                 'recent' => Utilisateur::where('created_at', '>=', now()->subDays(7))->count(),
             ];
         } else {
-            // Admin d'entité voit seulement les statistiques de son entité
-            $entityType = $user->type_utilisateur;
+            // Admin d'entité voit seulement les statistiques de sa même entité spécifique
+            $entiteId = $user->entite_id;
             $stats = [
-                'total' => Utilisateur::where('type_utilisateur', $entityType)->count(),
-                'pending' => Utilisateur::where('status', 'pending')->where('type_utilisateur', $entityType)->count(),
-                'approved' => Utilisateur::where('status', 'approved')->where('type_utilisateur', $entityType)->count(),
-                'rejected' => Utilisateur::where('status', 'rejected')->where('type_utilisateur', $entityType)->count(),
-                'par_status' => Utilisateur::where('type_utilisateur', $entityType)
+                'total' => Utilisateur::where('entite_id', $entiteId)->count(),
+                'pending' => Utilisateur::where('status', 'pending')->where('entite_id', $entiteId)->count(),
+                'approved' => Utilisateur::where('status', 'approved')->where('entite_id', $entiteId)->count(),
+                'rejected' => Utilisateur::where('status', 'rejected')->where('entite_id', $entiteId)->count(),
+                'par_status' => Utilisateur::where('entite_id', $entiteId)
                     ->select('status', DB::raw('count(*) as total'))
                     ->groupBy('status')
                     ->get(),
-                'par_type' => Utilisateur::where('type_utilisateur', $entityType)
+                'par_type' => Utilisateur::where('entite_id', $entiteId)
                     ->select('type_utilisateur', DB::raw('count(*) as total'))
                     ->groupBy('type_utilisateur')
                     ->get(),
-                'par_role' => Utilisateur::where('type_utilisateur', $entityType)
+                'par_role' => Utilisateur::where('entite_id', $entiteId)
                     ->select('role', DB::raw('count(*) as total'))
                     ->groupBy('role')
                     ->get(),
-                'recent' => Utilisateur::where('type_utilisateur', $entityType)
+                'recent' => Utilisateur::where('entite_id', $entiteId)
                     ->where('created_at', '>=', now()->subDays(7))->count(),
             ];
         }

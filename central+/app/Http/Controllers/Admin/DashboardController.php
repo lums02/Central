@@ -52,10 +52,17 @@ class DashboardController extends Controller
 
     private function getEntityAdminStats($user)
     {
+        $entityType = $user->type_utilisateur;
+        
+        $entiteId = $user->entite_id;
+        
         $stats = [
             'dashboard_type' => 'entity_admin',
-            'entity_type' => $user->type_utilisateur,
-            'entity_name' => ucfirst(str_replace('_', ' ', $user->type_utilisateur)),
+            'entity_type' => $entityType,
+            'entity_name' => ucfirst(str_replace('_', ' ', $entityType)),
+            'total_users' => \App\Models\Utilisateur::where('entite_id', $entiteId)->count(),
+            'pending_users' => \App\Models\Utilisateur::where('entite_id', $entiteId)->where('status', 'pending')->count(),
+            'approved_users' => \App\Models\Utilisateur::where('entite_id', $entiteId)->where('status', 'approved')->count(),
         ];
 
         // Statistiques selon le type d'entité et les permissions

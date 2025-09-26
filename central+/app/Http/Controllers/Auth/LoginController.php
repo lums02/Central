@@ -10,9 +10,28 @@ use Illuminate\Support\Facades\Hash;
 
 class LoginController extends Controller
 {
-    public function showLoginForm()
+    public function showLoginForm(Request $request)
     {
-        return view('auth.login');
+        $userType = $request->get('type', 'default');
+        
+        // Détection automatique si l'utilisateur vient d'une page spécifique
+        if ($userType === 'default') {
+            $referer = $request->headers->get('referer');
+            if ($referer) {
+                if (str_contains($referer, '/patient')) {
+                    $userType = 'patient';
+                } elseif (str_contains($referer, '/pharmacie')) {
+                    $userType = 'pharmacie';
+                } elseif (str_contains($referer, '/banque')) {
+                    $userType = 'banque_sang';
+                }
+            }
+        }
+        
+        // Debug: Log pour vérifier
+        \Log::info('LoginController - userType: ' . $userType . ', referer: ' . ($referer ?? 'null'));
+        
+        return view('auth.login', compact('userType'));
     }
 
     public function login(Request $request)
@@ -21,6 +40,7 @@ class LoginController extends Controller
         $credentials = $request->validate([
             'email'            => ['required', 'email'],
             'mot_de_passe'     => ['required'],
+            'user_type'        => ['sometimes', 'string'],
         ]);
 
         // On récupère l'utilisateur par email uniquement
@@ -45,10 +65,26 @@ class LoginController extends Controller
             // Si l'utilisateur est approuvé, procéder à la connexion
             Auth::login($utilisateur);
 
+            // Vérifier si c'est une connexion patient spécifique
+            if ($request->user_type === 'patient') {
+                // Vérifier que l'utilisateur est bien un patient
+                if ($utilisateur->type_utilisateur === 'patient') {
+                    return redirect()->intended(route('patient.dashboard'));
+                } else {
+                    Auth::logout();
+                    return back()->withErrors([
+                        'email' => 'Ce compte n\'est pas un compte patient.',
+                    ])->withInput();
+                }
+            }
+
             // Rediriger selon le rôle et le type_utilisateur
             if ($utilisateur->role === 'admin' || $utilisateur->role === 'superadmin') {
                 // Les admins vont toujours vers le dashboard admin
                 return redirect()->intended(route('admin.dashboard'));
+            } elseif ($utilisateur->role === 'medecin') {
+                // Les médecins vont vers leur dashboard spécifique
+                return redirect()->intended(route('admin.medecin.dashboard'));
             } else {
                 // Les utilisateurs normaux vont vers leur dashboard spécifique
                 switch ($utilisateur->type_utilisateur) {

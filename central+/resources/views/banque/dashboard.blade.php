@@ -1,22 +1,56 @@
-@extends('layouts.app')
+@extends('layouts.banque')
 
-@section('title', 'Dashboard Banque de Sang - CENTRAL+')
+@section('title', 'Tableau de Bord - Banque de Sang')
 
 @section('content')
-<div class="container-fluid">
-    <div class="page-header mb-4" style="background: linear-gradient(135deg, #003366 0%, #002244 100%); padding: 2rem; border-radius: 15px; box-shadow: 0 10px 30px rgba(0,0,0,0.1);">
-        <h1 style="color: white; margin: 0; font-size: 2.2rem; font-weight: 600;">
-            <i class="fas fa-tint me-3" style="color: #00a8e8;"></i>Dashboard Banque de Sang
-        </h1>
-        <p style="color: #b3d9ff; margin: 0.5rem 0 0 0; font-size: 1.1rem;">
-            Bienvenue, {{ auth()->user()->nom }} - Gestion de votre banque de sang
-        </p>
-    </div>
-
-    <div class="alert alert-info">
-        <i class="fas fa-info-circle me-2"></i>
-        <strong>Dashboard Banque de Sang en développement</strong><br>
-        Les fonctionnalités complètes seront bientôt disponibles.
+<div class="container py-5">
+    <div class="row">
+        <div class="col-12">
+            <h1 class="mb-4">
+                <i class="fas fa-tint me-2"></i>
+                Tableau de Bord Banque de Sang
+            </h1>
+            
+            <div class="alert alert-info">
+                <i class="fas fa-info-circle me-2"></i>
+                Bienvenue dans votre espace banque de sang ! Ce tableau de bord sera bientôt enrichi avec toutes les fonctionnalités nécessaires à la gestion de votre banque de sang.
+            </div>
+            
+            <div class="row mt-4">
+                <div class="col-md-6">
+                    <div class="card">
+                        <div class="card-body">
+                            <h5 class="card-title">
+                                <i class="fas fa-tint text-primary me-2"></i>
+                                Réserves de Sang
+                            </h5>
+                            <p class="card-text">Gérez vos stocks de sang par groupe sanguin.</p>
+                            <a href="#" class="btn btn-primary">Accéder</a>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="col-md-6">
+                    <div class="card">
+                        <div class="card-body">
+                            <h5 class="card-title">
+                                <i class="fas fa-user-friends text-primary me-2"></i>
+                                Gestion des Donneurs
+                            </h5>
+                            <p class="card-text">Suivez vos donneurs et leurs dons.</p>
+                            <a href="#" class="btn btn-primary">Accéder</a>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="mt-4">
+                <a href="{{ route('banque.logout') }}" class="btn btn-outline-primary">
+                    <i class="fas fa-sign-out-alt me-2"></i>
+                    Déconnexion
+                </a>
+            </div>
+        </div>
     </div>
 </div>
 @endsection

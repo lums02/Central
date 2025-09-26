@@ -11,6 +11,9 @@
                 <div class="d-flex justify-content-between align-items-center">
                     <h1 style="color: white; margin: 0; font-size: 1.8rem; font-weight: 500;">Gestion des Utilisateurs</h1>
                     <div class="d-flex gap-2">
+                        <button type="button" class="btn" style="background: #28a745; color: white; border: none; padding: 0.75rem 1.5rem; border-radius: 4px; font-weight: 600;" data-bs-toggle="modal" data-bs-target="#createUserModal">
+                            <i class="fas fa-user-plus me-2"></i>Nouvel Utilisateur
+                        </button>
                         <a href="{{ route('admin.users.pending') }}" class="btn" style="background: #ffc107; color: #000; border: none; padding: 0.75rem 1.5rem; border-radius: 4px; font-weight: 600;">
                             <i class="fas fa-clock me-2"></i>Utilisateurs en Attente
                             <span class="badge bg-danger text-white ms-2" id="pendingBadge">0</span>
@@ -45,6 +48,10 @@
                                         <span class="badge" style="background: #17a2b8; color: white; padding: 0.5rem 0.75rem; border-radius: 4px;">
                                             {{ ucfirst($utilisateur->type_utilisateur) }}
                                         </span>
+                                        <br>
+                                        <span class="badge mt-1" style="background: {{ $utilisateur->status === 'approved' ? '#28a745' : ($utilisateur->status === 'disabled' ? '#dc3545' : '#ffc107') }}; color: white; padding: 0.25rem 0.5rem; border-radius: 4px; font-size: 0.75rem;">
+                                            {{ $utilisateur->status === 'approved' ? 'Actif' : ($utilisateur->status === 'disabled' ? 'Désactivé' : 'En attente') }}
+                                        </span>
                                     </td>
                                     <td style="padding: 1rem; vertical-align: middle;">
                                         <span class="badge" style="background: #28a745; color: white; padding: 0.5rem 0.75rem; border-radius: 4px;">
@@ -56,7 +63,18 @@
                                     </td>
                                     <td style="padding: 1rem; vertical-align: middle;">
                                         <div class="action-buttons">
-                                            <button class="btn btn-icon btn-permissions" onclick="openPermissionsModal({{ $utilisateur->id }}, '{{ $utilisateur->nom }}')" title="Gérer les permissions">
+                                            @if($utilisateur->role !== 'superadmin' && $utilisateur->email !== 'admin@central.com')
+                                                <button class="btn btn-icon {{ $utilisateur->status === 'approved' ? 'btn-success' : 'btn-warning' }}" 
+                                                        onclick="toggleUserStatus({{ $utilisateur->id }}, '{{ $utilisateur->status }}')" 
+                                                        title="{{ $utilisateur->status === 'approved' ? 'Désactiver l\'utilisateur' : 'Activer l\'utilisateur' }}">
+                                                    <i class="fas {{ $utilisateur->status === 'approved' ? 'fa-user-check' : 'fa-user-times' }}"></i>
+                                                </button>
+                                            @else
+                                                <button class="btn btn-icon btn-success" disabled title="Le superadmin est toujours actif" style="opacity: 0.5; cursor: not-allowed;">
+                                                    <i class="fas fa-shield-alt"></i>
+                                                </button>
+                                            @endif
+                                            <button class="btn btn-icon btn-permissions" onclick="openPermissionsModal({{ $utilisateur->id }}, '{{ addslashes($utilisateur->nom) }}')" title="Gérer les permissions">
                                                 <i class="fas fa-shield-alt"></i>
                                             </button>
                                             <button class="btn btn-icon btn-edit" onclick="openEditModal({{ $utilisateur->id }})" title="Modifier l'utilisateur">
@@ -405,6 +423,8 @@
 const csrfToken = document.querySelector('meta[name="csrf-token"]').getAttribute('content');
 
 function openPermissionsModal(userId, userName) {
+    console.log('Opening permissions modal for user:', userId, userName);
+    
     document.getElementById('userId').value = userId;
     document.getElementById('userName').textContent = userName;
     
@@ -419,6 +439,8 @@ function openPermissionsModal(userId, userName) {
 }
 
 function openEditModal(userId) {
+    console.log('Opening edit modal for user:', userId);
+    
     // Charger les informations de l'utilisateur
     loadUserInfo(userId);
     
@@ -428,7 +450,7 @@ function openEditModal(userId) {
 
 function loadUserPermissions(userId) {
     // Charger les permissions depuis l'API sécurisée
-    fetch(`{{ route("admin.users.permissions", ":id") }}`.replace(':id', userId))
+    fetch(`/admin/users/${userId}/permissions`)
         .then(response => {
             if (!response.ok) {
                 throw new Error('Erreur réseau');
@@ -836,6 +858,45 @@ document.addEventListener('DOMContentLoaded', function() {
     document.getElementById('userType').addEventListener('change', setDefaultPermissions);
     
     loadPendingCount();
+    
+    // Gestion du formulaire de création d'utilisateur
+    document.getElementById('createUserForm').addEventListener('submit', function(e) {
+        e.preventDefault();
+        
+        const formData = new FormData(this);
+        const userData = {
+            nom: formData.get('nom'),
+            email: formData.get('email'),
+            password: formData.get('password'),
+            role: formData.get('role'),
+            type_utilisateur: formData.get('type_utilisateur')
+        };
+        
+        // Ajouter l'entité_id de l'utilisateur connecté
+        userData.entite_id = {{ auth()->user()->entite_id }};
+        
+        fetch('{{ route("admin.users.store") }}', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').getAttribute('content')
+            },
+            body: JSON.stringify(userData)
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                alert('Utilisateur créé avec succès !');
+                location.reload(); // Recharger la page pour voir le nouvel utilisateur
+            } else {
+                alert('Erreur lors de la création: ' + (data.message || 'Erreur inconnue'));
+            }
+        })
+        .catch(error => {
+            console.error('Erreur:', error);
+            alert('Erreur lors de la création de l\'utilisateur: ' + error.message);
+        });
+    });
 });
 
 function loadPendingCount() {
@@ -868,4 +929,112 @@ function loadPendingCount() {
         });
 }
 </script>
+<!-- Modal pour créer un nouvel utilisateur -->
+<div class="modal fade" id="createUserModal" tabindex="-1" aria-labelledby="createUserModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header" style="background: #003366; color: white;">
+                <h5 class="modal-title" id="createUserModalLabel">
+                    <i class="fas fa-user-plus me-2"></i>Créer un Nouvel Utilisateur
+                </h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <form id="createUserForm">
+                <div class="modal-body">
+                    <div class="row">
+                        <div class="col-md-6 mb-3">
+                            <label for="createNom" class="form-label">Nom complet <span class="text-danger">*</span></label>
+                            <input type="text" class="form-control" id="createNom" name="nom" required>
+                        </div>
+                        <div class="col-md-6 mb-3">
+                            <label for="createEmail" class="form-label">Email <span class="text-danger">*</span></label>
+                            <input type="email" class="form-control" id="createEmail" name="email" required>
+                        </div>
+                    </div>
+                    <div class="row">
+                        <div class="col-md-6 mb-3">
+                            <label for="createPassword" class="form-label">Mot de passe <span class="text-danger">*</span></label>
+                            <input type="password" class="form-control" id="createPassword" name="password" required minlength="8">
+                        </div>
+                        <div class="col-md-6 mb-3">
+                            <label for="createRole" class="form-label">Rôle <span class="text-danger">*</span></label>
+                            <select class="form-select" id="createRole" name="role" required>
+                                @if(auth()->user()->type_utilisateur === 'hopital')
+                                    <option value="medecin">Médecin</option>
+                                    <option value="infirmier">Infirmier</option>
+                                    <option value="secretaire">Secrétaire</option>
+                                    <option value="technicien">Technicien</option>
+                                @elseif(auth()->user()->type_utilisateur === 'pharmacie')
+                                    <option value="pharmacien">Pharmacien</option>
+                                    <option value="technicien">Technicien</option>
+                                    <option value="secretaire">Secrétaire</option>
+                                @elseif(auth()->user()->type_utilisateur === 'banque_sang')
+                                    <option value="technicien">Technicien</option>
+                                    <option value="secretaire">Secrétaire</option>
+                                    <option value="manager">Manager</option>
+                                @else
+                                    <option value="user">Utilisateur</option>
+                                    <option value="manager">Manager</option>
+                                    <option value="moderator">Modérateur</option>
+                                @endif
+                            </select>
+                        </div>
+                    </div>
+                    <div class="mb-3">
+                        <label for="createType" class="form-label">Type d'utilisateur <span class="text-danger">*</span></label>
+                        <select class="form-select" id="createType" name="type_utilisateur" required>
+                            <option value="{{ auth()->user()->type_utilisateur }}">{{ ucfirst(auth()->user()->type_utilisateur) }}</option>
+                        </select>
+                        <small class="form-text text-muted">L'utilisateur sera automatiquement associé à votre entité.</small>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Annuler</button>
+                    <button type="submit" class="btn btn-primary">
+                        <i class="fas fa-save me-2"></i>Créer l'Utilisateur
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
 @endsection
+
+<script>
+// Fonction pour activer/désactiver un utilisateur
+function toggleUserStatus(userId, currentStatus) {
+    const newStatus = currentStatus === 'approved' ? 'disabled' : 'approved';
+    const action = newStatus === 'approved' ? 'activer' : 'désactiver';
+    
+    if (confirm(`Êtes-vous sûr de vouloir ${action} cet utilisateur ?`)) {
+        fetch(`/admin/users/${userId}/toggle-status`, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').getAttribute('content')
+            },
+            body: JSON.stringify({ status: newStatus })
+        })
+        .then(response => {
+            if (!response.ok) {
+                throw new Error(`HTTP error! status: ${response.status}`);
+            }
+            return response.json();
+        })
+        .then(data => {
+            if (data.success) {
+                alert(`Utilisateur ${action} avec succès !`);
+                location.reload(); // Recharger la page pour voir les changements
+            } else {
+                alert('Erreur lors de la modification du statut: ' + (data.message || 'Erreur inconnue'));
+            }
+        })
+        .catch(error => {
+            console.error('Erreur:', error);
+            console.error('Response status:', error.status);
+            alert('Erreur lors de la modification du statut: ' + error.message);
+        });
+    }
+}
+</script>

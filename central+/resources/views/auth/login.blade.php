@@ -10,9 +10,23 @@
 <body>
     <div class="login-container">
         <div class="login-header">
-            <i class="fas fa-user-md"></i>
-            <h1>Connexion à la plateforme</h1>
-            <p>Choisissez votre entité pour accéder à l’espace de gestion</p>
+            @if($userType === 'patient')
+                <i class="fas fa-heartbeat"></i>
+                <h1>Mon Espace Personnel</h1>
+                <p>Connectez-vous pour accéder à vos informations médicales</p>
+            @elseif($userType === 'pharmacie')
+                <i class="fas fa-store"></i>
+                <h1>Mon Espace Pharmacie</h1>
+                <p>Connectez-vous pour gérer votre pharmacie</p>
+            @elseif($userType === 'banque_sang')
+                <i class="fas fa-tint"></i>
+                <h1>Mon Espace Banque de Sang</h1>
+                <p>Connectez-vous pour gérer votre banque de sang</p>
+            @else
+                <i class="fas fa-user-md"></i>
+                <h1>Connexion à la plateforme</h1>
+                <p>Choisissez votre entité pour accéder à l'espace de gestion</p>
+            @endif
         </div>
 
         @if ($errors->any())
@@ -27,6 +41,9 @@
 
         <form method="POST" action="{{ route('login.submit') }}">
             @csrf
+            @if($userType === 'patient')
+                <input type="hidden" name="user_type" value="patient">
+            @endif
 
 
 
@@ -43,12 +60,27 @@
             </div>
 
             <button type="submit" class="btn-login">
-                <i class="fas fa-sign-in-alt"></i> Se connecter
+                @if($userType === 'patient')
+                    <i class="fas fa-heartbeat"></i> Accéder à mon espace
+                @else
+                    <i class="fas fa-sign-in-alt"></i> Se connecter
+                @endif
             </button>
         </form>
 
         <div class="register-link">
-            <p>Pas encore inscrit ? <a href="{{ route('register.form') }}">Créer un compte</a></p>
+            @if($userType === 'patient')
+                <p>Pas encore inscrit ? <a href="{{ route('register.form') }}?type=patient">Créer un compte</a></p>
+                <p><a href="{{ route('patient.index') }}">← Retour à l'accueil</a></p>
+            @elseif($userType === 'pharmacie')
+                <p>Pas encore inscrit ? <a href="{{ route('register.form') }}?type=pharmacie">Créer un compte</a></p>
+                <p><a href="{{ route('pharmacie.index') }}">← Retour à l'accueil</a></p>
+            @elseif($userType === 'banque_sang')
+                <p>Pas encore inscrit ? <a href="{{ route('register.form') }}?type=banque_sang">Créer un compte</a></p>
+                <p><a href="{{ route('banque.index') }}">← Retour à l'accueil</a></p>
+            @else
+                <p>Pas encore inscrit ? <a href="{{ route('register.form') }}">Créer un compte</a></p>
+            @endif
         </div>
     </div>
 </body>
