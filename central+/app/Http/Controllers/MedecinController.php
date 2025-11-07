@@ -4,6 +4,9 @@ namespace App\Http\Controllers;
 
 use App\Models\Utilisateur;
 use App\Models\DossierMedical;
+use App\Models\RendezVous;
+use App\Models\ExamenPrescrit;
+use App\Models\Notification;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 
@@ -13,13 +16,14 @@ class MedecinController extends Controller
     {
         $medecin = Auth::user();
         
-        // Récupérer les patients du médecin
+        // Récupérer UNIQUEMENT les patients de SON hôpital
         $patients = Utilisateur::where('type_utilisateur', 'patient')
             ->where('entite_id', $medecin->entite_id)
             ->get();
         
-        // Récupérer les dossiers médicaux du médecin
+        // Récupérer UNIQUEMENT ses dossiers médicaux
         $dossiers = DossierMedical::where('medecin_id', $medecin->id)
+            ->where('hopital_id', $medecin->entite_id)
             ->with(['patient', 'hopital'])
             ->orderBy('date_consultation', 'desc')
             ->get();
@@ -57,8 +61,12 @@ class MedecinController extends Controller
             ->where('entite_id', $medecin->entite_id)
             ->get();
         
-        // TODO: Récupérer les rendez-vous du médecin
-        $rendezvous = collect([]); // Placeholder pour l'instant
+        // Récupérer les rendez-vous du médecin
+        $rendezvous = RendezVous::where('medecin_id', $medecin->id)
+            ->with(['patient', 'hopital'])
+            ->orderBy('date_rendezvous', 'desc')
+            ->orderBy('heure_rendezvous', 'desc')
+            ->get();
         
         return view('medecin.rendezvous', compact('patients', 'rendezvous'));
     }
@@ -105,37 +113,158 @@ class MedecinController extends Controller
         $medecin = Auth::user();
         
         // Générer un numéro de dossier unique
-        $numeroDossier = 'DM' . date('Y') . str_pad(DossierMedical::count() + 1, 4, '0', STR_PAD_LEFT);
+        $numeroDossier = 'DM-' . date('Ymd') . '-' . str_pad(DossierMedical::count() + 1, 5, '0', STR_PAD_LEFT);
         
         $dossier = DossierMedical::create([
             'patient_id' => $request->patient_id,
             'medecin_id' => $medecin->id,
             'hopital_id' => $medecin->entite_id,
             'numero_dossier' => $numeroDossier,
+            'motif_consultation' => $request->motif_consultation ?? 'Consultation',
             'diagnostic' => $request->diagnostic,
             'traitement' => $request->traitement,
             'observations' => $request->observations,
             'date_consultation' => $request->date_consultation,
+            'statut' => 'actif',
         ]);
         
-        return redirect()->route('admin.medecin.dossiers')->with('success', 'Dossier médical créé avec succès');
+        return response()->json([
+            'success' => true,
+            'message' => 'Dossier médical créé avec succès',
+            'dossier' => $dossier
+        ]);
     }
     
     public function createRendezVous(Request $request)
     {
         $request->validate([
             'patient_id' => 'required|exists:utilisateurs,id',
-            'date_rendezvous' => 'required|date',
+            'date_rendezvous' => 'required|date|after_or_equal:today',
             'heure_rendezvous' => 'required',
-            'type_rendezvous' => 'nullable|string',
+            'type_rendezvous' => 'required|string',
+            'motif' => 'required|string',
             'notes' => 'nullable|string',
         ]);
         
-        // TODO: Implémenter la création de rendez-vous
-        // Pour l'instant, retourner un succès
+        $medecin = Auth::user();
+        
+        RendezVous::create([
+            'patient_id' => $request->patient_id,
+            'medecin_id' => $medecin->id,
+            'hopital_id' => $medecin->entite_id,
+            'date_rendezvous' => $request->date_rendezvous,
+            'heure_rendezvous' => $request->heure_rendezvous,
+            'type_consultation' => $request->type_rendezvous,
+            'motif' => $request->motif,
+            'notes' => $request->notes,
+            'statut' => 'en_attente',
+            'prix' => 0,
+        ]);
+        
         return response()->json([
             'success' => true,
             'message' => 'Rendez-vous créé avec succès'
+        ]);
+    }
+    
+    /**
+     * Mettre à jour le statut d'un rendez-vous
+     */
+    public function updateRendezVousStatut(Request $request, $id)
+    {
+        $medecin = Auth::user();
+        
+        $rendezvous = RendezVous::where('id', $id)
+            ->where('medecin_id', $medecin->id)
+            ->firstOrFail();
+        
+        $rendezvous->update(['statut' => $request->statut]);
+        
+        return response()->json([
+            'success' => true,
+            'message' => 'Statut mis à jour'
+        ]);
+    }
+    
+    /**
+     * Mettre à jour un dossier médical
+     */
+    public function updateDossier(Request $request, $id)
+    {
+        $medecin = Auth::user();
+        
+        $dossier = DossierMedical::where('id', $id)
+            ->where('medecin_id', $medecin->id)
+            ->firstOrFail();
+        
+        $dossier->update([
+            'diagnostic' => $request->diagnostic,
+            'traitement' => $request->traitement,
+            'observations' => $request->observations,
+        ]);
+        
+        return response()->json([
+            'success' => true,
+            'message' => 'Dossier mis à jour'
+        ]);
+    }
+    
+    /**
+     * Prescrire des examens médicaux
+     */
+    public function prescrireExamens(Request $request, $id)
+    {
+        $medecin = Auth::user();
+        
+        $dossier = DossierMedical::where('id', $id)
+            ->where('medecin_id', $medecin->id)
+            ->firstOrFail();
+        
+        $examens = $request->examens;
+        $examensCreated = [];
+        
+        foreach ($examens as $examenData) {
+            $numeroExamen = 'EX-' . date('Ymd') . '-' . str_pad(ExamenPrescrit::count() + 1, 5, '0', STR_PAD_LEFT);
+            
+            $examen = ExamenPrescrit::create([
+                'dossier_medical_id' => $dossier->id,
+                'patient_id' => $dossier->patient_id,
+                'medecin_id' => $medecin->id,
+                'hopital_id' => $medecin->entite_id,
+                'numero_examen' => $numeroExamen,
+                'type_examen' => $examenData['type_examen'],
+                'nom_examen' => $examenData['nom_examen'],
+                'indication' => $examenData['indication'],
+                'date_prescription' => $examenData['date_prescription'] ?? now(),
+                'prix' => 0, // Le caissier fixera le prix
+                'statut_paiement' => 'en_attente',
+                'statut_examen' => 'prescrit',
+            ]);
+            
+            $examensCreated[] = $examen;
+        }
+        
+        // Créer notification pour le caissier
+        $caissiers = Utilisateur::where('type_utilisateur', 'hopital')
+            ->where('entite_id', $medecin->entite_id)
+            ->where('role', 'caissier')
+            ->get();
+        
+        foreach ($caissiers as $caissier) {
+            Notification::create([
+                'user_id' => $caissier->id,
+                'hopital_id' => null,
+                'type' => 'examens_a_payer',
+                'title' => 'Examens à valider',
+                'message' => 'Le Dr. ' . $medecin->nom . ' a prescrit ' . count($examensCreated) . ' examen(s) pour ' . $dossier->patient->nom,
+                'data' => json_encode(['dossier_id' => $dossier->id, 'examens' => array_column($examensCreated, 'id')]),
+                'read' => false,
+            ]);
+        }
+        
+        return response()->json([
+            'success' => true,
+            'message' => 'Examens prescrits avec succès'
         ]);
     }
 }

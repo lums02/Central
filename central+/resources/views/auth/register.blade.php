@@ -16,6 +16,7 @@
 
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet" />
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet" />
+    <link href="{{ asset('css/register-validation.css') }}" rel="stylesheet" />
     <style>
         body {
             background: #f8f9fa;
@@ -254,7 +255,7 @@
         </div>
     @endif
 
-    <form action="{{ route('register.submit') }}" method="POST" enctype="multipart/form-data" novalidate>
+    <form id="registerForm" action="{{ route('register.submit') }}" method="POST" enctype="multipart/form-data">
         @csrf
 
         {{-- Champs cachés pour le plan et paiement --}}
@@ -412,7 +413,17 @@
             <label for="password" class="form-label">Mot de passe</label>
             <input type="password" name="password" id="password" class="form-control" 
                    placeholder="Minimum 8 caractères" required />
-            <small class="form-text text-muted">Le mot de passe doit contenir au moins 8 caractères</small>
+            <div id="password-strength"></div>
+            <div class="password-criteria">
+                <h6><i class="fas fa-shield-alt"></i> Critères du mot de passe sécurisé :</h6>
+                <ul>
+                    <li><i class="fas fa-circle"></i> Au moins 8 caractères</li>
+                    <li><i class="fas fa-circle"></i> Une lettre majuscule (A-Z)</li>
+                    <li><i class="fas fa-circle"></i> Une lettre minuscule (a-z)</li>
+                    <li><i class="fas fa-circle"></i> Un chiffre (0-9)</li>
+                    <li><i class="fas fa-circle"></i> Un caractère spécial (@$!%*?&#)</li>
+                </ul>
+            </div>
         </div>
 
         <div class="form-group">
@@ -548,5 +559,7 @@
 </script>
 
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+<script src="{{ asset('js/register-validation.js') }}"></script>
 </body>
 </html>

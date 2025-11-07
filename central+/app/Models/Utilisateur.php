@@ -15,7 +15,12 @@ class Utilisateur extends Authenticatable
 
     protected $fillable = [
         'nom',
+        'prenom',
         'email',
+        'telephone',
+        'date_naissance',
+        'sexe',
+        'adresse',
         'mot_de_passe',
         'role',
         'type_utilisateur',
@@ -59,6 +64,29 @@ class Utilisateur extends Authenticatable
     /**
      * Obtenir le nom de l'entité
      */
+    /**
+     * Scope pour filtrer par entité de l'utilisateur connecté
+     */
+    public function scopeOfSameEntity($query)
+    {
+        $user = auth()->user();
+        
+        if (!$user || $user->isSuperAdmin()) {
+            return $query; // Superadmin voit tout
+        }
+        
+        return $query->where('entite_id', $user->entite_id)
+                     ->where('type_utilisateur', $user->type_utilisateur);
+    }
+    
+    /**
+     * Scope pour filtrer uniquement par entite_id
+     */
+    public function scopeOfEntity($query, $entiteId)
+    {
+        return $query->where('entite_id', $entiteId);
+    }
+    
     public function getEntiteName()
     {
         if ($this->isSuperAdmin()) {
@@ -288,6 +316,12 @@ class Utilisateur extends Authenticatable
     
     // Relation avec les dossiers médicaux (en tant que patient)
     public function dossiers()
+    {
+        return $this->hasMany(DossierMedical::class, 'patient_id');
+    }
+    
+    // Alias pour dossiers
+    public function dossiersMedicaux()
     {
         return $this->hasMany(DossierMedical::class, 'patient_id');
     }

@@ -39,6 +39,10 @@ Route::prefix('patient')->name('patient.')->group(function () {
         Route::get('/dashboard', [PatientController::class, 'dashboard'])->name('dashboard');
         Route::post('/logout', [PatientController::class, 'logout'])->name('logout');
         
+        // Routes pour les consentements de transfert
+        Route::get('/consentements', [\App\Http\Controllers\Admin\TransfertDossierController::class, 'mesConsentements'])->name('consentements');
+        Route::post('/consentements/{id}/accepter', [\App\Http\Controllers\Admin\TransfertDossierController::class, 'accepterConsentement'])->name('consentement.accepter');
+        Route::post('/consentements/{id}/refuser', [\App\Http\Controllers\Admin\TransfertDossierController::class, 'refuserConsentement'])->name('consentement.refuser');
     });
 });
 
@@ -131,6 +135,33 @@ Route::prefix('admin')->name('admin.')->middleware(['auth'])->group(function () 
     // Dashboard admin
     Route::get('/dashboard', [\App\Http\Controllers\Admin\DashboardController::class, 'index'])->name('dashboard');
     
+    // Gestion des utilisateurs
+    Route::get('/users', [\App\Http\Controllers\Admin\UserController::class, 'index'])->name('users.index');
+    Route::post('/users', [\App\Http\Controllers\Admin\UserController::class, 'store'])->name('users.store');
+    Route::get('/users/pending', [\App\Http\Controllers\Admin\UserController::class, 'pendingUsers'])->name('users.pending');
+    Route::get('/users/stats', [\App\Http\Controllers\Admin\UserController::class, 'stats'])->name('users.stats');
+    Route::get('/users/{id}', [\App\Http\Controllers\Admin\UserController::class, 'show'])->name('users.show');
+    Route::post('/users/{id}', [\App\Http\Controllers\Admin\UserController::class, 'update'])->name('users.update');
+    Route::delete('/users/{id}', [\App\Http\Controllers\Admin\UserController::class, 'destroy'])->name('users.destroy');
+    Route::post('/users/{id}/approve', [\App\Http\Controllers\Admin\UserController::class, 'approveUser'])->name('users.approve');
+    Route::post('/users/{id}/reject', [\App\Http\Controllers\Admin\UserController::class, 'rejectUser'])->name('users.reject');
+    Route::post('/users/{id}/toggle-status', [\App\Http\Controllers\Admin\UserController::class, 'toggleStatus'])->name('users.toggleStatus');
+    Route::post('/users/permissions', [\App\Http\Controllers\Admin\UserController::class, 'updatePermissions'])->name('users.updatePermissions');
+    Route::get('/users/{id}/permissions', [\App\Http\Controllers\Admin\UserController::class, 'showPermissions'])->name('users.permissions');
+    
+    // Gestion des permissions
+    Route::resource('permissions', \App\Http\Controllers\Admin\PermissionController::class);
+    
+    // Gestion des entités
+    Route::get('/entities', function () {
+        return view('admin.entities');
+    })->name('entities');
+    
+    // Gestion des paramètres
+    Route::get('/settings', function () {
+        return view('admin.settings');
+    })->name('settings');
+    
     // Routes pour les médecins
     Route::prefix('medecin')->name('medecin.')->group(function () {
         Route::get('/dashboard', [MedecinController::class, 'dashboard'])->name('dashboard');
@@ -138,8 +169,91 @@ Route::prefix('admin')->name('admin.')->middleware(['auth'])->group(function () 
         Route::get('/dossiers', [MedecinController::class, 'dossiers'])->name('dossiers');
         Route::get('/dossiers/{id}', [MedecinController::class, 'showDossier'])->name('dossier.show');
         Route::post('/dossiers', [MedecinController::class, 'createDossier'])->name('dossier.create');
+        Route::put('/dossiers/{id}', [MedecinController::class, 'updateDossier'])->name('dossier.update');
         Route::get('/rendezvous', [MedecinController::class, 'rendezvous'])->name('rendezvous');
         Route::post('/rendezvous', [MedecinController::class, 'createRendezVous'])->name('rendezvous.create');
+        Route::post('/rendezvous/{id}/statut', [MedecinController::class, 'updateRendezVousStatut'])->name('rendezvous.update-statut');
+        
+        // Gestion des examens
+        Route::post('/dossiers/{id}/prescrire-examens', [MedecinController::class, 'prescrireExamens'])->name('examens.prescrire');
+        
+        // Notifications pour médecins
+        Route::get('/notifications', [\App\Http\Controllers\Admin\NotificationController::class, 'getMedecinNotifications'])->name('notifications.get');
+        Route::post('/notifications/{id}/mark-read', [\App\Http\Controllers\Admin\NotificationController::class, 'markMedecinAsRead'])->name('notifications.mark-read');
+    });
+    
+    // Routes pour les caissiers
+    Route::prefix('caissier')->name('caissier.')->group(function () {
+        Route::get('/dashboard', [\App\Http\Controllers\CaissierController::class, 'dashboard'])->name('dashboard');
+        Route::get('/examens', [\App\Http\Controllers\CaissierController::class, 'examensEnAttente'])->name('examens');
+        Route::post('/examens/{id}/valider-paiement', [\App\Http\Controllers\CaissierController::class, 'validerPaiement'])->name('examens.valider');
+    });
+    
+    // Routes pour les laborantins
+    Route::prefix('laborantin')->name('laborantin.')->group(function () {
+        Route::get('/dashboard', [\App\Http\Controllers\LaborantinController::class, 'dashboard'])->name('dashboard');
+        Route::get('/examens', [\App\Http\Controllers\LaborantinController::class, 'examensARealiser'])->name('examens');
+        Route::post('/examens/{id}/marquer-en-cours', [\App\Http\Controllers\LaborantinController::class, 'marquerEnCours'])->name('examens.en-cours');
+        Route::post('/examens/{id}/uploader-resultats', [\App\Http\Controllers\LaborantinController::class, 'uploaderResultats'])->name('examens.upload');
+    });
+    
+    // Routes pour la gestion des patients de l'hôpital
+    Route::prefix('hopital')->name('hopital.')->group(function () {
+        Route::prefix('patients')->name('patients.')->group(function () {
+            Route::get('/', [\App\Http\Controllers\Admin\HopitalPatientController::class, 'index'])->name('index');
+            Route::post('/', [\App\Http\Controllers\Admin\HopitalPatientController::class, 'store'])->name('store');
+            Route::get('/{id}', [\App\Http\Controllers\Admin\HopitalPatientController::class, 'show'])->name('show');
+            Route::post('/{id}/create-dossier', [\App\Http\Controllers\Admin\HopitalPatientController::class, 'createDossier'])->name('create-dossier');
+            Route::post('/{patientId}/assign-dossier/{dossierId}', [\App\Http\Controllers\Admin\HopitalPatientController::class, 'assignDossierToMedecin'])->name('assign-dossier');
+            Route::get('/{patientId}/dossier/{dossierId}', [\App\Http\Controllers\Admin\HopitalPatientController::class, 'showDossier'])->name('dossier');
+            Route::post('/{id}/update-status', [\App\Http\Controllers\Admin\HopitalPatientController::class, 'updateStatus'])->name('update-status');
+        });
+        
+        // Routes pour la gestion des rendez-vous
+        Route::prefix('rendezvous')->name('rendezvous.')->group(function () {
+            Route::get('/', [\App\Http\Controllers\Admin\HopitalRendezVousController::class, 'index'])->name('index');
+            Route::get('/create', [\App\Http\Controllers\Admin\HopitalRendezVousController::class, 'create'])->name('create');
+            Route::post('/', [\App\Http\Controllers\Admin\HopitalRendezVousController::class, 'store'])->name('store');
+            Route::get('/{id}', [\App\Http\Controllers\Admin\HopitalRendezVousController::class, 'show'])->name('show');
+            Route::put('/{id}/statut', [\App\Http\Controllers\Admin\HopitalRendezVousController::class, 'updateStatut'])->name('update-statut');
+            Route::delete('/{id}', [\App\Http\Controllers\Admin\HopitalRendezVousController::class, 'destroy'])->name('destroy');
+        });
+        
+        // Routes pour les transferts de dossiers médicaux
+        Route::prefix('transferts')->name('transferts.')->group(function () {
+            Route::get('/rechercher', [\App\Http\Controllers\Admin\TransfertDossierController::class, 'rechercherPatient'])->name('rechercher');
+            Route::get('/rechercher-ajax', [\App\Http\Controllers\Admin\TransfertDossierController::class, 'rechercherPatientAjax'])->name('rechercher-ajax');
+            Route::post('/creer-demande', [\App\Http\Controllers\Admin\TransfertDossierController::class, 'creerDemande'])->name('creer-demande');
+            Route::get('/demandes-envoyees', [\App\Http\Controllers\Admin\TransfertDossierController::class, 'demandesEnvoyees'])->name('demandes-envoyees');
+            Route::get('/demandes-recues', [\App\Http\Controllers\Admin\TransfertDossierController::class, 'demandesRecues'])->name('demandes-recues');
+            Route::post('/{id}/transferer', [\App\Http\Controllers\Admin\TransfertDossierController::class, 'transfererDossier'])->name('transferer');
+            Route::post('/{id}/refuser', [\App\Http\Controllers\Admin\TransfertDossierController::class, 'refuserDemande'])->name('refuser');
+        });
+    });
+    
+    // Route pour les notifications (en dehors du groupe hopital, dans le groupe admin)
+    Route::get('/notifications', [\App\Http\Controllers\Admin\NotificationController::class, 'getNotifications'])->name('notifications.get');
+    Route::post('/notifications/{id}/mark-read', [\App\Http\Controllers\Admin\NotificationController::class, 'markAsRead'])->name('notifications.mark-read');
+    
+    // Routes API pour charger les entités (pour superadmin)
+    Route::prefix('api')->group(function () {
+        Route::get('/hopitaux', function() {
+            return \App\Models\Hopital::select('id', 'nom')->get();
+        });
+        Route::get('/pharmacies', function() {
+            return \App\Models\Pharmacie::select('id', 'nom')->get();
+        });
+        Route::get('/banque-sangs', function() {
+            return \App\Models\BanqueSang::select('id', 'nom')->get();
+        });
+    });
+});
+
+// Routes pour les transferts de dossiers - PATIENTS
+Route::prefix('patient')->name('patient.')->middleware(['auth'])->group(function () {
+        Route::get('/consentements-transfert', [\App\Http\Controllers\Admin\TransfertDossierController::class, 'mesConsentements'])->name('consentements-transfert');
+        Route::post('/consentements-transfert/{id}/accepter', [\App\Http\Controllers\Admin\TransfertDossierController::class, 'accepterConsentement'])->name('consentement-transfert.accepter');
+        Route::post('/consentements-transfert/{id}/refuser', [\App\Http\Controllers\Admin\TransfertDossierController::class, 'refuserConsentement'])->name('consentement-transfert.refuser');
     });
     
     // Page d'accueil admin
@@ -236,4 +350,3 @@ Route::prefix('admin')->name('admin.')->middleware(['auth'])->group(function () 
     Route::get('/consultations', function () {
         return view('admin.modules.coming-soon', ['module' => 'Consultations']);
     })->name('consultations.index');
-});

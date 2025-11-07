@@ -538,47 +538,60 @@ class UserController extends Controller
     {
         $user = auth()->user();
         
-        // Validation des rôles selon le type d'entité
-        $entityType = $user->type_utilisateur;
-        $allowedRoles = [];
-        
-        switch ($entityType) {
-            case 'hopital':
-                $allowedRoles = ['medecin', 'infirmier', 'secretaire', 'technicien'];
-                break;
-            case 'pharmacie':
-                $allowedRoles = ['pharmacien', 'technicien', 'secretaire'];
-                break;
-            case 'banque_sang':
-                $allowedRoles = ['technicien', 'secretaire', 'manager'];
-                break;
-            default:
-                $allowedRoles = ['user', 'manager', 'moderator'];
-        }
-        
-        $request->validate([
-            'nom' => 'required|string|max:255',
-            'email' => 'required|email|unique:utilisateurs,email',
-            'password' => 'required|string|min:8',
-            'role' => 'required|string|in:' . implode(',', $allowedRoles),
-            'type_utilisateur' => 'required|string|in:hopital,pharmacie,banque_sang,centre,patient',
-        ]);
-
-        // Vérifier que l'admin ne peut créer que des utilisateurs pour sa même entité
-        if (!$user->isSuperAdmin() && $request->type_utilisateur !== $user->type_utilisateur) {
-            return response()->json([
-                'success' => false, 
-                'message' => 'Vous ne pouvez créer que des utilisateurs pour votre entité'
-            ], 403);
+        // SUPERADMIN: Crée uniquement des administrateurs
+        if ($user->isSuperAdmin()) {
+            $request->validate([
+                'nom' => 'required|string|max:255',
+                'email' => 'required|email|unique:utilisateurs,email',
+                'password' => 'required|string|min:8',
+                'role' => 'required|in:admin',
+                'type_utilisateur' => 'required|in:hopital,pharmacie,banque_sang',
+                'entite_id' => 'required|integer',
+            ]);
+            
+            $entiteId = $request->entite_id;
+            $role = 'admin';
+        } 
+        // ADMIN D'ENTITÉ: Crée son personnel
+        else {
+            // Validation des rôles selon le type d'entité
+            $allowedRoles = [];
+            
+            switch ($user->type_utilisateur) {
+                case 'hopital':
+                    $allowedRoles = ['medecin', 'infirmier', 'laborantin', 'caissier', 'receptionniste'];
+                    break;
+                case 'pharmacie':
+                    $allowedRoles = ['pharmacien', 'assistant_pharmacie'];
+                    break;
+                case 'banque_sang':
+                    $allowedRoles = ['technicien_labo', 'gestionnaire_donneurs'];
+                    break;
+                default:
+                    return response()->json([
+                        'success' => false,
+                        'message' => 'Type d\'entité non autorisé à créer du personnel'
+                    ], 403);
+            }
+            
+            $request->validate([
+                'nom' => 'required|string|max:255',
+                'email' => 'required|email|unique:utilisateurs,email',
+                'password' => 'required|string|min:8',
+                'role' => 'required|in:' . implode(',', $allowedRoles),
+            ]);
+            
+            $entiteId = $user->entite_id;
+            $role = $request->role;
         }
 
         $utilisateur = Utilisateur::create([
             'nom' => $request->nom,
             'email' => $request->email,
             'mot_de_passe' => Hash::make($request->password),
-            'role' => $request->role, // Utiliser le rôle spécifié par l'admin
-            'type_utilisateur' => $request->type_utilisateur,
-            'entite_id' => $user->entite_id, // Associer à la même entité que l'admin
+            'role' => $role,
+            'type_utilisateur' => $user->isSuperAdmin() ? $request->type_utilisateur : $user->type_utilisateur,
+            'entite_id' => $entiteId,
             'status' => 'approved', // Approuvé automatiquement car créé par un admin
         ]);
 

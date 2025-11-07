@@ -57,12 +57,23 @@ class RegisterController extends Controller
     }
 public function submit(Request $request)
 {
-    // 1. Validation dynamique
+    // 1. Validation dynamique avec règles strictes
     $rules = [
         'type_utilisateur' => 'required|in:hopital,pharmacie,banque_sang,centre,patient',
-        'nom' => 'required|string|max:255',
-        'email' => 'required|email|unique:utilisateurs,email',
-        'password' => 'required|string|min:8|confirmed',
+        'nom' => 'required|string|max:255|min:3',
+        'email' => [
+            'required',
+            'email:rfc,dns',
+            'unique:utilisateurs,email',
+            'regex:/^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/'
+        ],
+        'password' => [
+            'required',
+            'string',
+            'min:8',
+            'confirmed',
+            'regex:/^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[@$!%*?&#])[A-Za-z\d@$!%*?&#]{8,}$/'
+        ],
         'logo' => 'nullable|image|mimes:jpeg,png,jpg,gif|max:2048',
     ];
 
@@ -76,7 +87,24 @@ public function submit(Request $request)
         $rules['sexe'] = 'required|in:masculin,feminin';
     }
 
-    $validated = $request->validate($rules);
+    // Messages d'erreur personnalisés en français
+    $messages = [
+        'nom.required' => 'Le nom est obligatoire.',
+        'nom.min' => 'Le nom doit contenir au moins 3 caractères.',
+        'email.required' => 'L\'adresse email est obligatoire.',
+        'email.email' => 'L\'adresse email doit être valide (ex: exemple@gmail.com).',
+        'email.unique' => 'Cette adresse email est déjà utilisée.',
+        'email.regex' => 'L\'adresse email doit être au format correct (ex: votremail@gmail.com).',
+        'password.required' => 'Le mot de passe est obligatoire.',
+        'password.min' => 'Le mot de passe doit contenir au moins 8 caractères.',
+        'password.confirmed' => 'Les mots de passe ne correspondent pas.',
+        'password.regex' => 'Le mot de passe doit contenir au moins : 1 majuscule, 1 minuscule, 1 chiffre et 1 caractère spécial (@$!%*?&#).',
+        'adresse.required' => 'L\'adresse est obligatoire.',
+        'date_naissance.required' => 'La date de naissance est obligatoire.',
+        'sexe.required' => 'Le sexe est obligatoire.',
+    ];
+
+    $validated = $request->validate($rules, $messages);
 
     DB::beginTransaction();
     try {

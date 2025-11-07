@@ -9,11 +9,35 @@ class DossierMedical extends Model
 {
     use HasFactory;
     
+    /**
+     * Scope pour filtrer par hôpital de l'utilisateur connecté
+     */
+    public function scopeOfSameHospital($query)
+    {
+        $user = auth()->user();
+        
+        if (!$user || $user->isSuperAdmin()) {
+            return $query; // Superadmin voit tout
+        }
+        
+        if ($user->type_utilisateur === 'hopital') {
+            return $query->where('hopital_id', $user->entite_id);
+        }
+        
+        // Si c'est un médecin, voir uniquement ses dossiers
+        if ($user->role === 'medecin') {
+            return $query->where('medecin_id', $user->id);
+        }
+        
+        return $query->where('hopital_id', $user->entite_id);
+    }
+
     protected $fillable = [
         'patient_id',
         'medecin_id',
         'hopital_id',
         'numero_dossier',
+        'motif_consultation',
         'diagnostic',
         'traitement',
         'observations',

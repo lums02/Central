@@ -29,16 +29,16 @@
             </a>
             @endif
 
-            {{-- Gestion des Utilisateurs - Seulement si l'utilisateur a les permissions --}}
-            @if(auth()->check() && auth()->user()->can('view_users'))
+            {{-- Gestion des Utilisateurs - Superadmin ou avec permissions --}}
+            @if(auth()->check() && (auth()->user()->isSuperAdmin() || auth()->user()->can('view_users')))
             <a href="{{ route('admin.users.index') }}"
                class="nav-link text-white mb-2 {{ request()->routeIs('admin.users.index') ? 'active bg-primary rounded' : '' }}">
-                <i class="fas fa-users me-2"></i> Utilisateur
+                <i class="fas fa-users me-2"></i> Utilisateurs
             </a>
             @endif
 
-            {{-- Utilisateurs en Attente - Seulement si l'utilisateur peut voir les utilisateurs --}}
-            @if(auth()->check() && auth()->user()->can('view_users'))
+            {{-- Utilisateurs en Attente - Superadmin ou avec permissions --}}
+            @if(auth()->check() && (auth()->user()->isSuperAdmin() || auth()->user()->can('view_users')))
             <a href="{{ route('admin.users.pending') }}"
                class="nav-link text-white mb-2 {{ request()->routeIs('admin.users.pending') ? 'active bg-primary rounded' : '' }}">
                 <i class="fas fa-clock me-2"></i> En Attente
@@ -46,18 +46,28 @@
             </a>
             @endif
 
-            {{-- Modules spécifiques aux entités - Seulement pour les non-superadmins --}}
-            @if(auth()->check() && !auth()->user()->isSuperAdmin())
-                {{-- Gestion des Patients - Seulement si l'utilisateur a les permissions ET si la route existe --}}
-                @if(auth()->user()->can('view_patients') && Route::has('admin.patients.index'))
+            {{-- Modules spécifiques aux entités --}}
+            @if(auth()->check())
+                {{-- Gestion des Patients - Pour les hôpitaux ou autres avec permissions --}}
+                @if(auth()->user()->type_utilisateur === 'hopital' && auth()->user()->role === 'admin')
+                <a href="{{ route('admin.hopital.patients.index') }}"
+                   class="nav-link text-white mb-2 {{ request()->routeIs('admin.hopital.patients*') ? 'active bg-primary rounded' : '' }}">
+                    <i class="fas fa-user-injured me-2"></i> Patients
+                </a>
+                @elseif(auth()->user()->can('view_patients') && Route::has('admin.patients.index'))
                 <a href="{{ route('admin.patients.index') }}"
                    class="nav-link text-white mb-2 {{ request()->routeIs('admin.patients*') ? 'active bg-primary rounded' : '' }}">
                     <i class="fas fa-user-injured me-2"></i> Patients
                 </a>
                 @endif
 
-                {{-- Gestion des Rendez-vous - Seulement si l'utilisateur a les permissions ET si la route existe --}}
-                @if(auth()->user()->can('view_appointments') && Route::has('admin.appointments.index'))
+                {{-- Gestion des Rendez-vous - Pour les hôpitaux ou autres avec permissions --}}
+                @if(auth()->user()->type_utilisateur === 'hopital' && auth()->user()->role === 'admin')
+                <a href="{{ route('admin.hopital.rendezvous.index') }}"
+                   class="nav-link text-white mb-2 {{ request()->routeIs('admin.hopital.rendezvous*') ? 'active bg-primary rounded' : '' }}">
+                    <i class="fas fa-calendar-alt me-2"></i> Rendez-vous
+                </a>
+                @elseif(auth()->user()->can('view_appointments') && Route::has('admin.appointments.index'))
                 <a href="{{ route('admin.appointments.index') }}"
                    class="nav-link text-white mb-2 {{ request()->routeIs('admin.appointments*') ? 'active bg-primary rounded' : '' }}">
                     <i class="fas fa-calendar-alt me-2"></i> Rendez-vous

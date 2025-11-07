@@ -682,11 +682,11 @@
                     
                     <div class="d-flex">
                         @auth
-                            <a href="{{ route('login') }}" class="btn btn-login me-2">
-                                <i class="fas fa-tachometer-alt me-1"></i>Se connecter
+                            <a href="{{ route('patient.dashboard') }}" class="btn btn-login me-2">
+                                <i class="fas fa-tachometer-alt me-1"></i>Mon Espace
                             </a>
                         @else
-                            <a href="{{ route('patient.login') }}" class="btn btn-login">
+                            <a href="{{ route('login') }}" class="btn btn-login">
                                 <i class="fas fa-sign-in-alt me-1"></i>Se connecter
                             </a>
                         @endauth

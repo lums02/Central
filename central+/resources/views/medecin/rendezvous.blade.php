@@ -25,60 +25,40 @@
                             </tr>
                         </thead>
                         <tbody>
-                            @forelse($rendezvous ?? [] as $rdv)
+                            @forelse($rendezvous as $rdv)
                             <tr>
                                 <td>
-                                    <div>
-                                        <strong>{{ $rdv->date_rendezvous->format('d/m/Y') }}</strong>
-                                        <br>
-                                        <small class="text-muted">{{ $rdv->heure_rendezvous }}</small>
-                                    </div>
+                                    <strong>{{ \Carbon\Carbon::parse($rdv->date_rendezvous)->format('d/m/Y') }}</strong><br>
+                                    <small class="text-muted">{{ substr($rdv->heure_rendezvous, 0, 5) }}</small>
+                                </td>
+                                <td>{{ $rdv->patient->nom ?? 'N/A' }}</td>
+                                <td>{{ ucfirst(str_replace('_', ' ', $rdv->type_consultation)) }}</td>
+                                <td>
+                                    <span class="badge bg-{{ $rdv->statut_color }}">{{ $rdv->statut_format }}</span>
                                 </td>
                                 <td>
-                                    <div class="d-flex align-items-center">
-                                        <div class="avatar-sm me-3">
-                                            <div class="avatar-title bg-primary rounded-circle">
-                                                {{ substr($rdv->patient->nom, 0, 1) }}
-                                            </div>
-                                        </div>
-                                        <div>
-                                            <h6 class="mb-0">{{ $rdv->patient->nom }}</h6>
-                                            <small class="text-muted">{{ $rdv->patient->email }}</small>
-                                        </div>
-                                    </div>
-                                </td>
-                                <td>
-                                    <span class="badge bg-info">{{ $rdv->type_rendezvous ?? 'Consultation' }}</span>
-                                </td>
-                                <td>
-                                    <span class="badge {{ $rdv->statut === 'confirme' ? 'bg-success' : ($rdv->statut === 'en_attente' ? 'bg-warning' : 'bg-secondary') }}">
-                                        {{ ucfirst($rdv->statut ?? 'En attente') }}
-                                    </span>
-                                </td>
-                                <td>
-                                    <div class="btn-group" role="group">
-                                        <button class="btn btn-sm btn-success" onclick="confirmerRendezVous({{ $rdv->id }})">
-                                            <i class="fas fa-check"></i> Confirmer
+                                    <div class="btn-group">
+                                        @if($rdv->statut == 'en_attente')
+                                            <button class="btn btn-sm btn-success" onclick="confirmerRendezVous({{ $rdv->id }})">
+                                                <i class="fas fa-check"></i>
+                                            </button>
+                                        @endif
+                                        <button class="btn btn-sm btn-info" onclick="voirRendezVous({{ $rdv->id }}, '{{ $rdv->patient->nom }}', '{{ $rdv->date_rendezvous }}', '{{ $rdv->heure_rendezvous }}', '{{ $rdv->motif }}')">
+                                            <i class="fas fa-eye"></i>
                                         </button>
-                                        <button class="btn btn-sm btn-warning" onclick="modifierRendezVous({{ $rdv->id }})">
-                                            <i class="fas fa-edit"></i> Modifier
-                                        </button>
-                                        <button class="btn btn-sm btn-danger" onclick="annulerRendezVous({{ $rdv->id }})">
-                                            <i class="fas fa-times"></i> Annuler
-                                        </button>
+                                        @if($rdv->statut != 'termine')
+                                            <button class="btn btn-sm btn-danger" onclick="annulerRendezVous({{ $rdv->id }})">
+                                                <i class="fas fa-times"></i>
+                                            </button>
+                                        @endif
                                     </div>
                                 </td>
                             </tr>
                             @empty
                             <tr>
                                 <td colspan="5" class="text-center py-4">
-                                    <div class="text-muted">
-                                        <i class="fas fa-calendar-alt fa-3x mb-3"></i>
-                                        <p>Aucun rendez-vous trouvé</p>
-                                        <button class="btn btn-primary" onclick="showCreateRendezVousModal()">
-                                            <i class="fas fa-plus me-2"></i>Créer le premier rendez-vous
-                                        </button>
-                                    </div>
+                                    <i class="fas fa-calendar-times fa-3x text-muted mb-3"></i>
+                                    <p class="text-muted">Aucun rendez-vous trouvé</p>
                                 </td>
                             </tr>
                             @endforelse
@@ -119,17 +99,22 @@
                         <input type="time" name="heure_rendezvous" class="form-control" value="09:00" required>
                     </div>
                     <div class="mb-3">
-                        <label class="form-label">Type de Rendez-vous</label>
-                        <select name="type_rendezvous" class="form-select">
-                            <option value="consultation">Consultation</option>
+                        <label class="form-label">Type de Rendez-vous *</label>
+                        <select name="type_rendezvous" class="form-select" required>
+                            <option value="consultation_generale">Consultation Générale</option>
+                            <option value="consultation_specialisee">Consultation Spécialisée</option>
                             <option value="controle">Contrôle</option>
                             <option value="urgence">Urgence</option>
                             <option value="suivi">Suivi</option>
                         </select>
                     </div>
                     <div class="mb-3">
+                        <label class="form-label">Motif *</label>
+                        <textarea name="motif" class="form-control" rows="2" required placeholder="Motif du rendez-vous..."></textarea>
+                    </div>
+                    <div class="mb-3">
                         <label class="form-label">Notes</label>
-                        <textarea name="notes" class="form-control" rows="3" placeholder="Notes sur le rendez-vous..."></textarea>
+                        <textarea name="notes" class="form-control" rows="2" placeholder="Notes supplémentaires..."></textarea>
                     </div>
                 </div>
                 <div class="modal-footer">
@@ -150,21 +135,40 @@ function showCreateRendezVousModal() {
 
 function confirmerRendezVous(rdvId) {
     if (confirm('Confirmer ce rendez-vous ?')) {
-        // TODO: Implémenter la confirmation
-        alert('Fonctionnalité de confirmation à implémenter');
+        updateStatut(rdvId, 'confirme');
     }
 }
 
+function voirRendezVous(id, patient, date, heure, motif) {
+    alert(`Rendez-vous #${id}\nPatient: ${patient}\nDate: ${date} à ${heure}\nMotif: ${motif}`);
+}
+
 function modifierRendezVous(rdvId) {
-    // TODO: Implémenter la modification
-    alert('Fonctionnalité de modification à implémenter');
+    alert('Fonctionnalité de modification à venir');
 }
 
 function annulerRendezVous(rdvId) {
     if (confirm('Annuler ce rendez-vous ?')) {
-        // TODO: Implémenter l'annulation
-        alert('Fonctionnalité d\'annulation à implémenter');
+        updateStatut(rdvId, 'annule');
     }
+}
+
+function updateStatut(rdvId, statut) {
+    fetch(`/admin/medecin/rendezvous/${rdvId}/statut`, {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+            'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').content
+        },
+        body: JSON.stringify({ statut: statut })
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            alert(data.message);
+            location.reload();
+        }
+    });
 }
 
 document.getElementById('createRendezVousForm').addEventListener('submit', function(e) {

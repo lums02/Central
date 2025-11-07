@@ -85,6 +85,12 @@ class LoginController extends Controller
             } elseif ($utilisateur->role === 'medecin') {
                 // Les médecins vont vers leur dashboard spécifique
                 return redirect()->intended(route('admin.medecin.dashboard'));
+            } elseif ($utilisateur->role === 'caissier') {
+                // Les caissiers vont vers leur page d'examens
+                return redirect()->intended(route('admin.caissier.examens'));
+            } elseif ($utilisateur->role === 'laborantin') {
+                // Les laborantins vont vers leur page d'examens
+                return redirect()->intended(route('admin.laborantin.examens'));
             } else {
                 // Les utilisateurs normaux vont vers leur dashboard spécifique
                 switch ($utilisateur->type_utilisateur) {

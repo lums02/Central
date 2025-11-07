@@ -859,6 +859,62 @@ document.addEventListener('DOMContentLoaded', function() {
     
     loadPendingCount();
     
+    // Charger les entités selon le type sélectionné (pour superadmin)
+    @if(auth()->user()->isSuperAdmin())
+    document.getElementById('createType').addEventListener('change', function() {
+        const type = this.value;
+        const entiteSelect = document.getElementById('createEntite');
+        
+        if (!type) {
+            entiteSelect.innerHTML = '<option value="">-- Sélectionner une entité --</option>';
+            return;
+        }
+        
+        // Charger les entités selon le type
+        let url = '';
+        switch(type) {
+            case 'hopital':
+                url = '/admin/api/hopitaux';
+                break;
+            case 'pharmacie':
+                url = '/admin/api/pharmacies';
+                break;
+            case 'banque_sang':
+                url = '/admin/api/banque-sangs';
+                break;
+            default:
+                entiteSelect.innerHTML = '<option value="">Aucune entité requise</option>';
+                entiteSelect.removeAttribute('required');
+                return;
+        }
+        
+        entiteSelect.setAttribute('required', 'required');
+        
+        console.log('Chargement des entités depuis:', url);
+        
+        fetch(url)
+            .then(response => {
+                console.log('Response status:', response.status);
+                if (!response.ok) {
+                    throw new Error('HTTP ' + response.status);
+                }
+                return response.json();
+            })
+            .then(data => {
+                console.log('Entités reçues:', data);
+                entiteSelect.innerHTML = '<option value="">-- Sélectionner une entité --</option>';
+                data.forEach(entite => {
+                    entiteSelect.innerHTML += `<option value="${entite.id}">${entite.nom}</option>`;
+                });
+            })
+            .catch(error => {
+                console.error('Erreur chargement entités:', error);
+                alert('Erreur: ' + error.message + '\nURL: ' + url);
+                entiteSelect.innerHTML = '<option value="">Erreur de chargement</option>';
+            });
+    });
+    @endif
+    
     // Gestion du formulaire de création d'utilisateur
     document.getElementById('createUserForm').addEventListener('submit', function(e) {
         e.preventDefault();
@@ -872,8 +928,12 @@ document.addEventListener('DOMContentLoaded', function() {
             type_utilisateur: formData.get('type_utilisateur')
         };
         
-        // Ajouter l'entité_id de l'utilisateur connecté
-        userData.entite_id = {{ auth()->user()->entite_id }};
+        // Ajouter l'entité_id
+        @if(auth()->user()->isSuperAdmin())
+            userData.entite_id = formData.get('entite_id');
+        @else
+            userData.entite_id = {{ auth()->user()->entite_id }};
+        @endif
         
         fetch('{{ route("admin.users.store") }}', {
             method: 'POST',
@@ -956,37 +1016,73 @@ function loadPendingCount() {
                             <label for="createPassword" class="form-label">Mot de passe <span class="text-danger">*</span></label>
                             <input type="password" class="form-control" id="createPassword" name="password" required minlength="8">
                         </div>
+                        
+                        @if(auth()->user()->isSuperAdmin())
+                        {{-- SUPERADMIN: Sélectionne le type d'entité --}}
                         <div class="col-md-6 mb-3">
-                            <label for="createRole" class="form-label">Rôle <span class="text-danger">*</span></label>
-                            <select class="form-select" id="createRole" name="role" required>
-                                @if(auth()->user()->type_utilisateur === 'hopital')
-                                    <option value="medecin">Médecin</option>
-                                    <option value="infirmier">Infirmier</option>
-                                    <option value="secretaire">Secrétaire</option>
-                                    <option value="technicien">Technicien</option>
-                                @elseif(auth()->user()->type_utilisateur === 'pharmacie')
-                                    <option value="pharmacien">Pharmacien</option>
-                                    <option value="technicien">Technicien</option>
-                                    <option value="secretaire">Secrétaire</option>
-                                @elseif(auth()->user()->type_utilisateur === 'banque_sang')
-                                    <option value="technicien">Technicien</option>
-                                    <option value="secretaire">Secrétaire</option>
-                                    <option value="manager">Manager</option>
-                                @else
-                                    <option value="user">Utilisateur</option>
-                                    <option value="manager">Manager</option>
-                                    <option value="moderator">Modérateur</option>
-                                @endif
+                            <label for="createType" class="form-label">Type d'entité <span class="text-danger">*</span></label>
+                            <select class="form-select" id="createType" name="type_utilisateur" required>
+                                <option value="">-- Sélectionner un type --</option>
+                                <option value="hopital">Hôpital</option>
+                                <option value="pharmacie">Pharmacie</option>
+                                <option value="banque_sang">Banque de Sang</option>
                             </select>
                         </div>
                     </div>
-                    <div class="mb-3">
-                        <label for="createType" class="form-label">Type d'utilisateur <span class="text-danger">*</span></label>
-                        <select class="form-select" id="createType" name="type_utilisateur" required>
-                            <option value="{{ auth()->user()->type_utilisateur }}">{{ ucfirst(auth()->user()->type_utilisateur) }}</option>
-                        </select>
-                        <small class="form-text text-muted">L'utilisateur sera automatiquement associé à votre entité.</small>
+                    
+                    {{-- SUPERADMIN: Sélectionne l'entité --}}
+                    <div class="row mb-3" id="entiteSelection">
+                        <div class="col-12">
+                            <label for="createEntite" class="form-label">Entité <span class="text-danger">*</span></label>
+                            <select class="form-select" id="createEntite" name="entite_id" required>
+                                <option value="">-- Sélectionner une entité --</option>
+                            </select>
+                            <small class="form-text text-muted">Sélectionnez d'abord le type d'entité</small>
+                        </div>
                     </div>
+                    
+                    {{-- SUPERADMIN: Rôle = admin uniquement --}}
+                    <div class="mb-3">
+                        <label for="createRole" class="form-label">Rôle <span class="text-danger">*</span></label>
+                        <select class="form-select" id="createRole" name="role" required>
+                            <option value="admin">Administrateur de l'entité</option>
+                        </select>
+                        <div class="alert alert-info mt-2">
+                            <i class="fas fa-info-circle me-2"></i>
+                            En tant que superadmin, vous créez uniquement les <strong>administrateurs</strong> de chaque entité.
+                            Ces administrateurs pourront ensuite créer leur propre personnel.
+                        </div>
+                    </div>
+                    @else
+                    {{-- ADMIN D'ENTITÉ: Type fixé à son entité --}}
+                        <input type="hidden" name="type_utilisateur" value="{{ auth()->user()->type_utilisateur }}">
+                    </div>
+                    
+                    {{-- ADMIN D'ENTITÉ: Sélectionne le rôle de son personnel --}}
+                    <div class="mb-3">
+                        <label for="createRole" class="form-label">Rôle du personnel <span class="text-danger">*</span></label>
+                        <select class="form-select" id="createRole" name="role" required>
+                            <option value="">-- Sélectionner un rôle --</option>
+                            @if(auth()->user()->type_utilisateur === 'hopital')
+                                <option value="medecin">Médecin</option>
+                                <option value="infirmier">Infirmier(ère)</option>
+                                <option value="laborantin">Laborantin</option>
+                                <option value="caissier">Caissier(ère)</option>
+                                <option value="receptionniste">Réceptionniste</option>
+                            @elseif(auth()->user()->type_utilisateur === 'pharmacie')
+                                <option value="pharmacien">Pharmacien(ne)</option>
+                                <option value="assistant_pharmacie">Assistant(e) Pharmacie</option>
+                            @elseif(auth()->user()->type_utilisateur === 'banque_sang')
+                                <option value="technicien_labo">Technicien Laboratoire</option>
+                                <option value="gestionnaire_donneurs">Gestionnaire Donneurs</option>
+                            @endif
+                        </select>
+                        <div class="alert alert-info mt-2">
+                            <i class="fas fa-info-circle me-2"></i>
+                            Vous créez un membre de votre personnel pour <strong>{{ auth()->user()->getEntiteName() }}</strong>.
+                        </div>
+                    </div>
+                    @endif
                 </div>
                 <div class="modal-footer">
                     <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Annuler</button>
