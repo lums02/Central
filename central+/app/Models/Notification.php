@@ -9,6 +9,8 @@ class Notification extends Model
     protected $fillable = [
         'user_id',
         'hopital_id',
+        'pharmacie_id',
+        'banque_sang_id',
         'type',
         'title',
         'message',
@@ -29,6 +31,16 @@ class Notification extends Model
     public function hopital()
     {
         return $this->belongsTo(Hopital::class, 'hopital_id');
+    }
+
+    public function pharmacie()
+    {
+        return $this->belongsTo(Pharmacie::class, 'pharmacie_id');
+    }
+
+    public function banqueSang()
+    {
+        return $this->belongsTo(BanqueSang::class, 'banque_sang_id');
     }
 }
 

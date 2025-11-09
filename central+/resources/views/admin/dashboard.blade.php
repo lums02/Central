@@ -145,6 +145,163 @@
                         </div>
                     </div>
                 </div>
+            @elseif($data['entity_type'] === 'pharmacie')
+                <!-- Statistiques Pharmacie -->
+                <div class="col-md-3">
+                    <div class="stats-card" style="background: white; border-radius: 15px; padding: 1.5rem; box-shadow: 0 10px 30px rgba(0,0,0,0.1); transition: transform 0.3s ease; border-left: 5px solid #003366;">
+                        <div class="d-flex justify-content-between align-items-center">
+                            <div>
+                                <h3 class="mb-0" style="color: #003366; font-weight: 600;">{{ $data['total_medicines'] ?? 0 }}</h3>
+                                <p class="mb-0" style="color: #666; font-size: 0.9rem;">Médicaments</p>
+                            </div>
+                            <div style="background: linear-gradient(135deg, #003366 0%, #002244 100%); width: 60px; height: 60px; border-radius: 50%; display: flex; align-items: center; justify-content: center;">
+                                <i class="fas fa-pills fa-2x text-white"></i>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="col-md-3">
+                    <div class="stats-card" style="background: white; border-radius: 15px; padding: 1.5rem; box-shadow: 0 10px 30px rgba(0,0,0,0.1); transition: transform 0.3s ease; border-left: 5px solid #dc3545;">
+                        <div class="d-flex justify-content-between align-items-center">
+                            <div>
+                                <h3 class="mb-0" style="color: #dc3545; font-weight: 600;">{{ $data['low_stock_items'] ?? 0 }}</h3>
+                                <p class="mb-0" style="color: #666; font-size: 0.9rem;">Stock Faible</p>
+                            </div>
+                            <div style="background: linear-gradient(135deg, #dc3545 0%, #c82333 100%); width: 60px; height: 60px; border-radius: 50%; display: flex; align-items: center; justify-content: center;">
+                                <i class="fas fa-exclamation-triangle fa-2x text-white"></i>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="col-md-3">
+                    <div class="stats-card" style="background: white; border-radius: 15px; padding: 1.5rem; box-shadow: 0 10px 30px rgba(0,0,0,0.1); transition: transform 0.3s ease; border-left: 5px solid #28a745;">
+                        <div class="d-flex justify-content-between align-items-center">
+                            <div>
+                                <h3 class="mb-0" style="color: #28a745; font-weight: 600;">{{ $data['total_orders'] ?? 0 }}</h3>
+                                <p class="mb-0" style="color: #666; font-size: 0.9rem;">Commandes</p>
+                            </div>
+                            <div style="background: linear-gradient(135deg, #28a745 0%, #20c997 100%); width: 60px; height: 60px; border-radius: 50%; display: flex; align-items: center; justify-content: center;">
+                                <i class="fas fa-shopping-cart fa-2x text-white"></i>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="col-md-3">
+                    <div class="stats-card" style="background: white; border-radius: 15px; padding: 1.5rem; box-shadow: 0 10px 30px rgba(0,0,0,0.1); transition: transform 0.3s ease; border-left: 5px solid #ffc107;">
+                        <div class="d-flex justify-content-between align-items-center">
+                            <div>
+                                <h3 class="mb-0" style="color: #ffc107; font-weight: 600;">{{ $data['pending_orders'] ?? 0 }}</h3>
+                                <p class="mb-0" style="color: #666; font-size: 0.9rem;">En Attente</p>
+                            </div>
+                            <div style="background: linear-gradient(135deg, #ffc107 0%, #ff8f00 100%); width: 60px; height: 60px; border-radius: 50%; display: flex; align-items: center; justify-content: center;">
+                                <i class="fas fa-clock fa-2x text-white"></i>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            @elseif($data['entity_type'] === 'banque_sang')
+                <!-- Statistiques Banque de Sang -->
+                <div class="col-md-3">
+                    <div class="stats-card" style="background: white; border-radius: 15px; padding: 1.5rem; box-shadow: 0 10px 30px rgba(0,0,0,0.1); transition: transform 0.3s ease; border-left: 5px solid #003366;">
+                        <div class="d-flex justify-content-between align-items-center">
+                            <div>
+                                <h3 class="mb-0" style="color: #003366; font-weight: 600;">{{ $data['total_donors'] ?? 0 }}</h3>
+                                <p class="mb-0" style="color: #666; font-size: 0.9rem;">Donneurs</p>
+                            </div>
+                            <div style="background: linear-gradient(135deg, #003366 0%, #002244 100%); width: 60px; height: 60px; border-radius: 50%; display: flex; align-items: center; justify-content: center;">
+                                <i class="fas fa-user-friends fa-2x text-white"></i>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="col-md-3">
+                    <div class="stats-card" style="background: white; border-radius: 15px; padding: 1.5rem; box-shadow: 0 10px 30px rgba(0,0,0,0.1); transition: transform 0.3s ease; border-left: 5px solid #dc3545;">
+                        <div class="d-flex justify-content-between align-items-center">
+                            <div>
+                                <h3 class="mb-0" style="color: #dc3545; font-weight: 600;">{{ $data['recent_donations'] ?? 0 }}</h3>
+                                <p class="mb-0" style="color: #666; font-size: 0.9rem;">Dons (7 jours)</p>
+                            </div>
+                            <div style="background: linear-gradient(135deg, #dc3545 0%, #c82333 100%); width: 60px; height: 60px; border-radius: 50%; display: flex; align-items: center; justify-content: center;">
+                                <i class="fas fa-hand-holding-heart fa-2x text-white"></i>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="col-md-3">
+                    <div class="stats-card" style="background: white; border-radius: 15px; padding: 1.5rem; box-shadow: 0 10px 30px rgba(0,0,0,0.1); transition: transform 0.3s ease; border-left: 5px solid #28a745;">
+                        <div class="d-flex justify-content-between align-items-center">
+                            <div>
+                                <h3 class="mb-0" style="color: #28a745; font-weight: 600;">{{ $data['total_users'] ?? 0 }}</h3>
+                                <p class="mb-0" style="color: #666; font-size: 0.9rem;">Personnel</p>
+                            </div>
+                            <div style="background: linear-gradient(135deg, #28a745 0%, #20c997 100%); width: 60px; height: 60px; border-radius: 50%; display: flex; align-items: center; justify-content: center;">
+                                <i class="fas fa-users fa-2x text-white"></i>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="col-md-3">
+                    <div class="stats-card" style="background: white; border-radius: 15px; padding: 1.5rem; box-shadow: 0 10px 30px rgba(0,0,0,0.1); transition: transform 0.3s ease; border-left: 5px solid #ffc107;">
+                        <div class="d-flex justify-content-between align-items-center">
+                            <div>
+                                <h3 class="mb-0" style="color: #ffc107; font-weight: 600;">8</h3>
+                                <p class="mb-0" style="color: #666; font-size: 0.9rem;">Groupes Sanguins</p>
+                            </div>
+                            <div style="background: linear-gradient(135deg, #ffc107 0%, #ff8f00 100%); width: 60px; height: 60px; border-radius: 50%; display: flex; align-items: center; justify-content: center;">
+                                <i class="fas fa-tint fa-2x text-white"></i>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            @else
+                <!-- Statistiques génériques pour autres entités -->
+                <div class="col-md-4">
+                    <div class="stats-card" style="background: white; border-radius: 15px; padding: 1.5rem; box-shadow: 0 10px 30px rgba(0,0,0,0.1); transition: transform 0.3s ease; border-left: 5px solid #003366;">
+                        <div class="d-flex justify-content-between align-items-center">
+                            <div>
+                                <h3 class="mb-0" style="color: #003366; font-weight: 600;">{{ $data['total_users'] ?? 0 }}</h3>
+                                <p class="mb-0" style="color: #666; font-size: 0.9rem;">Utilisateurs</p>
+                            </div>
+                            <div style="background: linear-gradient(135deg, #003366 0%, #002244 100%); width: 60px; height: 60px; border-radius: 50%; display: flex; align-items: center; justify-content: center;">
+                                <i class="fas fa-users fa-2x text-white"></i>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="col-md-4">
+                    <div class="stats-card" style="background: white; border-radius: 15px; padding: 1.5rem; box-shadow: 0 10px 30px rgba(0,0,0,0.1); transition: transform 0.3s ease; border-left: 5px solid #28a745;">
+                        <div class="d-flex justify-content-between align-items-center">
+                            <div>
+                                <h3 class="mb-0" style="color: #28a745; font-weight: 600;">{{ $data['approved_users'] ?? 0 }}</h3>
+                                <p class="mb-0" style="color: #666; font-size: 0.9rem;">Approuvés</p>
+                            </div>
+                            <div style="background: linear-gradient(135deg, #28a745 0%, #20c997 100%); width: 60px; height: 60px; border-radius: 50%; display: flex; align-items: center; justify-content: center;">
+                                <i class="fas fa-check-circle fa-2x text-white"></i>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="col-md-4">
+                    <div class="stats-card" style="background: white; border-radius: 15px; padding: 1.5rem; box-shadow: 0 10px 30px rgba(0,0,0,0.1); transition: transform 0.3s ease; border-left: 5px solid #ffc107;">
+                        <div class="d-flex justify-content-between align-items-center">
+                            <div>
+                                <h3 class="mb-0" style="color: #ffc107; font-weight: 600;">{{ $data['pending_users'] ?? 0 }}</h3>
+                                <p class="mb-0" style="color: #666; font-size: 0.9rem;">En Attente</p>
+                            </div>
+                            <div style="background: linear-gradient(135deg, #ffc107 0%, #ff8f00 100%); width: 60px; height: 60px; border-radius: 50%; display: flex; align-items: center; justify-content: center;">
+                                <i class="fas fa-clock fa-2x text-white"></i>
+                            </div>
+                        </div>
+                    </div>
+                </div>
             @endif
         @endif
     </div>
@@ -189,7 +346,35 @@
 
                     @elseif($data['dashboard_type'] === 'entity_admin')
                         <!-- Actions Admin d'Entité -->
-                        @if($data['entity_type'] === 'hopital')
+                        @if($data['entity_type'] === 'pharmacie')
+                            <div class="col-md-3 mb-3">
+                                <a href="{{ route('admin.pharmacie.medicaments.index') }}" class="action-btn" style="display: block; background: #003366; color: white; text-decoration: none; padding: 1.5rem; border-radius: 15px; text-align: center; transition: transform 0.3s ease; box-shadow: 0 5px 15px rgba(0,0,0,0.1);">
+                                    <i class="fas fa-pills fa-2x mb-2 d-block" style="color: white;"></i>
+                                    <strong>Gérer les Médicaments</strong>
+                                </a>
+                            </div>
+                            
+                            <div class="col-md-3 mb-3">
+                                <a href="{{ route('admin.pharmacie.stocks.index') }}" class="action-btn" style="display: block; background: #003366; color: white; text-decoration: none; padding: 1.5rem; border-radius: 15px; text-align: center; transition: transform 0.3s ease; box-shadow: 0 5px 15px rgba(0,0,0,0.1);">
+                                    <i class="fas fa-boxes fa-2x mb-2 d-block" style="color: white;"></i>
+                                    <strong>Gérer les Stocks</strong>
+                                </a>
+                            </div>
+                            
+                            <div class="col-md-3 mb-3">
+                                <a href="{{ route('admin.pharmacie.commandes.index') }}" class="action-btn" style="display: block; background: #003366; color: white; text-decoration: none; padding: 1.5rem; border-radius: 15px; text-align: center; transition: transform 0.3s ease; box-shadow: 0 5px 15px rgba(0,0,0,0.1);">
+                                    <i class="fas fa-shopping-cart fa-2x mb-2 d-block" style="color: white;"></i>
+                                    <strong>Voir les Commandes</strong>
+                                </a>
+                            </div>
+                            
+                            <div class="col-md-3 mb-3">
+                                <a href="{{ route('admin.pharmacie.test-notification') }}" class="action-btn" style="display: block; background: #ffc107; color: #333; text-decoration: none; padding: 1.5rem; border-radius: 15px; text-align: center; transition: transform 0.3s ease; box-shadow: 0 5px 15px rgba(0,0,0,0.1);">
+                                    <i class="fas fa-bell fa-2x mb-2 d-block" style="color: #333;"></i>
+                                    <strong>Test Notification</strong>
+                                </a>
+                            </div>
+                        @elseif($data['entity_type'] === 'hopital')
                             <div class="col-md-3 mb-3">
                                 <a href="#" class="action-btn" style="display: block; background: #003366; color: white; text-decoration: none; padding: 1.5rem; border-radius: 15px; text-align: center; transition: transform 0.3s ease; box-shadow: 0 5px 15px rgba(0,0,0,0.1);">
                                     <i class="fas fa-user-plus fa-2x mb-2 d-block" style="color: white;"></i>

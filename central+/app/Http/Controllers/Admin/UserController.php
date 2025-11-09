@@ -30,7 +30,9 @@ class UserController extends Controller
                 ->get();
         } else {
             // Admin d'entité voit seulement les utilisateurs de sa même entité spécifique (approuvés et désactivés)
+            // IMPORTANT: Filtrer par type_utilisateur ET entite_id pour éviter les conflits entre entités
             $utilisateurs = Utilisateur::whereIn('status', ['approved', 'disabled'])
+                ->where('type_utilisateur', $user->type_utilisateur)
                 ->where('entite_id', $user->entite_id)
                 ->orderBy('created_at', 'desc')
                 ->get();
@@ -46,7 +48,9 @@ class UserController extends Controller
         $utilisateur = Utilisateur::findOrFail($id);
         
         // Vérifier que l'admin d'entité ne peut voir que les utilisateurs de sa même entité spécifique
-        if (!$user->isSuperAdmin() && $utilisateur->entite_id !== $user->entite_id) {
+        if (!$user->isSuperAdmin() && 
+            ($utilisateur->type_utilisateur !== $user->type_utilisateur || 
+             $utilisateur->entite_id !== $user->entite_id)) {
             return response()->json([
                 'success' => false, 
                 'message' => 'Accès non autorisé à cet utilisateur'

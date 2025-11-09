@@ -235,6 +235,101 @@ Route::prefix('admin')->name('admin.')->middleware(['auth'])->group(function () 
     Route::get('/notifications', [\App\Http\Controllers\Admin\NotificationController::class, 'getNotifications'])->name('notifications.get');
     Route::post('/notifications/{id}/mark-read', [\App\Http\Controllers\Admin\NotificationController::class, 'markAsRead'])->name('notifications.mark-read');
     
+    // ========== ROUTES PHARMACIE ==========
+    Route::prefix('pharmacie')->name('pharmacie.')->group(function () {
+        // Route de test pour créer une notification
+        Route::get('/test-notification', function() {
+            $user = auth()->user();
+            if ($user->type_utilisateur === 'pharmacie') {
+                \App\Helpers\NotificationHelper::notifyStockFaible(
+                    $user->entite_id,
+                    'Paracétamol 500mg',
+                    5
+                );
+                return redirect()->route('admin.dashboard')->with('success', 'Notification de test créée !');
+            }
+            return back()->with('error', 'Vous devez être connecté en tant que pharmacie');
+        })->name('test-notification');
+        
+        // Gestion des médicaments
+        Route::prefix('medicaments')->name('medicaments.')->group(function () {
+            Route::get('/', [\App\Http\Controllers\Admin\MedicamentController::class, 'index'])->name('index');
+            Route::post('/', [\App\Http\Controllers\Admin\MedicamentController::class, 'store'])->name('store');
+            Route::get('/categories', [\App\Http\Controllers\Admin\MedicamentController::class, 'getCategories'])->name('categories');
+            Route::get('/formes', [\App\Http\Controllers\Admin\MedicamentController::class, 'getFormes'])->name('formes');
+            Route::get('/{id}', [\App\Http\Controllers\Admin\MedicamentController::class, 'show'])->name('show');
+            Route::put('/{id}', [\App\Http\Controllers\Admin\MedicamentController::class, 'update'])->name('update');
+            Route::delete('/{id}', [\App\Http\Controllers\Admin\MedicamentController::class, 'destroy'])->name('destroy');
+        });
+        
+        // Gestion des stocks
+        Route::prefix('stocks')->name('stocks.')->group(function () {
+            Route::get('/', [\App\Http\Controllers\Admin\StockController::class, 'index'])->name('index');
+            Route::post('/ajuster', [\App\Http\Controllers\Admin\StockController::class, 'ajuster'])->name('ajuster');
+            Route::get('/inventaire', [\App\Http\Controllers\Admin\StockController::class, 'inventaire'])->name('inventaire');
+            Route::post('/inventaire', [\App\Http\Controllers\Admin\StockController::class, 'enregistrerInventaire'])->name('inventaire.enregistrer');
+            Route::get('/{id}/historique', [\App\Http\Controllers\Admin\StockController::class, 'historique'])->name('historique');
+        });
+        
+        // Gestion des commandes
+        Route::prefix('commandes')->name('commandes.')->group(function () {
+            Route::get('/', [\App\Http\Controllers\Admin\CommandeController::class, 'index'])->name('index');
+            Route::post('/', [\App\Http\Controllers\Admin\CommandeController::class, 'store'])->name('store');
+            Route::get('/{id}', [\App\Http\Controllers\Admin\CommandeController::class, 'show'])->name('show');
+            Route::post('/{id}/valider', [\App\Http\Controllers\Admin\CommandeController::class, 'valider'])->name('valider');
+            Route::post('/{id}/receptionner', [\App\Http\Controllers\Admin\CommandeController::class, 'receptionner'])->name('receptionner');
+            Route::post('/{id}/annuler', [\App\Http\Controllers\Admin\CommandeController::class, 'annuler'])->name('annuler');
+        });
+        
+        // Gestion des fournisseurs
+        Route::prefix('fournisseurs')->name('fournisseurs.')->group(function () {
+            Route::get('/', [\App\Http\Controllers\Admin\FournisseurController::class, 'index'])->name('index');
+            Route::post('/', [\App\Http\Controllers\Admin\FournisseurController::class, 'store'])->name('store');
+            Route::get('/liste', [\App\Http\Controllers\Admin\FournisseurController::class, 'liste'])->name('liste');
+            Route::get('/{id}', [\App\Http\Controllers\Admin\FournisseurController::class, 'show'])->name('show');
+            Route::put('/{id}', [\App\Http\Controllers\Admin\FournisseurController::class, 'update'])->name('update');
+            Route::delete('/{id}', [\App\Http\Controllers\Admin\FournisseurController::class, 'destroy'])->name('destroy');
+        });
+        
+        // Gestion des ventes
+        Route::prefix('ventes')->name('ventes.')->group(function () {
+            Route::get('/', function() { return view('admin.pharmacie.ventes.index'); })->name('index');
+            Route::post('/', function() { return back(); })->name('store');
+            Route::get('/{id}', function() { return view('admin.pharmacie.ventes.show'); })->name('show');
+        });
+    });
+    
+    // ========== ROUTES BANQUE DE SANG ==========
+    Route::prefix('banque-sang')->name('banque-sang.')->group(function () {
+        // Gestion des donneurs
+        Route::prefix('donneurs')->name('donneurs.')->group(function () {
+            Route::get('/', [\App\Http\Controllers\Admin\BanqueSangController::class, 'donneurs'])->name('index');
+            Route::post('/', [\App\Http\Controllers\Admin\BanqueSangController::class, 'storeDonneur'])->name('store');
+        });
+        
+        // Gestion des dons
+        Route::prefix('dons')->name('dons.')->group(function () {
+            Route::get('/', [\App\Http\Controllers\Admin\BanqueSangController::class, 'dons'])->name('index');
+            Route::post('/', [\App\Http\Controllers\Admin\BanqueSangController::class, 'storeDon'])->name('store');
+        });
+        
+        // Gestion des réserves
+        Route::prefix('reserves')->name('reserves.')->group(function () {
+            Route::get('/', [\App\Http\Controllers\Admin\BanqueSangController::class, 'reserves'])->name('index');
+        });
+        
+        // Gestion des demandes
+        Route::prefix('demandes')->name('demandes.')->group(function () {
+            Route::get('/', [\App\Http\Controllers\Admin\BanqueSangController::class, 'demandes'])->name('index');
+            Route::post('/{id}/traiter', [\App\Http\Controllers\Admin\BanqueSangController::class, 'traiterDemande'])->name('traiter');
+        });
+        
+        // Gestion des analyses
+        Route::prefix('analyses')->name('analyses.')->group(function () {
+            Route::get('/', function() { return view('admin.banque-sang.analyses.index'); })->name('index');
+        });
+    });
+    
     // Routes API pour charger les entités (pour superadmin)
     Route::prefix('api')->group(function () {
         Route::get('/hopitaux', function() {

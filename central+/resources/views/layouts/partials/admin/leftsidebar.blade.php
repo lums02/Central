@@ -15,160 +15,133 @@
         </div>
 
         <nav class="nav flex-column mt-3 px-2 flex-grow-1">
-            {{-- Tableau de bord - Toujours visible --}}
-            <a href="{{ route('admin.dashboard') }}"
-               class="nav-link text-white mb-2 {{ request()->routeIs('admin.dashboard') ? 'active bg-primary rounded' : '' }}">
-                <i class="fas fa-home me-2"></i> Tableau de bord
-            </a>
-
-            {{-- Rôles et Permissions - Toujours visible pour le superadmin, sinon selon les permissions --}}
-            @if(auth()->check() && (auth()->user()->isSuperAdmin() || auth()->user()->can('view_roles')))
-            <a href="{{ route('admin.permissions.index') }}"
-               class="nav-link text-white mb-2 {{ request()->routeIs('admin.permissions*') ? 'active bg-primary rounded' : '' }}">
-                <i class="fas fa-shield-alt me-2"></i> Rôles et Permissions
-            </a>
-            @endif
-
-            {{-- Gestion des Utilisateurs - Superadmin ou avec permissions --}}
-            @if(auth()->check() && (auth()->user()->isSuperAdmin() || auth()->user()->can('view_users')))
-            <a href="{{ route('admin.users.index') }}"
-               class="nav-link text-white mb-2 {{ request()->routeIs('admin.users.index') ? 'active bg-primary rounded' : '' }}">
-                <i class="fas fa-users me-2"></i> Utilisateurs
-            </a>
-            @endif
-
-            {{-- Utilisateurs en Attente - Superadmin ou avec permissions --}}
-            @if(auth()->check() && (auth()->user()->isSuperAdmin() || auth()->user()->can('view_users')))
-            <a href="{{ route('admin.users.pending') }}"
-               class="nav-link text-white mb-2 {{ request()->routeIs('admin.users.pending') ? 'active bg-primary rounded' : '' }}">
-                <i class="fas fa-clock me-2"></i> En Attente
-                <span class="badge bg-warning text-dark ms-auto" id="pendingBadge">0</span>
-            </a>
-            @endif
-
-            {{-- Modules spécifiques aux entités --}}
             @if(auth()->check())
-                {{-- Gestion des Patients - Pour les hôpitaux ou autres avec permissions --}}
-                @if(auth()->user()->type_utilisateur === 'hopital' && auth()->user()->role === 'admin')
-                <a href="{{ route('admin.hopital.patients.index') }}"
-                   class="nav-link text-white mb-2 {{ request()->routeIs('admin.hopital.patients*') ? 'active bg-primary rounded' : '' }}">
-                    <i class="fas fa-user-injured me-2"></i> Patients
+                {{-- ========== COMMUN À TOUS (Données isolées par entité) ========== --}}
+                <a href="{{ route('admin.dashboard') }}"
+                   class="nav-link text-white mb-2 {{ request()->routeIs('admin.dashboard') ? 'active bg-primary rounded' : '' }}">
+                    <i class="fas fa-home me-2"></i> Tableau de bord
                 </a>
-                @elseif(auth()->user()->can('view_patients') && Route::has('admin.patients.index'))
-                <a href="{{ route('admin.patients.index') }}"
-                   class="nav-link text-white mb-2 {{ request()->routeIs('admin.patients*') ? 'active bg-primary rounded' : '' }}">
-                    <i class="fas fa-user-injured me-2"></i> Patients
+
+                <a href="{{ route('admin.permissions.index') }}"
+                   class="nav-link text-white mb-2 {{ request()->routeIs('admin.permissions*') ? 'active bg-primary rounded' : '' }}">
+                    <i class="fas fa-shield-alt me-2"></i> Rôles et Permissions
                 </a>
+
+                <a href="{{ route('admin.users.index') }}"
+                   class="nav-link text-white mb-2 {{ request()->routeIs('admin.users.index') ? 'active bg-primary rounded' : '' }}">
+                    <i class="fas fa-users me-2"></i> Utilisateurs
+                </a>
+
+                {{-- ========== SPÉCIFIQUE PAR TYPE D'UTILISATEUR ========== --}}
+                @if(auth()->user()->isSuperAdmin())
+                    {{-- SUPERADMIN UNIQUEMENT --}}
+                    <a href="{{ route('admin.users.pending') }}"
+                       class="nav-link text-white mb-2 {{ request()->routeIs('admin.users.pending') ? 'active bg-primary rounded' : '' }}">
+                        <i class="fas fa-clock me-2"></i> En Attente
+                        <span class="badge bg-warning text-dark ms-auto" id="pendingBadge">0</span>
+                    </a>
+
+                    <a href="{{ route('admin.entities') }}"
+                       class="nav-link text-white mb-2 {{ request()->routeIs('admin.entities') ? 'active bg-primary rounded' : '' }}">
+                        <i class="fas fa-building me-2"></i> Entités
+                    </a>
+
+                    <a href="{{ route('admin.settings') }}"
+                       class="nav-link text-white mb-2 {{ request()->routeIs('admin.settings') ? 'active bg-primary rounded' : '' }}">
+                        <i class="fas fa-cog me-2"></i> Paramètres
+                    </a>
+
+                @elseif(auth()->user()->type_utilisateur === 'hopital')
+                    {{-- HÔPITAL UNIQUEMENT --}}
+                    @if(auth()->user()->hasRole('admin'))
+                        <a href="{{ route('admin.hopital.patients.index') }}"
+                           class="nav-link text-white mb-2 {{ request()->routeIs('admin.hopital.patients*') ? 'active bg-primary rounded' : '' }}">
+                            <i class="fas fa-user-injured me-2"></i> Patients
+                        </a>
+
+                        <a href="{{ route('admin.hopital.rendezvous.index') }}"
+                           class="nav-link text-white mb-2 {{ request()->routeIs('admin.hopital.rendezvous*') ? 'active bg-primary rounded' : '' }}">
+                            <i class="fas fa-calendar-alt me-2"></i> Rendez-vous
+                        </a>
+
+                        <div class="nav-section-title text-white-50 mt-3 mb-2 px-2">
+                            <small>TRANSFERTS</small>
+                        </div>
+
+                        <a href="{{ route('admin.hopital.transferts.rechercher') }}"
+                           class="nav-link text-white mb-2 {{ request()->routeIs('admin.hopital.transferts.rechercher') ? 'active bg-primary rounded' : '' }}">
+                            <i class="fas fa-search me-2"></i> Demander un Dossier
+                        </a>
+
+                        <a href="{{ route('admin.hopital.transferts.demandes-envoyees') }}"
+                           class="nav-link text-white mb-2 {{ request()->routeIs('admin.hopital.transferts.demandes-envoyees') ? 'active bg-primary rounded' : '' }}">
+                            <i class="fas fa-paper-plane me-2"></i> Demandes Envoyées
+                        </a>
+
+                        <a href="{{ route('admin.hopital.transferts.demandes-recues') }}"
+                           class="nav-link text-white mb-2 {{ request()->routeIs('admin.hopital.transferts.demandes-recues') ? 'active bg-primary rounded' : '' }}">
+                            <i class="fas fa-inbox me-2"></i> Demandes Reçues
+                        </a>
+                    @endif
+
+                @elseif(auth()->user()->type_utilisateur === 'pharmacie')
+                    {{-- PHARMACIE UNIQUEMENT --}}
+                    @if(auth()->user()->hasRole('admin'))
+                        <a href="{{ route('admin.pharmacie.medicaments.index') }}"
+                           class="nav-link text-white mb-2 {{ request()->routeIs('admin.pharmacie.medicaments*') ? 'active bg-primary rounded' : '' }}">
+                            <i class="fas fa-pills me-2"></i> Médicaments
+                        </a>
+
+                        <a href="{{ route('admin.pharmacie.stocks.index') }}"
+                           class="nav-link text-white mb-2 {{ request()->routeIs('admin.pharmacie.stocks*') ? 'active bg-primary rounded' : '' }}">
+                            <i class="fas fa-boxes me-2"></i> Stocks
+                        </a>
+
+                        <a href="{{ route('admin.pharmacie.commandes.index') }}"
+                           class="nav-link text-white mb-2 {{ request()->routeIs('admin.pharmacie.commandes*') ? 'active bg-primary rounded' : '' }}">
+                            <i class="fas fa-shopping-cart me-2"></i> Commandes
+                        </a>
+
+                        <a href="{{ route('admin.pharmacie.fournisseurs.index') }}"
+                           class="nav-link text-white mb-2 {{ request()->routeIs('admin.pharmacie.fournisseurs*') ? 'active bg-primary rounded' : '' }}">
+                            <i class="fas fa-truck me-2"></i> Fournisseurs
+                        </a>
+
+                        <a href="{{ route('admin.pharmacie.ventes.index') }}"
+                           class="nav-link text-white mb-2 {{ request()->routeIs('admin.pharmacie.ventes*') ? 'active bg-primary rounded' : '' }}">
+                            <i class="fas fa-cash-register me-2"></i> Ventes
+                        </a>
+                    @endif
+
+                @elseif(auth()->user()->type_utilisateur === 'banque_sang')
+                    {{-- BANQUE DE SANG UNIQUEMENT --}}
+                    @if(auth()->user()->hasRole('admin'))
+                        <a href="{{ route('admin.banque-sang.donneurs.index') }}"
+                           class="nav-link text-white mb-2 {{ request()->routeIs('admin.banque-sang.donneurs*') ? 'active bg-primary rounded' : '' }}">
+                            <i class="fas fa-user-friends me-2"></i> Donneurs
+                        </a>
+
+                        <a href="{{ route('admin.banque-sang.dons.index') }}"
+                           class="nav-link text-white mb-2 {{ request()->routeIs('admin.banque-sang.dons*') ? 'active bg-primary rounded' : '' }}">
+                            <i class="fas fa-hand-holding-heart me-2"></i> Dons
+                        </a>
+
+                        <a href="{{ route('admin.banque-sang.reserves.index') }}"
+                           class="nav-link text-white mb-2 {{ request()->routeIs('admin.banque-sang.reserves*') ? 'active bg-primary rounded' : '' }}">
+                            <i class="fas fa-tint me-2"></i> Réserves
+                        </a>
+
+                        <a href="{{ route('admin.banque-sang.demandes.index') }}"
+                           class="nav-link text-white mb-2 {{ request()->routeIs('admin.banque-sang.demandes*') ? 'active bg-primary rounded' : '' }}">
+                            <i class="fas fa-file-medical me-2"></i> Demandes
+                        </a>
+
+                        <a href="{{ route('admin.banque-sang.analyses.index') }}"
+                           class="nav-link text-white mb-2 {{ request()->routeIs('admin.banque-sang.analyses*') ? 'active bg-primary rounded' : '' }}">
+                            <i class="fas fa-microscope me-2"></i> Analyses
+                        </a>
+                    @endif
                 @endif
-
-                {{-- Gestion des Rendez-vous - Pour les hôpitaux ou autres avec permissions --}}
-                @if(auth()->user()->type_utilisateur === 'hopital' && auth()->user()->role === 'admin')
-                <a href="{{ route('admin.hopital.rendezvous.index') }}"
-                   class="nav-link text-white mb-2 {{ request()->routeIs('admin.hopital.rendezvous*') ? 'active bg-primary rounded' : '' }}">
-                    <i class="fas fa-calendar-alt me-2"></i> Rendez-vous
-                </a>
-                @elseif(auth()->user()->can('view_appointments') && Route::has('admin.appointments.index'))
-                <a href="{{ route('admin.appointments.index') }}"
-                   class="nav-link text-white mb-2 {{ request()->routeIs('admin.appointments*') ? 'active bg-primary rounded' : '' }}">
-                    <i class="fas fa-calendar-alt me-2"></i> Rendez-vous
-                </a>
-                @endif
-
-                {{-- Gestion des Dossiers Médicaux - Seulement si l'utilisateur a les permissions ET si la route existe --}}
-                @if(auth()->user()->can('view_medical_records') && Route::has('admin.medical-records.index'))
-                <a href="{{ route('admin.medical-records.index') }}"
-                   class="nav-link text-white mb-2 {{ request()->routeIs('admin.medical_records*') ? 'active bg-primary rounded' : '' }}">
-                    <i class="fas fa-file-medical me-2"></i> Dossiers Médicaux
-                </a>
-                @endif
-
-                {{-- Gestion des Prescriptions - Seulement si l'utilisateur a les permissions ET si la route existe --}}
-                @if(auth()->user()->can('view_prescriptions') && Route::has('admin.prescriptions.index'))
-                <a href="{{ route('admin.prescriptions.index') }}"
-                   class="nav-link text-white mb-2 {{ request()->routeIs('admin.prescriptions*') ? 'active bg-primary rounded' : '' }}">
-                    <i class="fas fa-prescription me-2"></i> Prescriptions
-                </a>
-                @endif
-
-                {{-- Gestion des Factures - Seulement si l'utilisateur a les permissions ET si la route existe --}}
-                @if(auth()->user()->can('view_invoices') && Route::has('admin.invoices.index'))
-                <a href="{{ route('admin.invoices.index') }}"
-                   class="nav-link text-white mb-2 {{ request()->routeIs('admin.invoices*') ? 'active bg-primary rounded' : '' }}">
-                    <i class="fas fa-file-invoice me-2"></i> Factures
-                </a>
-                @endif
-
-                {{-- Gestion des Rapports - Seulement si l'utilisateur a les permissions ET si la route existe --}}
-                @if(auth()->user()->can('view_reports') && Route::has('admin.reports.index'))
-                <a href="{{ route('admin.reports.index') }}"
-                   class="nav-link text-white mb-2 {{ request()->routeIs('admin.reports*') ? 'active bg-primary rounded' : '' }}">
-                    <i class="fas fa-chart-bar me-2"></i> Rapports
-                </a>
-                @endif
-
-                {{-- Gestion des Médicaments - Seulement si l'utilisateur a les permissions ET si la route existe --}}
-                @if(auth()->user()->can('view_medicines') && Route::has('admin.medicines.index'))
-                <a href="{{ route('admin.medicines.index') }}"
-                   class="nav-link text-white mb-2 {{ request()->routeIs('admin.medicines*') ? 'active bg-primary rounded' : '' }}">
-                    <i class="fas fa-pills me-2"></i> Médicaments
-                </a>
-                @endif
-
-                {{-- Gestion des Stocks - Seulement si l'utilisateur a les permissions ET si la route existe --}}
-                @if(auth()->user()->can('view_stocks') && Route::has('admin.stocks.index'))
-                <a href="{{ route('admin.stocks.index') }}"
-                   class="nav-link text-white mb-2 {{ request()->routeIs('admin.stocks*') ? 'active bg-primary rounded' : '' }}">
-                    <i class="fas fa-boxes me-2"></i> Stocks
-                </a>
-                @endif
-
-                {{-- Gestion des Donneurs - Seulement si l'utilisateur a les permissions ET si la route existe --}}
-                @if(auth()->user()->can('view_donors') && Route::has('admin.donors.index'))
-                <a href="{{ route('admin.donors.index') }}"
-                   class="nav-link text-white mb-2 {{ request()->routeIs('admin.donors*') ? 'active bg-primary rounded' : '' }}">
-                    <i class="fas fa-heart me-2"></i> Donneurs
-                </a>
-                @endif
-
-                {{-- Gestion des Réserves de Sang - Seulement si l'utilisateur a les permissions ET si la route existe --}}
-                @if(auth()->user()->can('view_blood_reserves') && Route::has('admin.blood-reserves.index'))
-                <a href="{{ route('admin.blood-reserves.index') }}"
-                   class="nav-link text-white mb-2 {{ request()->routeIs('admin.blood_reserves*') ? 'active bg-primary rounded' : '' }}">
-                    <i class="fas fa-tint me-2"></i> Réserves de Sang
-                </a>
-                @endif
-
-                {{-- Gestion des Services - Seulement si l'utilisateur a les permissions ET si la route existe --}}
-                @if(auth()->user()->can('view_services') && Route::has('admin.services.index'))
-                <a href="{{ route('admin.services.index') }}"
-                   class="nav-link text-white mb-2 {{ request()->routeIs('admin.services*') ? 'active bg-primary rounded' : '' }}">
-                    <i class="fas fa-concierge-bell me-2"></i> Services
-                </a>
-                @endif
-
-                {{-- Gestion des Consultations - Seulement si l'utilisateur a les permissions ET si la route existe --}}
-                @if(auth()->user()->can('view_consultations') && Route::has('admin.consultations.index'))
-                <a href="{{ route('admin.consultations.index') }}"
-                   class="nav-link text-white mb-2 {{ request()->routeIs('admin.consultations*') ? 'active bg-primary rounded' : '' }}">
-                    <i class="fas fa-stethoscope me-2"></i> Consultations
-                </a>
-                @endif
-            @endif
-
-            {{-- Entités - Seulement pour les superadmins ou admins --}}
-            @if(auth()->check() && (auth()->user()->can('view_roles') || auth()->user()->isSuperAdmin()))
-            <a href="{{ route('admin.entities') }}"
-               class="nav-link text-white mb-2 {{ request()->routeIs('admin.entities') ? 'active bg-primary rounded' : '' }}">
-                <i class="fas fa-building me-2"></i> Entités
-            </a>
-            @endif
-
-            {{-- Paramètres - Seulement pour les superadmins ou admins --}}
-            @if(auth()->check() && (auth()->user()->can('view_roles') || auth()->user()->isSuperAdmin()))
-            <a href="{{ route('admin.settings') }}"
-               class="nav-link text-white mb-2 {{ request()->routeIs('admin.settings') ? 'active bg-primary rounded' : '' }}">
-                <i class="fas fa-cog me-2"></i> Paramètres
-            </a>
             @endif
         </nav>
     </div>
