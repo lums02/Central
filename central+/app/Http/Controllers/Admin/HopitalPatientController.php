@@ -82,19 +82,22 @@ class HopitalPatientController extends Controller
         
         $request->validate([
             'nom' => 'required|string|max:255',
-            'prenom' => 'nullable|string|max:255',
             'email' => 'required|email|unique:utilisateurs,email',
+            'mot_de_passe' => 'required|string|min:6',
             'telephone' => 'nullable|string|max:20',
-            'date_naissance' => 'required|date',
-            'sexe' => 'required|in:masculin,feminin',
+            'date_naissance' => 'nullable|date',
+            'sexe' => 'nullable|in:M,F,masculin,feminin',
+            'groupe_sanguin' => 'nullable|string',
             'adresse' => 'nullable|string',
-        ], [
-            'nom.required' => 'Le nom est obligatoire.',
-            'email.required' => 'L\'email est obligatoire.',
-            'email.unique' => 'Cette adresse email est déjà utilisée.',
-            'date_naissance.required' => 'La date de naissance est obligatoire.',
-            'sexe.required' => 'Le sexe est obligatoire.',
+            'antecedents' => 'nullable|string',
+            'prenom' => 'nullable|string|max:255',
+            'medecin_id' => 'nullable|exists:utilisateurs,id',
         ]);
+        
+        // Normaliser le sexe
+        $sexe = $request->sexe;
+        if ($sexe === 'M') $sexe = 'masculin';
+        if ($sexe === 'F') $sexe = 'feminin';
         
         // Créer le patient
         $patient = Utilisateur::create([
@@ -103,17 +106,47 @@ class HopitalPatientController extends Controller
             'email' => $request->email,
             'telephone' => $request->telephone,
             'date_naissance' => $request->date_naissance,
-            'sexe' => $request->sexe,
+            'sexe' => $sexe,
+            'groupe_sanguin' => $request->groupe_sanguin,
             'adresse' => $request->adresse,
             'type_utilisateur' => 'patient',
             'entite_id' => $user->entite_id,
-            'mot_de_passe' => bcrypt('password123'), // Mot de passe par défaut
-            'status' => 'actif',
-            'role' => 'user',
+            'mot_de_passe' => bcrypt($request->mot_de_passe),
+            'status' => 'approved', // Approuvé automatiquement
+            'role' => 'patient',
         ]);
         
+        // Si un médecin traitant est sélectionné, créer une notification pour le médecin
+        if ($request->medecin_id) {
+            \App\Models\Notification::create([
+                'user_id' => $request->medecin_id,
+                'hopital_id' => $user->entite_id,
+                'type' => 'nouveau_patient',
+                'title' => 'Nouveau patient assigné',
+                'message' => "Le patient {$patient->nom} vous a été assigné par l'administration.",
+                'data' => json_encode(['patient_id' => $patient->id]),
+                'read' => false,
+            ]);
+        }
+        
+        // Si la requête attend du JSON (AJAX)
+        if ($request->expectsJson() || $request->ajax()) {
+            return response()->json([
+                'success' => true,
+                'message' => 'Patient créé avec succès',
+                'patient' => $patient
+            ]);
+        }
+        
+        // Redirection selon le type d'utilisateur
+        if ($user->role === 'medecin') {
+            return redirect()->route('admin.medecin.patients')
+                ->with('success', 'Patient créé avec succès.');
+        }
+        
+        // Sinon redirection normale pour l'admin
         return redirect()->route('admin.hopital.patients.index')
-            ->with('success', 'Patient créé avec succès. Email de bienvenue envoyé à ' . $patient->email);
+            ->with('success', 'Patient créé avec succès.');
     }
     
     /**

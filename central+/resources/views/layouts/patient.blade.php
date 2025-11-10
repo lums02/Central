@@ -669,22 +669,59 @@
                 
                 <div class="collapse navbar-collapse" id="navbarNav">
                     <ul class="navbar-nav me-auto">
-                        <li class="nav-item">
-                            <a class="nav-link" href="#services">Services</a>
-                        </li>
-                        <li class="nav-item">
-                            <a class="nav-link" href="#about">À propos</a>
-                        </li>
-                        <li class="nav-item">
-                            <a class="nav-link" href="#contact">Contact</a>
-                        </li>
+                        @auth
+                            <li class="nav-item">
+                                <a class="nav-link {{ request()->routeIs('patient.dashboard') ? 'active' : '' }}" href="{{ route('patient.dashboard') }}">
+                                    <i class="fas fa-home me-1"></i>Accueil
+                                </a>
+                            </li>
+                            <li class="nav-item">
+                                <a class="nav-link {{ request()->routeIs('patient.dossiers*') ? 'active' : '' }}" href="{{ route('patient.dossiers') }}">
+                                    <i class="fas fa-folder-open me-1"></i>Mon Dossier
+                                </a>
+                            </li>
+                            <li class="nav-item">
+                                <a class="nav-link {{ request()->routeIs('patient.rendezvous') ? 'active' : '' }}" href="{{ route('patient.rendezvous') }}">
+                                    <i class="fas fa-calendar-alt me-1"></i>Rendez-vous
+                                </a>
+                            </li>
+                            <li class="nav-item">
+                                <a class="nav-link {{ request()->routeIs('patient.examens') ? 'active' : '' }}" href="{{ route('patient.examens') }}">
+                                    <i class="fas fa-flask me-1"></i>Examens
+                                </a>
+                            </li>
+                            <li class="nav-item">
+                                <a class="nav-link {{ request()->routeIs('patient.pharmacies') ? 'active' : '' }}" href="{{ route('patient.pharmacies') }}">
+                                    <i class="fas fa-pills me-1"></i>Pharmacies
+                                </a>
+                            </li>
+                            <li class="nav-item">
+                                <a class="nav-link {{ request()->routeIs('patient.banques-sang') ? 'active' : '' }}" href="{{ route('patient.banques-sang') }}">
+                                    <i class="fas fa-tint me-1"></i>Banques de Sang
+                                </a>
+                            </li>
+                        @else
+                            <li class="nav-item">
+                                <a class="nav-link" href="#services">Services</a>
+                            </li>
+                            <li class="nav-item">
+                                <a class="nav-link" href="#about">À propos</a>
+                            </li>
+                            <li class="nav-item">
+                                <a class="nav-link" href="#contact">Contact</a>
+                            </li>
+                        @endauth
                     </ul>
                     
                     <div class="d-flex">
                         @auth
-                            <a href="{{ route('patient.dashboard') }}" class="btn btn-login me-2">
-                                <i class="fas fa-tachometer-alt me-1"></i>Mon Espace
-                            </a>
+                            <span class="text-white me-3 align-self-center">{{ auth()->user()->nom }}</span>
+                            <form action="{{ route('patient.logout') }}" method="POST" class="d-inline">
+                                @csrf
+                                <button type="submit" class="btn btn-login">
+                                    <i class="fas fa-sign-out-alt me-1"></i>Déconnexion
+                                </button>
+                            </form>
                         @else
                             <a href="{{ route('login') }}" class="btn btn-login">
                                 <i class="fas fa-sign-in-alt me-1"></i>Se connecter

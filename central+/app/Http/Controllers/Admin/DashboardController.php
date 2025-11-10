@@ -68,33 +68,43 @@ class DashboardController extends Controller
         // Statistiques selon le type d'entité et les permissions
         switch ($user->type_utilisateur) {
             case 'hopital':
-                $stats['total_patients'] = 0; // Patient::where('hopital_id', $user->hopital_id)->count();
-                $stats['total_appointments'] = 0; // Appointment::where('hopital_id', $user->hopital_id)->count();
-                $stats['today_appointments'] = 0; // Appointment::where('hopital_id', $user->hopital_id)->whereDate('date', today())->count();
-                $stats['total_consultations'] = 0; // Consultation::where('hopital_id', $user->hopital_id)->count();
-                $stats['total_prescriptions'] = 0; // Prescription::where('hopital_id', $user->hopital_id)->count();
+                $stats['total_patients'] = \App\Models\Utilisateur::where('type_utilisateur', 'patient')
+                    ->where('entite_id', $entiteId)
+                    ->count();
+                $stats['total_appointments'] = \App\Models\RendezVous::where('hopital_id', $entiteId)->count();
+                $stats['today_appointments'] = \App\Models\RendezVous::where('hopital_id', $entiteId)
+                    ->whereDate('date_rendezvous', today())
+                    ->count();
+                $stats['total_consultations'] = \App\Models\DossierMedical::where('hopital_id', $entiteId)->count();
+                $stats['total_medecins'] = \App\Models\Utilisateur::where('type_utilisateur', 'hopital')
+                    ->where('entite_id', $entiteId)
+                    ->where('role', 'medecin')
+                    ->count();
                 break;
 
             case 'pharmacie':
-                $stats['total_medicines'] = 0; // Medicine::where('pharmacie_id', $user->pharmacie_id)->count();
-                $stats['low_stock_items'] = 0; // Stock::where('pharmacie_id', $user->pharmacie_id)->where('quantity', '<', 'min_quantity')->count();
-                $stats['total_orders'] = 0; // Order::where('pharmacie_id', $user->pharmacie_id)->count();
-                $stats['pending_orders'] = 0; // Order::where('pharmacie_id', $user->pharmacie_id)->where('status', 'pending')->count();
+                $stats['total_medicaments'] = \App\Models\Medicament::where('pharmacie_id', $entiteId)
+                    ->where('actif', true)
+                    ->count();
+                $stats['stock_faible'] = \App\Models\Medicament::where('pharmacie_id', $entiteId)
+                    ->where('actif', true)
+                    ->whereRaw('stock_actuel <= stock_minimum')
+                    ->count();
+                $stats['total_commandes'] = \App\Models\Commande::where('pharmacie_id', $entiteId)->count();
+                $stats['commandes_en_attente'] = \App\Models\Commande::where('pharmacie_id', $entiteId)
+                    ->where('statut', 'en_attente')
+                    ->count();
                 break;
 
             case 'banque_sang':
-                $stats['total_donors'] = 0; // Donor::where('banque_sang_id', $user->banque_sang_id)->count();
-                $stats['blood_reserves'] = [
-                    'A+' => 0, // BloodReserve::where('banque_sang_id', $user->banque_sang_id)->where('blood_type', 'A+')->sum('quantity');
-                    'A-' => 0,
-                    'B+' => 0,
-                    'B-' => 0,
-                    'AB+' => 0,
-                    'AB-' => 0,
-                    'O+' => 0,
-                    'O-' => 0,
-                ];
-                $stats['recent_donations'] = 0; // Donation::where('banque_sang_id', $user->banque_sang_id)->where('created_at', '>=', now()->subDays(7))->count();
+                $stats['total_donneurs'] = \App\Models\Donneur::where('banque_sang_id', $entiteId)->count();
+                $stats['dons_7_jours'] = \App\Models\Don::where('banque_sang_id', $entiteId)
+                    ->where('created_at', '>=', now()->subDays(7))
+                    ->count();
+                $stats['total_personnel'] = \App\Models\Utilisateur::where('type_utilisateur', 'banque_sang')
+                    ->where('entite_id', $entiteId)
+                    ->count();
+                $stats['groupes_sanguins'] = 8; // Toujours 8 groupes
                 break;
 
             case 'centre':

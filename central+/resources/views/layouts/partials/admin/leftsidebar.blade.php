@@ -16,21 +16,23 @@
 
         <nav class="nav flex-column mt-3 px-2 flex-grow-1">
             @if(auth()->check())
-                {{-- ========== COMMUN À TOUS (Données isolées par entité) ========== --}}
-                <a href="{{ route('admin.dashboard') }}"
-                   class="nav-link text-white mb-2 {{ request()->routeIs('admin.dashboard') ? 'active bg-primary rounded' : '' }}">
-                    <i class="fas fa-home me-2"></i> Tableau de bord
-                </a>
+                {{-- ========== MENU POUR ADMINISTRATEURS ========== --}}
+                @if(auth()->user()->isSuperAdmin() || auth()->user()->role === 'admin')
+                    <a href="{{ route('admin.dashboard') }}"
+                       class="nav-link text-white mb-2 {{ request()->routeIs('admin.dashboard') ? 'active bg-primary rounded' : '' }}">
+                        <i class="fas fa-home me-2"></i> Tableau de bord
+                    </a>
 
-                <a href="{{ route('admin.permissions.index') }}"
-                   class="nav-link text-white mb-2 {{ request()->routeIs('admin.permissions*') ? 'active bg-primary rounded' : '' }}">
-                    <i class="fas fa-shield-alt me-2"></i> Rôles et Permissions
-                </a>
+                    <a href="{{ route('admin.permissions.index') }}"
+                       class="nav-link text-white mb-2 {{ request()->routeIs('admin.permissions*') ? 'active bg-primary rounded' : '' }}">
+                        <i class="fas fa-shield-alt me-2"></i> Rôles et Permissions
+                    </a>
 
-                <a href="{{ route('admin.users.index') }}"
-                   class="nav-link text-white mb-2 {{ request()->routeIs('admin.users.index') ? 'active bg-primary rounded' : '' }}">
-                    <i class="fas fa-users me-2"></i> Utilisateurs
-                </a>
+                    <a href="{{ route('admin.users.index') }}"
+                       class="nav-link text-white mb-2 {{ request()->routeIs('admin.users.index') ? 'active bg-primary rounded' : '' }}">
+                        <i class="fas fa-users me-2"></i> Utilisateurs
+                    </a>
+                @endif
 
                 {{-- ========== SPÉCIFIQUE PAR TYPE D'UTILISATEUR ========== --}}
                 @if(auth()->user()->isSuperAdmin())
@@ -53,7 +55,7 @@
 
                 @elseif(auth()->user()->type_utilisateur === 'hopital')
                     {{-- HÔPITAL UNIQUEMENT --}}
-                    @if(auth()->user()->hasRole('admin'))
+                    @if(auth()->user()->hasRole('admin') || auth()->user()->role === 'admin')
                         <a href="{{ route('admin.hopital.patients.index') }}"
                            class="nav-link text-white mb-2 {{ request()->routeIs('admin.hopital.patients*') ? 'active bg-primary rounded' : '' }}">
                             <i class="fas fa-user-injured me-2"></i> Patients
@@ -86,7 +88,7 @@
 
                 @elseif(auth()->user()->type_utilisateur === 'pharmacie')
                     {{-- PHARMACIE UNIQUEMENT --}}
-                    @if(auth()->user()->hasRole('admin'))
+                    @if(auth()->user()->hasRole('admin') || auth()->user()->role === 'admin')
                         <a href="{{ route('admin.pharmacie.medicaments.index') }}"
                            class="nav-link text-white mb-2 {{ request()->routeIs('admin.pharmacie.medicaments*') ? 'active bg-primary rounded' : '' }}">
                             <i class="fas fa-pills me-2"></i> Médicaments
@@ -115,32 +117,122 @@
 
                 @elseif(auth()->user()->type_utilisateur === 'banque_sang')
                     {{-- BANQUE DE SANG UNIQUEMENT --}}
-                    @if(auth()->user()->hasRole('admin'))
-                        <a href="{{ route('admin.banque-sang.donneurs.index') }}"
-                           class="nav-link text-white mb-2 {{ request()->routeIs('admin.banque-sang.donneurs*') ? 'active bg-primary rounded' : '' }}">
-                            <i class="fas fa-user-friends me-2"></i> Donneurs
-                        </a>
+                    {{-- DEBUG: type_utilisateur = {{ auth()->user()->type_utilisateur }}, role = {{ auth()->user()->role }} --}}
+                    
+                    <a href="{{ route('admin.banque-sang.donneurs.index') }}"
+                       class="nav-link text-white mb-2 {{ request()->routeIs('admin.banque-sang.donneurs*') ? 'active bg-primary rounded' : '' }}">
+                        <i class="fas fa-user-friends me-2"></i> Donneurs
+                    </a>
 
-                        <a href="{{ route('admin.banque-sang.dons.index') }}"
-                           class="nav-link text-white mb-2 {{ request()->routeIs('admin.banque-sang.dons*') ? 'active bg-primary rounded' : '' }}">
-                            <i class="fas fa-hand-holding-heart me-2"></i> Dons
-                        </a>
+                    <a href="{{ route('admin.banque-sang.dons.index') }}"
+                       class="nav-link text-white mb-2 {{ request()->routeIs('admin.banque-sang.dons*') ? 'active bg-primary rounded' : '' }}">
+                        <i class="fas fa-hand-holding-heart me-2"></i> Dons
+                    </a>
 
-                        <a href="{{ route('admin.banque-sang.reserves.index') }}"
-                           class="nav-link text-white mb-2 {{ request()->routeIs('admin.banque-sang.reserves*') ? 'active bg-primary rounded' : '' }}">
-                            <i class="fas fa-tint me-2"></i> Réserves
-                        </a>
+                    <a href="{{ route('admin.banque-sang.reserves.index') }}"
+                       class="nav-link text-white mb-2 {{ request()->routeIs('admin.banque-sang.reserves*') ? 'active bg-primary rounded' : '' }}">
+                        <i class="fas fa-tint me-2"></i> Réserves
+                    </a>
 
-                        <a href="{{ route('admin.banque-sang.demandes.index') }}"
-                           class="nav-link text-white mb-2 {{ request()->routeIs('admin.banque-sang.demandes*') ? 'active bg-primary rounded' : '' }}">
-                            <i class="fas fa-file-medical me-2"></i> Demandes
-                        </a>
+                    <a href="{{ route('admin.banque-sang.demandes.index') }}"
+                       class="nav-link text-white mb-2 {{ request()->routeIs('admin.banque-sang.demandes*') ? 'active bg-primary rounded' : '' }}">
+                        <i class="fas fa-file-medical me-2"></i> Demandes
+                    </a>
 
-                        <a href="{{ route('admin.banque-sang.analyses.index') }}"
-                           class="nav-link text-white mb-2 {{ request()->routeIs('admin.banque-sang.analyses*') ? 'active bg-primary rounded' : '' }}">
-                            <i class="fas fa-microscope me-2"></i> Analyses
-                        </a>
+                    <a href="{{ route('admin.banque-sang.analyses.index') }}"
+                       class="nav-link text-white mb-2 {{ request()->routeIs('admin.banque-sang.analyses*') ? 'active bg-primary rounded' : '' }}">
+                        <i class="fas fa-microscope me-2"></i> Analyses
+                    </a>
+                @endif
+
+                {{-- ========== MENU POUR MÉDECINS ========== --}}
+                @if(auth()->user()->role === 'medecin')
+                    <a href="{{ route('admin.medecin.dashboard') }}"
+                       class="nav-link text-white mb-2 {{ request()->routeIs('admin.medecin.dashboard') ? 'active bg-primary rounded' : '' }}">
+                        <i class="fas fa-home me-2"></i> Tableau de bord
+                    </a>
+                    <a href="{{ route('admin.medecin.patients') }}"
+                       class="nav-link text-white mb-2 {{ request()->routeIs('admin.medecin.patients') ? 'active bg-primary rounded' : '' }}">
+                        <i class="fas fa-user-injured me-2"></i> Mes Patients
+                    </a>
+                    <a href="{{ route('admin.medecin.dossiers') }}"
+                       class="nav-link text-white mb-2 {{ request()->routeIs('admin.medecin.dossiers*') ? 'active bg-primary rounded' : '' }}">
+                        <i class="fas fa-folder-open me-2"></i> Dossiers Médicaux
+                    </a>
+                    <a href="{{ route('admin.medecin.rendezvous') }}"
+                       class="nav-link text-white mb-2 {{ request()->routeIs('admin.medecin.rendezvous') ? 'active bg-primary rounded' : '' }}">
+                        <i class="fas fa-calendar-alt me-2"></i> Rendez-vous
+                    </a>
+                @endif
+
+                {{-- ========== MENU POUR CAISSIERS ========== --}}
+                @if(auth()->user()->role === 'caissier')
+                    <a href="{{ route('admin.caissier.examens') }}"
+                       class="nav-link text-white mb-2 {{ request()->routeIs('admin.caissier*') ? 'active bg-primary rounded' : '' }}">
+                        <i class="fas fa-cash-register me-2"></i> Examens à Valider
+                    </a>
+                @endif
+
+                {{-- ========== MENU POUR LABORANTINS ========== --}}
+                @if(auth()->user()->role === 'laborantin')
+                    <a href="{{ route('admin.laborantin.examens') }}"
+                       class="nav-link text-white mb-2 {{ request()->routeIs('admin.laborantin*') ? 'active bg-primary rounded' : '' }}">
+                        <i class="fas fa-microscope me-2"></i> Examens à Réaliser
+                    </a>
+                @endif
+
+                {{-- ========== MENU POUR RÉCEPTIONNISTES ========== --}}
+                @if(auth()->user()->role === 'receptionniste')
+                    <a href="{{ route('admin.receptionniste.dashboard') }}"
+                       class="nav-link text-white mb-2 {{ request()->routeIs('admin.receptionniste.dashboard') ? 'active bg-primary rounded' : '' }}">
+                        <i class="fas fa-home me-2"></i> Tableau de Bord
+                    </a>
+                    <a href="{{ route('admin.receptionniste.patients') }}"
+                       class="nav-link text-white mb-2 {{ request()->routeIs('admin.receptionniste.patients*') ? 'active bg-primary rounded' : '' }}">
+                        <i class="fas fa-users me-2"></i> Patients
+                    </a>
+                    <a href="{{ route('admin.receptionniste.rendezvous') }}"
+                       class="nav-link text-white mb-2 {{ request()->routeIs('admin.receptionniste.rendezvous*') ? 'active bg-primary rounded' : '' }}">
+                        <i class="fas fa-calendar-alt me-2"></i> Rendez-vous
+                    </a>
+                @endif
+
+                {{-- ========== MENU POUR PATIENTS ========== --}}
+                @if(auth()->user()->type_utilisateur === 'patient')
+                    <a href="{{ route('patient.dashboard') }}"
+                       class="nav-link text-white mb-2 {{ request()->routeIs('patient.dashboard') ? 'active bg-primary rounded' : '' }}">
+                        <i class="fas fa-home me-2"></i> Accueil
+                    </a>
+                    
+                    @if(!auth()->user()->hopital_id)
+                    <a href="{{ route('patient.choisir-hopital') }}"
+                       class="nav-link text-white mb-2 {{ request()->routeIs('patient.choisir-hopital') ? 'active bg-primary rounded' : '' }}"
+                       style="background: rgba(255,193,7,0.2); border-left: 3px solid #ffc107;">
+                        <i class="fas fa-hospital me-2"></i> Choisir mon Hôpital
+                        <span class="badge bg-warning text-dark ms-2">!</span>
+                    </a>
                     @endif
+                    
+                    <a href="{{ route('patient.dossiers') }}"
+                       class="nav-link text-white mb-2 {{ request()->routeIs('patient.dossiers*') ? 'active bg-primary rounded' : '' }}">
+                        <i class="fas fa-folder-open me-2"></i> Mon Dossier Médical
+                    </a>
+                    <a href="{{ route('patient.rendezvous') }}"
+                       class="nav-link text-white mb-2 {{ request()->routeIs('patient.rendezvous') ? 'active bg-primary rounded' : '' }}">
+                        <i class="fas fa-calendar-alt me-2"></i> Mes Rendez-vous
+                    </a>
+                    <a href="{{ route('patient.examens') }}"
+                       class="nav-link text-white mb-2 {{ request()->routeIs('patient.examens') ? 'active bg-primary rounded' : '' }}">
+                        <i class="fas fa-flask me-2"></i> Mes Examens
+                    </a>
+                    <a href="{{ route('patient.pharmacies') }}"
+                       class="nav-link text-white mb-2 {{ request()->routeIs('patient.pharmacies') ? 'active bg-primary rounded' : '' }}">
+                        <i class="fas fa-pills me-2"></i> Trouver une Pharmacie
+                    </a>
+                    <a href="{{ route('patient.banques-sang') }}"
+                       class="nav-link text-white mb-2 {{ request()->routeIs('patient.banques-sang') ? 'active bg-primary rounded' : '' }}">
+                        <i class="fas fa-tint me-2"></i> Banques de Sang
+                    </a>
                 @endif
             @endif
         </nav>

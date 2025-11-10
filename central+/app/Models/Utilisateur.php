@@ -25,6 +25,8 @@ class Utilisateur extends Authenticatable
         'role',
         'type_utilisateur',
         'entite_id',
+        'hopital_id',
+        'groupe_sanguin',
         'status',
         'rejection_reason',
     ];
@@ -91,6 +93,15 @@ class Utilisateur extends Authenticatable
     {
         if ($this->isSuperAdmin()) {
             return 'CENTRAL+';
+        }
+        
+        // Pour les patients, afficher l'hôpital s'il est choisi
+        if ($this->type_utilisateur === 'patient') {
+            if ($this->hopital_id) {
+                $hopital = \App\Models\Hopital::find($this->hopital_id);
+                return $hopital ? $hopital->nom : 'Patient';
+            }
+            return 'Patient';
         }
         
         $entite = $this->entite;

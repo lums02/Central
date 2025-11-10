@@ -184,6 +184,8 @@ class NotificationController extends Controller
             'patient_nouveau' => 'user-plus',
             'nouveau_patient' => 'user-plus',
             'rendez_vous' => 'calendar-check',
+            'rappel_rdv_24h' => 'calendar-day',
+            'rappel_rdv_2h' => 'clock',
             'dossier_assigne' => 'file-medical',
             'examens_a_payer' => 'dollar-sign',
             'examen_a_realiser' => 'microscope',

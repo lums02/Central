@@ -38,15 +38,20 @@ class DossierMedical extends Model
         'hopital_id',
         'numero_dossier',
         'motif_consultation',
+        'antecedents',
+        'examen_clinique',
         'diagnostic',
         'traitement',
         'observations',
         'date_consultation',
+        'date_prochain_rdv',
+        'urgence',
         'statut'
     ];
     
     protected $casts = [
         'date_consultation' => 'date',
+        'date_prochain_rdv' => 'date',
     ];
     
     public function patient()

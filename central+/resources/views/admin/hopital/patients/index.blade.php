@@ -139,15 +139,13 @@
                     <table class="table table-hover mb-0">
                         <thead class="table-light">
                             <tr>
-                                <th>ID</th>
-                                <th>Nom Complet</th>
-                                <th>Email</th>
-                                <th>Téléphone</th>
-                                <th>Sexe</th>
-                                <th>Date Naissance</th>
-                                <th>Dossiers</th>
-                                <th>Statut</th>
-                                <th>Actions</th>
+                                <th style="width: 5%;">ID</th>
+                                <th style="width: 25%;">Patient</th>
+                                <th style="width: 20%;">Contact</th>
+                                <th style="width: 15%;">Info</th>
+                                <th style="width: 10%;">Dossiers</th>
+                                <th style="width: 10%;">Statut</th>
+                                <th style="width: 15%;">Actions</th>
                             </tr>
                         </thead>
                         <tbody>
@@ -156,49 +154,53 @@
                                     <td><strong>#{{ $patient->id }}</strong></td>
                                     <td>
                                         <div class="d-flex align-items-center">
-                                            <div class="avatar-circle bg-primary text-white me-2">
+                                            <div style="width: 35px; height: 35px; border-radius: 50%; background: #007bff; color: white; display: flex; align-items: center; justify-content: center; font-weight: bold; margin-right: 10px; flex-shrink: 0;">
                                                 {{ strtoupper(substr($patient->nom, 0, 1)) }}
                                             </div>
-                                            <div>
-                                                <strong>{{ $patient->nom }} {{ $patient->prenom ?? '' }}</strong>
+                                            <div style="min-width: 0;">
+                                                <strong class="d-block text-truncate">{{ $patient->nom }} {{ $patient->prenom ?? '' }}</strong>
                                             </div>
                                         </div>
                                     </td>
-                                    <td>{{ $patient->email }}</td>
-                                    <td>{{ $patient->telephone ?? 'N/A' }}</td>
                                     <td>
-                                        <span class="badge bg-{{ $patient->sexe == 'masculin' ? 'primary' : 'pink' }}">
-                                            <i class="fas fa-{{ $patient->sexe == 'masculin' ? 'mars' : 'venus' }}"></i>
-                                            {{ ucfirst($patient->sexe) }}
-                                        </span>
+                                        <small class="d-block text-truncate">{{ $patient->email }}</small>
+                                        <small class="d-block text-muted">{{ $patient->telephone ?? 'N/A' }}</small>
                                     </td>
-                                    <td>{{ $patient->date_naissance ? \Carbon\Carbon::parse($patient->date_naissance)->format('d/m/Y') : 'N/A' }}</td>
                                     <td>
+                                        <small class="d-block">
+                                            <i class="fas fa-{{ $patient->sexe == 'masculin' ? 'mars' : 'venus' }} me-1"></i>
+                                            {{ ucfirst($patient->sexe ?? 'N/A') }}
+                                        </small>
+                                        <small class="d-block text-muted">
+                                            {{ $patient->date_naissance ? \Carbon\Carbon::parse($patient->date_naissance)->format('d/m/Y') : 'N/A' }}
+                                        </small>
+                                    </td>
+                                    <td class="text-center">
                                         <span class="badge bg-info">
-                                            {{ $patient->dossiersMedicaux->count() }} dossier(s)
+                                            {{ $patient->dossiersMedicaux->count() }}
                                         </span>
                                     </td>
                                     <td>
-                                        @if($patient->status == 'actif')
+                                        @if($patient->status == 'approved' || $patient->status == 'actif')
                                             <span class="badge bg-success">Actif</span>
-                                        @elseif($patient->status == 'inactif')
-                                            <span class="badge bg-warning">Inactif</span>
+                                        @elseif($patient->status == 'pending')
+                                            <span class="badge bg-warning">En attente</span>
                                         @else
-                                            <span class="badge bg-danger">Désactivé</span>
+                                            <span class="badge bg-danger">Inactif</span>
                                         @endif
                                     </td>
                                     <td>
                                         <div class="btn-group" role="group">
                                             <a href="{{ route('admin.hopital.patients.show', $patient->id) }}" 
                                                class="btn btn-sm btn-primary" 
-                                               title="Voir le dossier">
+                                               title="Voir">
                                                 <i class="fas fa-eye"></i>
                                             </a>
                                             <button type="button" 
                                                     class="btn btn-sm btn-info" 
                                                     data-bs-toggle="modal" 
                                                     data-bs-target="#createDossierModal{{ $patient->id }}"
-                                                    title="Créer un dossier">
+                                                    title="Dossier">
                                                 <i class="fas fa-plus"></i>
                                             </button>
                                         </div>
@@ -331,9 +333,28 @@
                         <label class="form-label">Adresse</label>
                         <textarea name="adresse" class="form-control" rows="2" placeholder="Adresse complète du patient"></textarea>
                     </div>
-                    
-                    <div class="alert alert-info">
-                        <i class="fas fa-info-circle"></i> <strong>Note:</strong> Le patient recevra un email avec ses identifiants de connexion.
+
+                    <div class="mb-3">
+                        <label class="form-label">Médecin Traitant</label>
+                        <select name="medecin_id" class="form-select">
+                            <option value="">-- Sélectionner un médecin (optionnel) --</option>
+                            @php
+                                $medecins = \App\Models\Utilisateur::where('type_utilisateur', 'hopital')
+                                    ->where('entite_id', auth()->user()->entite_id)
+                                    ->where('role', 'medecin')
+                                    ->get();
+                            @endphp
+                            @foreach($medecins as $medecin)
+                                <option value="{{ $medecin->id }}">Dr. {{ $medecin->nom }}</option>
+                            @endforeach
+                        </select>
+                        <small class="text-muted">Le médecin qui prendra en charge ce patient</small>
+                    </div>
+
+                    <div class="mb-3">
+                        <label class="form-label">Mot de passe <span class="text-danger">*</span></label>
+                        <input type="password" name="mot_de_passe" class="form-control" required placeholder="Mot de passe pour le compte patient" minlength="6">
+                        <small class="text-muted">Le patient utilisera cet email et ce mot de passe pour se connecter (minimum 6 caractères)</small>
                     </div>
                 </div>
                 <div class="modal-footer">

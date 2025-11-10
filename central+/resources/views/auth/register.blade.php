@@ -408,6 +408,43 @@
             </select>
         </div>
 
+        <div class="form-group" id="hopital-group" style="display:none;">
+            <label for="hopital_id" class="form-label">Hôpital (optionnel)</label>
+            <select name="hopital_id" id="hopital_id" class="form-select">
+                <option value="">-- Aucun hôpital sélectionné --</option>
+                @php
+                    $hopitaux = \App\Models\Hopital::orderBy('nom')->get();
+                @endphp
+                @foreach($hopitaux as $hopital)
+                <option value="{{ $hopital->id }}" {{ old('hopital_id') == $hopital->id ? 'selected' : '' }}>
+                    {{ $hopital->nom }} - {{ $hopital->adresse }}
+                </option>
+                @endforeach
+            </select>
+            <small class="text-muted">Vous pouvez choisir un hôpital ou le faire plus tard</small>
+        </div>
+
+        <div class="form-group" id="telephone-group" style="display:none;">
+            <label for="telephone" class="form-label">Téléphone</label>
+            <input type="tel" name="telephone" id="telephone" class="form-control" value="{{ old('telephone') }}" 
+                   placeholder="Ex: +243 123 456 789" />
+        </div>
+
+        <div class="form-group" id="groupe-sanguin-group" style="display:none;">
+            <label for="groupe_sanguin" class="form-label">Groupe Sanguin (optionnel)</label>
+            <select name="groupe_sanguin" id="groupe_sanguin" class="form-select">
+                <option value="">-- Non renseigné --</option>
+                <option value="A+" {{ old('groupe_sanguin') == 'A+' ? 'selected' : '' }}>A+</option>
+                <option value="A-" {{ old('groupe_sanguin') == 'A-' ? 'selected' : '' }}>A-</option>
+                <option value="B+" {{ old('groupe_sanguin') == 'B+' ? 'selected' : '' }}>B+</option>
+                <option value="B-" {{ old('groupe_sanguin') == 'B-' ? 'selected' : '' }}>B-</option>
+                <option value="AB+" {{ old('groupe_sanguin') == 'AB+' ? 'selected' : '' }}>AB+</option>
+                <option value="AB-" {{ old('groupe_sanguin') == 'AB-' ? 'selected' : '' }}>AB-</option>
+                <option value="O+" {{ old('groupe_sanguin') == 'O+' ? 'selected' : '' }}>O+</option>
+                <option value="O-" {{ old('groupe_sanguin') == 'O-' ? 'selected' : '' }}>O-</option>
+            </select>
+        </div>
+
         {{-- Champs communs mot de passe --}}
         <div class="form-group">
             <label for="password" class="form-label">Mot de passe</label>
@@ -510,6 +547,12 @@
         } else if(type === 'patient') {
             dateNaissanceGroup.style.display = 'block';
             sexeGroup.style.display = 'block';
+            const hopitalGroup = document.getElementById('hopital-group');
+            const telephoneGroup = document.getElementById('telephone-group');
+            const groupeSanguinGroup = document.getElementById('groupe-sanguin-group');
+            if (hopitalGroup) hopitalGroup.style.display = 'block';
+            if (telephoneGroup) telephoneGroup.style.display = 'block';
+            if (groupeSanguinGroup) groupeSanguinGroup.style.display = 'block';
         }
     }
 
@@ -554,6 +597,12 @@
         } else if(entityType === 'patient') {
             dateNaissanceGroup.style.display = 'block';
             sexeGroup.style.display = 'block';
+            const hopitalGroup = document.getElementById('hopital-group');
+            const telephoneGroup = document.getElementById('telephone-group');
+            const groupeSanguinGroup = document.getElementById('groupe-sanguin-group');
+            if (hopitalGroup) hopitalGroup.style.display = 'block';
+            if (telephoneGroup) telephoneGroup.style.display = 'block';
+            if (groupeSanguinGroup) groupeSanguinGroup.style.display = 'block';
         }
     }
 </script>

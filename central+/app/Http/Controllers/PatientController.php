@@ -145,16 +145,292 @@ class PatientController extends Controller
      */
     public function dashboard()
     {
-        $user = Auth::user();
+        $patient = Auth::user();
         
         // Vérifier que l'utilisateur est bien un patient
-        if ($user->type_utilisateur !== 'patient') {
+        if ($patient->type_utilisateur !== 'patient') {
             Auth::logout();
-            return redirect()->route('patient.login')
+            return redirect()->route('login')
                 ->with('error', 'Accès non autorisé.');
         }
 
-        return view('patient.dashboard', compact('user'));
+        // Récupérer les dossiers médicaux du patient
+        $dossiers = \App\Models\DossierMedical::where('patient_id', $patient->id)
+            ->with(['medecin', 'hopital'])
+            ->orderBy('date_consultation', 'desc')
+            ->get();
+
+        // Récupérer les rendez-vous du patient
+        $rendezvous = \App\Models\RendezVous::where('patient_id', $patient->id)
+            ->with(['medecin', 'hopital'])
+            ->where('date_rendezvous', '>=', now()->subDays(30)) // 30 derniers jours
+            ->orderBy('date_rendezvous', 'desc')
+            ->get();
+
+        // Récupérer les examens prescrits
+        $examens = \App\Models\ExamenPrescrit::where('patient_id', $patient->id)
+            ->with(['medecin', 'hopital'])
+            ->orderBy('created_at', 'desc')
+            ->take(10)
+            ->get();
+
+        // Statistiques
+        $stats = [
+            'total_dossiers' => $dossiers->count(),
+            'total_consultations' => $dossiers->count(),
+            'rendez_vous_a_venir' => $rendezvous->where('statut', '!=', 'termine')
+                ->where('statut', '!=', 'annule')
+                ->where('date_rendezvous', '>=', now())
+                ->count(),
+            'examens_en_attente' => $examens->whereIn('statut_examen', ['prescrit', 'paye', 'en_cours'])->count(),
+        ];
+
+        // Prochain rendez-vous
+        $prochainRdv = $rendezvous->where('statut', '!=', 'termine')
+            ->where('statut', '!=', 'annule')
+            ->where('date_rendezvous', '>=', now())
+            ->sortBy('date_rendezvous')
+            ->first();
+
+        // Pharmacies disponibles
+        $pharmacies = \App\Models\Pharmacie::all();
+
+        // Banques de sang disponibles
+        $banquesSang = \App\Models\BanqueSang::all();
+
+        return view('patient.dashboard', compact('patient', 'dossiers', 'rendezvous', 'examens', 'stats', 'prochainRdv', 'pharmacies', 'banquesSang'));
+    }
+
+    /**
+     * Afficher mes dossiers médicaux
+     */
+    public function mesDossiers()
+    {
+        $patient = Auth::user();
+        
+        $dossiers = \App\Models\DossierMedical::where('patient_id', $patient->id)
+            ->with(['medecin', 'hopital'])
+            ->orderBy('date_consultation', 'desc')
+            ->paginate(10);
+        
+        return view('patient.dossiers', compact('dossiers'));
+    }
+
+    /**
+     * Voir un dossier médical
+     */
+    public function voirDossier($id)
+    {
+        $patient = Auth::user();
+        
+        $dossier = \App\Models\DossierMedical::where('patient_id', $patient->id)
+            ->where('id', $id)
+            ->with(['medecin', 'hopital'])
+            ->firstOrFail();
+        
+        // Récupérer les examens liés à ce dossier
+        $examens = \App\Models\ExamenPrescrit::where('dossier_medical_id', $dossier->id)
+            ->orderBy('created_at', 'desc')
+            ->get();
+        
+        return view('patient.dossier-show', compact('dossier', 'examens'));
+    }
+
+    /**
+     * Afficher mes rendez-vous
+     */
+    public function mesRendezVous()
+    {
+        $patient = Auth::user();
+        
+        $rendezvous = \App\Models\RendezVous::where('patient_id', $patient->id)
+            ->with(['medecin', 'hopital'])
+            ->orderBy('date_rendezvous', 'desc')
+            ->paginate(15);
+        
+        return view('patient.rendezvous', compact('rendezvous'));
+    }
+
+    /**
+     * Afficher mes examens
+     */
+    public function mesExamens()
+    {
+        $patient = Auth::user();
+        
+        $examens = \App\Models\ExamenPrescrit::where('patient_id', $patient->id)
+            ->with(['medecin', 'hopital', 'dossierMedical'])
+            ->orderBy('created_at', 'desc')
+            ->paginate(15);
+        
+        return view('patient.examens', compact('examens'));
+    }
+
+    /**
+     * Choisir un hôpital
+     */
+    public function choisirHopital()
+    {
+        $patient = Auth::user();
+        
+        // Liste de tous les hôpitaux
+        $hopitaux = \App\Models\Hopital::orderBy('nom')->get();
+        
+        return view('patient.choisir-hopital', compact('hopitaux'));
+    }
+    
+    /**
+     * Enregistrer le choix d'hôpital
+     */
+    public function enregistrerHopital(Request $request)
+    {
+        $patient = Auth::user();
+        
+        $validated = $request->validate([
+            'hopital_id' => 'required|exists:hopitaux,id',
+        ]);
+        
+        $patient->update([
+            'hopital_id' => $validated['hopital_id'],
+        ]);
+        
+        // Créer une notification pour l'administrateur de l'hôpital
+        $hopital = \App\Models\Hopital::find($validated['hopital_id']);
+        
+        // Trouver l'administrateur de l'hôpital
+        $adminHopital = \App\Models\Utilisateur::where('entite_id', $hopital->id)
+            ->where('type_utilisateur', 'hopital')
+            ->where('role', 'admin')
+            ->first();
+        
+        if ($adminHopital) {
+            \App\Models\Notification::create([
+                'user_id' => $adminHopital->id,
+                'hopital_id' => $hopital->id,
+                'type' => 'nouveau_patient',
+                'title' => 'Nouveau patient inscrit',
+                'message' => 'Le patient ' . $patient->nom . ' ' . $patient->prenom . ' vient de choisir votre hôpital.',
+                'read' => false,
+            ]);
+        }
+        
+        return redirect()->route('patient.dashboard')
+            ->with('success', 'Hôpital sélectionné avec succès ! Vous pouvez maintenant prendre rendez-vous.');
+    }
+    
+    /**
+     * Trouver une pharmacie
+     */
+    public function pharmacies(Request $request)
+    {
+        $patient = Auth::user();
+        
+        // Récupérer les médicaments recherchés
+        $searchTerms = $request->input('medicaments', []);
+        $pharmacies = collect();
+        $medicamentsDisponibles = [];
+        
+        if (!empty($searchTerms) && count(array_filter($searchTerms)) > 0) {
+            // Rechercher les pharmacies qui ont ces médicaments en stock
+            $pharmacies = \App\Models\Pharmacie::whereHas('medicaments', function($query) use ($searchTerms) {
+                $query->where('actif', true)
+                      ->where('stock_actuel', '>', 0)
+                      ->where(function($q) use ($searchTerms) {
+                          foreach ($searchTerms as $term) {
+                              if (!empty($term)) {
+                                  $q->orWhere('nom', 'LIKE', '%' . $term . '%')
+                                    ->orWhere('nom_generique', 'LIKE', '%' . $term . '%');
+                              }
+                          }
+                      });
+            })
+            ->with(['medicaments' => function($query) use ($searchTerms) {
+                $query->where('actif', true)
+                      ->where('stock_actuel', '>', 0)
+                      ->where(function($q) use ($searchTerms) {
+                          foreach ($searchTerms as $term) {
+                              if (!empty($term)) {
+                                  $q->orWhere('nom', 'LIKE', '%' . $term . '%')
+                                    ->orWhere('nom_generique', 'LIKE', '%' . $term . '%');
+                              }
+                          }
+                      });
+            }])
+            ->get();
+            
+            // Récupérer les médicaments trouvés pour chaque pharmacie
+            foreach ($pharmacies as $pharmacie) {
+                $medicamentsDisponibles[$pharmacie->id] = $pharmacie->medicaments;
+            }
+        }
+        
+        return view('patient.pharmacies', compact('pharmacies', 'searchTerms', 'medicamentsDisponibles'));
+    }
+    
+    /**
+     * API pour rechercher des médicaments (autocomplétion)
+     */
+    public function searchMedicaments(Request $request)
+    {
+        $term = $request->input('term');
+        
+        // Rechercher les médicaments disponibles (avec stock > 0)
+        $medicaments = \App\Models\Medicament::where('actif', true)
+            ->where('stock_actuel', '>', 0)
+            ->where(function($query) use ($term) {
+                $query->where('nom', 'LIKE', '%' . $term . '%')
+                      ->orWhere('nom_generique', 'LIKE', '%' . $term . '%');
+            })
+            ->select('nom', 'nom_generique', 'forme', 'dosage')
+            ->distinct()
+            ->limit(10)
+            ->get()
+            ->map(function($med) {
+                return [
+                    'label' => $med->nom . ($med->forme ? ' - ' . $med->forme : '') . ($med->dosage ? ' ' . $med->dosage : ''),
+                    'value' => $med->nom
+                ];
+            });
+        
+        return response()->json($medicaments);
+    }
+
+    /**
+     * Trouver une banque de sang
+     */
+    public function banquesSang(Request $request)
+    {
+        $patient = Auth::user();
+        
+        // Récupérer le groupe sanguin recherché
+        $groupeSanguin = $request->input('groupe_sanguin');
+        $rhesus = $request->input('rhesus');
+        
+        $banquesSang = collect();
+        $reservesDisponibles = [];
+        
+        if ($groupeSanguin && $rhesus) {
+            // Combiner le groupe et le rhésus (ex: "A+", "O-")
+            $groupeComplet = $groupeSanguin . $rhesus;
+            
+            // Rechercher les banques qui ont des réserves pour ce groupe sanguin
+            $banquesSang = \App\Models\BanqueSang::whereHas('reserves', function($query) use ($groupeComplet) {
+                $query->where('groupe_sanguin', $groupeComplet)
+                      ->where('quantite_disponible', '>', 0);
+            })
+            ->with(['reserves' => function($query) use ($groupeComplet) {
+                $query->where('groupe_sanguin', $groupeComplet)
+                      ->where('quantite_disponible', '>', 0);
+            }])
+            ->get();
+            
+            // Récupérer les réserves disponibles pour chaque banque
+            foreach ($banquesSang as $banque) {
+                $reservesDisponibles[$banque->id] = $banque->reserves;
+            }
+        }
+        
+        return view('patient.banques-sang', compact('banquesSang', 'groupeSanguin', 'rhesus', 'reservesDisponibles'));
     }
 
     /**

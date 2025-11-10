@@ -185,6 +185,10 @@ function handleNotificationClick(notifId, type, data) {
         headers: {
             'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').content
         }
+    })
+    .then(() => {
+        // Recharger immédiatement les notifications pour mettre à jour le badge
+        loadNotifications();
     });
     
     // Rediriger selon le type
@@ -192,9 +196,14 @@ function handleNotificationClick(notifId, type, data) {
         window.location.href = '{{ route("admin.hopital.transferts.demandes-recues") }}';
     } else if (type === 'transfert_complete') {
         window.location.href = '{{ route("admin.hopital.patients.index") }}';
+    } else if (type === 'resultats_examen' && data && data.dossier_id) {
+        window.location.href = `/admin/medecin/dossiers/${data.dossier_id}`;
+    } else if (type === 'examens_a_payer') {
+        window.location.href = '{{ route("admin.caissier.examens") }}';
+    } else if (type === 'examen_a_realiser') {
+        window.location.href = '{{ route("admin.laborantin.examens") }}';
+    } else if (type === 'rappel_rdv_24h' || type === 'rappel_rdv_2h') {
+        window.location.href = '{{ route("admin.medecin.rendezvous") }}';
     }
-    
-    // Recharger les notifications
-    setTimeout(() => loadNotifications(), 500);
 }
 </script>

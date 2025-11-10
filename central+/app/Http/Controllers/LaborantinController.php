@@ -80,6 +80,22 @@ class LaborantinController extends Controller
             'fichier_resultat' => $fichierPath,
         ]);
         
+        // Ajouter les résultats au diagnostic du dossier médical
+        $dossier = $examen->dossierMedical;
+        if ($dossier) {
+            $resultatExamen = "\n\n=== RÉSULTAT EXAMEN: " . $examen->nom_examen . " ===";
+            $resultatExamen .= "\nDate: " . now()->format('d/m/Y H:i');
+            $resultatExamen .= "\nRésultats: " . $request->resultats;
+            if ($request->interpretation) {
+                $resultatExamen .= "\nInterprétation: " . $request->interpretation;
+            }
+            
+            // Ajouter au diagnostic existant
+            $dossier->update([
+                'diagnostic' => $dossier->diagnostic . $resultatExamen
+            ]);
+        }
+        
         // Notifier le médecin
         Notification::create([
             'user_id' => $examen->medecin_id,

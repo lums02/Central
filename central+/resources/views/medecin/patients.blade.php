@@ -1,5 +1,6 @@
-@extends('layouts.medecin')
+@extends('layouts.admin')
 
+@section('title', 'Mes Patients')
 @section('page-title', 'Mes Patients')
 
 @section('content')
@@ -7,7 +8,12 @@
     <div class="col-12">
         <div class="card">
             <div class="card-header">
-                <h5 class="mb-0"><i class="fas fa-users me-2"></i>Mes Patients</h5>
+                <div class="d-flex justify-content-between align-items-center">
+                    <h5 class="mb-0"><i class="fas fa-users me-2"></i>Mes Patients</h5>
+                    <button class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#createPatientModal">
+                        <i class="fas fa-user-plus me-2"></i>Nouveau Patient
+                    </button>
+                </div>
             </div>
             <div class="card-body">
                 <div class="table-responsive">
@@ -82,6 +88,78 @@
     </div>
 </div>
 
+<!-- Modal pour créer un nouveau patient -->
+<div class="modal fade" id="createPatientModal" tabindex="-1">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <form action="{{ route('admin.hopital.patients.store') }}" method="POST">
+                @csrf
+                <div class="modal-header bg-primary text-white">
+                    <h5 class="modal-title"><i class="fas fa-user-plus me-2"></i>Nouveau Patient</h5>
+                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                    <div class="row">
+                        <div class="col-md-6 mb-3">
+                            <label class="form-label">Nom <span class="text-danger">*</span></label>
+                            <input type="text" name="nom" class="form-control" required placeholder="Nom du patient">
+                        </div>
+                        <div class="col-md-6 mb-3">
+                            <label class="form-label">Prénom</label>
+                            <input type="text" name="prenom" class="form-control" placeholder="Prénom du patient">
+                        </div>
+                    </div>
+                    
+                    <div class="row">
+                        <div class="col-md-6 mb-3">
+                            <label class="form-label">Email <span class="text-danger">*</span></label>
+                            <input type="email" name="email" class="form-control" required placeholder="patient@email.com">
+                        </div>
+                        <div class="col-md-6 mb-3">
+                            <label class="form-label">Téléphone</label>
+                            <input type="text" name="telephone" class="form-control" placeholder="+243 XXX XXX XXX">
+                        </div>
+                    </div>
+                    
+                    <div class="row">
+                        <div class="col-md-6 mb-3">
+                            <label class="form-label">Date de Naissance <span class="text-danger">*</span></label>
+                            <input type="date" name="date_naissance" class="form-control" required>
+                        </div>
+                        <div class="col-md-6 mb-3">
+                            <label class="form-label">Sexe <span class="text-danger">*</span></label>
+                            <select name="sexe" class="form-select" required>
+                                <option value="">-- Sélectionner --</option>
+                                <option value="masculin">Masculin</option>
+                                <option value="feminin">Féminin</option>
+                            </select>
+                        </div>
+                    </div>
+                    
+                    <div class="mb-3">
+                        <label class="form-label">Adresse</label>
+                        <textarea name="adresse" class="form-control" rows="2" placeholder="Adresse complète du patient"></textarea>
+                    </div>
+
+                    <div class="mb-3">
+                        <label class="form-label">Mot de passe <span class="text-danger">*</span></label>
+                        <input type="password" name="mot_de_passe" class="form-control" required placeholder="Mot de passe pour le compte patient" minlength="6">
+                        <small class="text-muted">Le patient pourra se connecter avec cet email et ce mot de passe (minimum 6 caractères)</small>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">
+                        <i class="fas fa-times me-1"></i>Annuler
+                    </button>
+                    <button type="submit" class="btn btn-primary">
+                        <i class="fas fa-save me-1"></i>Créer le Patient
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
 <!-- Modal pour créer un nouveau dossier -->
 <div class="modal fade" id="createDossierModal" tabindex="-1">
     <div class="modal-dialog modal-lg">
@@ -127,6 +205,7 @@
 
 @section('scripts')
 <script>
+// Création d'un nouveau dossier
 function createDossier(patientId, patientName) {
     document.getElementById('patient_id').value = patientId;
     document.getElementById('patient_name').value = patientName;

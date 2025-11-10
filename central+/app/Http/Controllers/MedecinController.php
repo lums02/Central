@@ -104,10 +104,32 @@ class MedecinController extends Controller
     {
         $request->validate([
             'patient_id' => 'required|exists:utilisateurs,id',
-            'diagnostic' => 'required|string',
-            'traitement' => 'required|string',
-            'observations' => 'nullable|string',
             'date_consultation' => 'required|date',
+            'motif_consultation' => 'required|string',
+            'diagnostic' => 'required|string',
+            // Tous les autres champs sont optionnels
+            'antecedents_medicaux' => 'nullable|string',
+            'antecedents_familiaux' => 'nullable|string',
+            'allergies' => 'nullable|string',
+            'traitements_en_cours' => 'nullable|string',
+            'poids' => 'nullable|numeric',
+            'taille' => 'nullable|numeric',
+            'temperature' => 'nullable|numeric',
+            'tension_systolique' => 'nullable|integer',
+            'tension_diastolique' => 'nullable|integer',
+            'pouls' => 'nullable|integer',
+            'frequence_respiratoire' => 'nullable|integer',
+            'histoire_maladie' => 'nullable|string',
+            'symptomes' => 'nullable|string',
+            'examen_general' => 'nullable|string',
+            'examen_physique' => 'nullable|string',
+            'code_cim10' => 'nullable|string',
+            'diagnostics_secondaires' => 'nullable|string',
+            'diagnostic_differentiel' => 'nullable|string',
+            'traitement' => 'nullable|string',
+            'observations' => 'nullable|string',
+            'date_prochain_rdv' => 'nullable|date',
+            'urgence' => 'nullable|string',
         ]);
         
         $medecin = Auth::user();
@@ -115,24 +137,94 @@ class MedecinController extends Controller
         // Générer un numéro de dossier unique
         $numeroDossier = 'DM-' . date('Ymd') . '-' . str_pad(DossierMedical::count() + 1, 5, '0', STR_PAD_LEFT);
         
+        // Construire les signes vitaux
+        $signesVitaux = [];
+        if ($request->temperature) $signesVitaux[] = "Température: {$request->temperature}°C";
+        if ($request->tension_systolique && $request->tension_diastolique) {
+            $signesVitaux[] = "TA: {$request->tension_systolique}/{$request->tension_diastolique} mmHg";
+        }
+        if ($request->pouls) $signesVitaux[] = "Pouls: {$request->pouls} bpm";
+        if ($request->frequence_respiratoire) $signesVitaux[] = "FR: {$request->frequence_respiratoire}/min";
+        if ($request->poids) $signesVitaux[] = "Poids: {$request->poids} kg";
+        if ($request->taille) $signesVitaux[] = "Taille: {$request->taille} cm";
+        
+        // Calculer l'IMC si poids et taille sont fournis
+        $imc = null;
+        if ($request->poids && $request->taille) {
+            $taille_m = $request->taille / 100;
+            $imc = round($request->poids / ($taille_m * $taille_m), 1);
+            $signesVitaux[] = "IMC: {$imc}";
+        }
+        
+        $signesVitauxText = !empty($signesVitaux) ? implode("\n", $signesVitaux) : null;
+        
+        // Construire l'examen clinique complet
+        $examenClinique = [];
+        if ($request->examen_general) $examenClinique[] = "EXAMEN GÉNÉRAL:\n{$request->examen_general}";
+        if ($signesVitauxText) $examenClinique[] = "SIGNES VITAUX:\n{$signesVitauxText}";
+        if ($request->examen_physique) $examenClinique[] = "EXAMEN PHYSIQUE:\n{$request->examen_physique}";
+        
+        $examenCliniqueText = !empty($examenClinique) ? implode("\n\n", $examenClinique) : null;
+        
+        // Construire le diagnostic complet
+        $diagnosticComplet = $request->diagnostic;
+        if ($request->code_cim10) $diagnosticComplet .= " (CIM-10: {$request->code_cim10})";
+        if ($request->diagnostics_secondaires) {
+            $diagnosticComplet .= "\n\nDIAGNOSTICS SECONDAIRES:\n{$request->diagnostics_secondaires}";
+        }
+        if ($request->diagnostic_differentiel) {
+            $diagnosticComplet .= "\n\nDIAGNOSTIC DIFFÉRENTIEL:\n{$request->diagnostic_differentiel}";
+        }
+        
+        // Construire les antécédents
+        $antecedents = [];
+        if ($request->antecedents_medicaux) $antecedents[] = "ANTÉCÉDENTS MÉDICAUX:\n{$request->antecedents_medicaux}";
+        if ($request->antecedents_familiaux) $antecedents[] = "ANTÉCÉDENTS FAMILIAUX:\n{$request->antecedents_familiaux}";
+        if ($request->allergies) $antecedents[] = "ALLERGIES:\n{$request->allergies}";
+        if ($request->traitements_en_cours) $antecedents[] = "TRAITEMENTS EN COURS:\n{$request->traitements_en_cours}";
+        
+        $antecedentsText = !empty($antecedents) ? implode("\n\n", $antecedents) : null;
+        
+        // Construire l'anamnèse
+        $anamneseText = $request->motif_consultation;
+        if ($request->histoire_maladie) $anamneseText .= "\n\nHISTOIRE DE LA MALADIE:\n{$request->histoire_maladie}";
+        if ($request->symptomes) $anamneseText .= "\n\nSYMPTÔMES:\n{$request->symptomes}";
+        
         $dossier = DossierMedical::create([
             'patient_id' => $request->patient_id,
             'medecin_id' => $medecin->id,
             'hopital_id' => $medecin->entite_id,
             'numero_dossier' => $numeroDossier,
-            'motif_consultation' => $request->motif_consultation ?? 'Consultation',
-            'diagnostic' => $request->diagnostic,
-            'traitement' => $request->traitement,
+            'motif_consultation' => $anamneseText,
+            'antecedents' => $antecedentsText,
+            'examen_clinique' => $examenCliniqueText,
+            'diagnostic' => $diagnosticComplet,
+            'traitement' => $request->traitement ?? 'En attente des résultats d\'examens',
             'observations' => $request->observations,
             'date_consultation' => $request->date_consultation,
+            'date_prochain_rdv' => $request->date_prochain_rdv,
+            'urgence' => $request->urgence ?? 'normale',
             'statut' => 'actif',
         ]);
         
-        return response()->json([
-            'success' => true,
-            'message' => 'Dossier médical créé avec succès',
-            'dossier' => $dossier
-        ]);
+        // Créer automatiquement un rendez-vous si date_prochain_rdv est définie
+        if ($request->date_prochain_rdv) {
+            RendezVous::create([
+                'patient_id' => $request->patient_id,
+                'medecin_id' => $medecin->id,
+                'hopital_id' => $medecin->entite_id,
+                'date_rendezvous' => $request->date_prochain_rdv,
+                'heure_rendezvous' => '09:00', // Heure par défaut
+                'type_consultation' => 'suivi',
+                'motif' => 'Rendez-vous de suivi suite à consultation du ' . $request->date_consultation,
+                'notes' => 'Créé automatiquement depuis le dossier médical ' . $numeroDossier,
+                'statut' => 'en_attente',
+                'prix' => 0,
+            ]);
+        }
+        
+        return redirect()->route('admin.medecin.dossier.show', $dossier->id)
+            ->with('success', 'Dossier médical créé avec succès !' . ($request->date_prochain_rdv ? ' Un rendez-vous de suivi a été automatiquement créé.' : ''));
     }
     
     public function createRendezVous(Request $request)
@@ -161,10 +253,8 @@ class MedecinController extends Controller
             'prix' => 0,
         ]);
         
-        return response()->json([
-            'success' => true,
-            'message' => 'Rendez-vous créé avec succès'
-        ]);
+        return redirect()->route('admin.medecin.rendezvous')
+            ->with('success', 'Rendez-vous créé avec succès !');
     }
     
     /**
@@ -180,10 +270,15 @@ class MedecinController extends Controller
         
         $rendezvous->update(['statut' => $request->statut]);
         
-        return response()->json([
-            'success' => true,
-            'message' => 'Statut mis à jour'
-        ]);
+        $message = match($request->statut) {
+            'confirme' => 'Rendez-vous confirmé avec succès !',
+            'termine' => 'Rendez-vous marqué comme terminé !',
+            'annule' => 'Rendez-vous annulé.',
+            default => 'Statut mis à jour.'
+        };
+        
+        return redirect()->route('admin.medecin.rendezvous')
+            ->with('success', $message);
     }
     
     /**
@@ -197,16 +292,93 @@ class MedecinController extends Controller
             ->where('medecin_id', $medecin->id)
             ->firstOrFail();
         
-        $dossier->update([
-            'diagnostic' => $request->diagnostic,
-            'traitement' => $request->traitement,
-            'observations' => $request->observations,
-        ]);
-        
-        return response()->json([
-            'success' => true,
-            'message' => 'Dossier mis à jour'
-        ]);
+        // Déterminer le type de mise à jour
+        if ($request->has('traitement') && $request->has('diagnostic_final')) {
+            // Ajout d'un traitement après résultats d'examens
+            $updateData = [];
+            
+            // Mettre à jour le diagnostic si un diagnostic final est fourni
+            if ($request->diagnostic_final) {
+                $diagnosticFinal = "DIAGNOSTIC FINAL (Confirmé):\n" . $request->diagnostic_final;
+                $diagnosticFinal .= "\n\n" . "DIAGNOSTIC INITIAL:\n" . $dossier->diagnostic;
+                $updateData['diagnostic'] = $diagnosticFinal;
+            }
+            
+            // Ajouter le traitement
+            $traitementComplet = "=== TRAITEMENT PRESCRIT LE " . now()->format('d/m/Y') . " ===\n\n";
+            $traitementComplet .= $request->traitement;
+            
+            if ($request->soins) {
+                $traitementComplet .= "\n\nSOINS ET PROCÉDURES:\n" . $request->soins;
+            }
+            
+            if ($request->recommandations) {
+                $traitementComplet .= "\n\nRECOMMANDATIONS:\n" . $request->recommandations;
+            }
+            
+            // Ajouter au traitement existant ou remplacer
+            if ($dossier->traitement && $dossier->traitement !== 'En attente des résultats d\'examens') {
+                $updateData['traitement'] = $dossier->traitement . "\n\n" . $traitementComplet;
+            } else {
+                $updateData['traitement'] = $traitementComplet;
+            }
+            
+            $dossier->update($updateData);
+            
+            return response()->json([
+                'success' => true,
+                'message' => 'Traitement ajouté avec succès'
+            ]);
+            
+        } elseif ($request->has('evolution')) {
+            // Ajout d'une consultation de suivi
+            $consultation = "\n\n=== CONSULTATION DU " . now()->format('d/m/Y') . " ===\n";
+            $consultation .= "Type: " . ($request->type_consultation ?? 'Suivi') . "\n";
+            $consultation .= "Motif: " . $request->motif . "\n\n";
+            $consultation .= "ÉVOLUTION:\n" . $request->evolution . "\n";
+            
+            if ($request->nouveaux_symptomes) {
+                $consultation .= "\nNOUVEAUX SYMPTÔMES:\n" . $request->nouveaux_symptomes . "\n";
+            }
+            
+            if ($request->examen_clinique) {
+                $consultation .= "\nEXAMEN CLINIQUE:\n" . $request->examen_clinique . "\n";
+            }
+            
+            if ($request->ajustement_traitement) {
+                $consultation .= "\nAJUSTEMENT DU TRAITEMENT:\n" . $request->ajustement_traitement . "\n";
+            }
+            
+            if ($request->notes) {
+                $consultation .= "\nNOTES:\n" . $request->notes . "\n";
+            }
+            
+            // Ajouter aux observations
+            $dossier->update([
+                'observations' => ($dossier->observations ?? '') . $consultation
+            ]);
+            
+            return response()->json([
+                'success' => true,
+                'message' => 'Consultation ajoutée avec succès'
+            ]);
+            
+        } else {
+            // Modification simple du dossier
+            $updateData = [];
+            
+            if ($request->has('diagnostic')) $updateData['diagnostic'] = $request->diagnostic;
+            if ($request->has('traitement')) $updateData['traitement'] = $request->traitement;
+            if ($request->has('observations')) $updateData['observations'] = $request->observations;
+            if ($request->has('statut')) $updateData['statut'] = $request->statut;
+            
+            $dossier->update($updateData);
+            
+            return response()->json([
+                'success' => true,
+                'message' => 'Dossier mis à jour avec succès'
+            ]);
+        }
     }
     
     /**
@@ -232,10 +404,10 @@ class MedecinController extends Controller
                 'medecin_id' => $medecin->id,
                 'hopital_id' => $medecin->entite_id,
                 'numero_examen' => $numeroExamen,
-                'type_examen' => $examenData['type_examen'],
-                'nom_examen' => $examenData['nom_examen'],
-                'indication' => $examenData['indication'],
-                'date_prescription' => $examenData['date_prescription'] ?? now(),
+                'type_examen' => $examenData['type'] ?? $examenData['type_examen'] ?? 'Autre',
+                'nom_examen' => $examenData['nom'] ?? $examenData['nom_examen'] ?? '',
+                'indication' => $examenData['indication'] ?? '',
+                'date_prescription' => now(),
                 'prix' => 0, // Le caissier fixera le prix
                 'statut_paiement' => 'en_attente',
                 'statut_examen' => 'prescrit',
@@ -262,9 +434,7 @@ class MedecinController extends Controller
             ]);
         }
         
-        return response()->json([
-            'success' => true,
-            'message' => 'Examens prescrits avec succès'
-        ]);
+        return redirect()->route('admin.medecin.dossier.show', $dossier->id)
+            ->with('success', count($examensCreated) . ' examen(s) prescrit(s) avec succès ! Le caissier a été notifié.');
     }
 }

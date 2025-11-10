@@ -10,6 +10,7 @@ use App\Http\Controllers\PatientController;
 use App\Http\Controllers\PharmacieController;
 use App\Http\Controllers\BanqueController;
 use App\Http\Controllers\MedecinController;
+use App\Http\Controllers\ReceptionnisteController;
 
 // Page d'accueil
 Route::get('/', function () {
@@ -38,6 +39,27 @@ Route::prefix('patient')->name('patient.')->group(function () {
     Route::middleware(['auth'])->group(function () {
         Route::get('/dashboard', [PatientController::class, 'dashboard'])->name('dashboard');
         Route::post('/logout', [PatientController::class, 'logout'])->name('logout');
+        
+        // Mon dossier médical
+        Route::get('/dossiers', [PatientController::class, 'mesDossiers'])->name('dossiers');
+        Route::get('/dossiers/{id}', [PatientController::class, 'voirDossier'])->name('dossier.show');
+        
+        // Mes rendez-vous
+        Route::get('/rendezvous', [PatientController::class, 'mesRendezVous'])->name('rendezvous');
+        
+        // Mes examens
+        Route::get('/examens', [PatientController::class, 'mesExamens'])->name('examens');
+        
+        // Choisir un hôpital
+        Route::get('/choisir-hopital', [PatientController::class, 'choisirHopital'])->name('choisir-hopital');
+        Route::post('/choisir-hopital', [PatientController::class, 'enregistrerHopital'])->name('enregistrer-hopital');
+        
+        // Trouver une pharmacie
+        Route::get('/pharmacies', [PatientController::class, 'pharmacies'])->name('pharmacies');
+        Route::get('/search-medicaments', [PatientController::class, 'searchMedicaments'])->name('search.medicaments');
+        
+        // Trouver une banque de sang
+        Route::get('/banques-sang', [PatientController::class, 'banquesSang'])->name('banques-sang');
         
         // Routes pour les consentements de transfert
         Route::get('/consentements', [\App\Http\Controllers\Admin\TransfertDossierController::class, 'mesConsentements'])->name('consentements');
@@ -116,13 +138,13 @@ Route::get('/admin', function () {
 
 
 
-// 🔐 Dashboards protégés
+// 🔐 Dashboards protégés (pour les entités non-admin)
 Route::middleware(['auth'])->group(function () {
     Route::get('/hopital/dashboard', [DashboardController::class, 'hopitalDashboard'])->name('hopital.dashboard');
     Route::get('/pharmacie/dashboard', [DashboardController::class, 'pharmacieDashboard'])->name('pharmacie.dashboard');
     Route::get('/banque/dashboard', [DashboardController::class, 'banqueSangDashboard'])->name('banque.dashboard');
     Route::get('/centre/dashboard', [DashboardController::class, 'centreDashboard'])->name('centre.dashboard');
-    Route::get('/patient/dashboard', [DashboardController::class, 'patientDashboard'])->name('patient.dashboard');
+    // Note: patient.dashboard est défini dans le groupe patient.* plus haut
 });
 
 // Gestion des permissions
@@ -162,6 +184,18 @@ Route::prefix('admin')->name('admin.')->middleware(['auth'])->group(function () 
         return view('admin.settings');
     })->name('settings');
     
+    // Routes pour les réceptionnistes
+    Route::prefix('receptionniste')->name('receptionniste.')->group(function () {
+        Route::get('/dashboard', [ReceptionnisteController::class, 'dashboard'])->name('dashboard');
+        Route::get('/patients', [ReceptionnisteController::class, 'patients'])->name('patients');
+        Route::post('/patients', [ReceptionnisteController::class, 'storePatient'])->name('patients.store');
+        Route::put('/patients/{id}', [ReceptionnisteController::class, 'updatePatient'])->name('patients.update');
+        Route::get('/rendezvous', [ReceptionnisteController::class, 'rendezvous'])->name('rendezvous');
+        Route::post('/rendezvous', [ReceptionnisteController::class, 'storeRendezVous'])->name('rendezvous.store');
+        Route::post('/rendezvous/{id}/confirmer', [ReceptionnisteController::class, 'confirmerRendezVous'])->name('rendezvous.confirmer');
+        Route::post('/rendezvous/{id}/annuler', [ReceptionnisteController::class, 'annulerRendezVous'])->name('rendezvous.annuler');
+    });
+
     // Routes pour les médecins
     Route::prefix('medecin')->name('medecin.')->group(function () {
         Route::get('/dashboard', [MedecinController::class, 'dashboard'])->name('dashboard');

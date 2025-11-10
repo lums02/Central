@@ -80,7 +80,8 @@ class LoginController extends Controller
 
             // Rediriger selon le rôle et le type_utilisateur
             if ($utilisateur->role === 'admin' || $utilisateur->role === 'superadmin') {
-                // Les admins vont toujours vers le dashboard admin
+                // Les admins (superadmin, hopital_admin, pharmacie_admin, banque_sang_admin) 
+                // vont toujours vers le dashboard admin
                 return redirect()->intended(route('admin.dashboard'));
             } elseif ($utilisateur->role === 'medecin') {
                 // Les médecins vont vers leur dashboard spécifique
@@ -91,22 +92,15 @@ class LoginController extends Controller
             } elseif ($utilisateur->role === 'laborantin') {
                 // Les laborantins vont vers leur page d'examens
                 return redirect()->intended(route('admin.laborantin.examens'));
+            } elseif ($utilisateur->role === 'receptionniste') {
+                // Les réceptionnistes vont vers leur dashboard
+                return redirect()->intended(route('admin.receptionniste.dashboard'));
+            } elseif ($utilisateur->type_utilisateur === 'patient') {
+                // Les patients vont vers leur dashboard
+                return redirect()->intended(route('patient.dashboard'));
             } else {
-                // Les utilisateurs normaux vont vers leur dashboard spécifique
-                switch ($utilisateur->type_utilisateur) {
-                    case 'hopital':
-                        return redirect()->intended('/hopital/dashboard');
-                    case 'pharmacie':
-                        return redirect()->intended('/pharmacie/dashboard');
-                    case 'banque_sang':
-                        return redirect()->intended('/banque/dashboard');
-                    case 'centre':
-                        return redirect()->intended('/centre/dashboard');
-                    case 'patient':
-                        return redirect()->intended('/patient/dashboard');
-                    default:
-                        return redirect()->intended('/admin/dashboard');
-                }
+                // Tous les autres utilisateurs (personnel non-admin) vont vers le dashboard admin
+                return redirect()->intended(route('admin.dashboard'));
             }
         }
 
@@ -128,23 +122,21 @@ class LoginController extends Controller
 
         // Redirection selon le rôle
         if ($user->role === 'superadmin' || $user->role === 'admin') {
+            // Tous les admins (superadmin, hopital_admin, pharmacie_admin, banque_sang_admin)
             return redirect()->route('admin.dashboard');
+        } elseif ($user->role === 'medecin') {
+            return redirect()->route('admin.medecin.dashboard');
+        } elseif ($user->role === 'caissier') {
+            return redirect()->route('admin.caissier.examens');
+        } elseif ($user->role === 'laborantin') {
+            return redirect()->route('admin.laborantin.examens');
+        } elseif ($user->role === 'receptionniste') {
+            return redirect()->route('admin.receptionniste.dashboard');
+        } elseif ($user->type_utilisateur === 'patient') {
+            return redirect()->route('patient.dashboard');
         } else {
-            // Redirection vers le dashboard spécifique à l'entité
-            switch ($user->type_utilisateur) {
-                case 'hopital':
-                    return redirect()->route('hopital.dashboard');
-                case 'pharmacie':
-                    return redirect()->route('pharmacie.dashboard');
-                case 'banque_sang':
-                    return redirect()->route('banque.dashboard');
-                case 'centre':
-                    return redirect()->route('centre.dashboard');
-                case 'patient':
-                    return redirect()->route('patient.dashboard');
-                default:
-                    return redirect()->route('admin.dashboard');
-            }
+            // Tous les autres utilisateurs vont vers le dashboard admin
+            return redirect()->route('admin.dashboard');
         }
     }
 

@@ -1,52 +1,152 @@
-@extends('layouts.medecin')
+@extends('layouts.admin')
 
+@section('title', 'Dashboard Médecin')
 @section('page-title', 'Dashboard Médecin')
 
 @section('content')
+<style>
+.stats-card {
+    background: white;
+    border-radius: 15px;
+    padding: 1.5rem;
+    box-shadow: 0 10px 30px rgba(0,0,0,0.1);
+    transition: transform 0.3s ease;
+    height: 100%;
+}
+
+.stats-card:hover {
+    transform: translateY(-5px);
+    box-shadow: 0 15px 40px rgba(0,0,0,0.15);
+}
+
+/* Cartes modernes */
+.modern-card {
+    background: white;
+    border-radius: 10px;
+    box-shadow: 0 2px 10px rgba(0,0,0,0.08);
+    overflow: hidden;
+}
+
+.modern-card-header {
+    padding: 20px;
+    border-bottom: 1px solid #e9ecef;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.modern-card-body {
+    padding: 20px;
+}
+
+/* Items patients */
+.patient-item, .dossier-item {
+    display: flex;
+    align-items: center;
+    gap: 15px;
+    padding: 15px;
+    border-radius: 8px;
+    margin-bottom: 10px;
+    background: #f8f9fa;
+    transition: all 0.3s ease;
+}
+
+.patient-item:hover, .dossier-item:hover {
+    background: #e9ecef;
+    transform: translateX(5px);
+}
+
+.patient-avatar {
+    width: 50px;
+    height: 50px;
+    border-radius: 50%;
+    background: #e9ecef;
+    color: #495057;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 18px;
+    font-weight: 600;
+}
+
+.dossier-icon {
+    width: 50px;
+    height: 50px;
+    border-radius: 50%;
+    background: #e9ecef;
+    color: #495057;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 18px;
+}
+
+.patient-info, .dossier-info {
+    flex: 1;
+}
+
+.patient-info h6, .dossier-info h6 {
+    margin: 0;
+    font-weight: 600;
+    color: #2c3e50;
+}
+
+.patient-meta, .dossier-meta {
+    text-align: right;
+}
+</style>
 
 <!-- Statistiques -->
 <div class="row mb-4">
     <div class="col-xl-3 col-md-6 mb-3">
-        <div class="stats-card stats-card-blue">
-            <div class="stats-icon">
-                <i class="fas fa-users"></i>
-            </div>
-            <div class="stats-info">
-                <h3>{{ $stats['total_patients'] }}</h3>
-                <p>Total Patients</p>
-            </div>
-        </div>
-    </div>
-    <div class="col-xl-3 col-md-6 mb-3">
-        <div class="stats-card stats-card-green">
-            <div class="stats-icon">
-                <i class="fas fa-file-medical"></i>
-            </div>
-            <div class="stats-info">
-                <h3>{{ $stats['total_dossiers'] }}</h3>
-                <p>Dossiers Médicaux</p>
+        <div class="stats-card" style="border-left: 5px solid #003366;">
+            <div class="d-flex justify-content-between align-items-center">
+                <div>
+                    <h3 class="mb-0" style="color: #003366; font-weight: 600;">{{ $stats['total_patients'] }}</h3>
+                    <p class="mb-0" style="color: #666; font-size: 0.9rem;">Total Patients</p>
+                </div>
+                <div style="background: linear-gradient(135deg, #003366 0%, #002244 100%); width: 60px; height: 60px; border-radius: 50%; display: flex; align-items: center; justify-content: center;">
+                    <i class="fas fa-users fa-2x text-white"></i>
+                </div>
             </div>
         </div>
     </div>
     <div class="col-xl-3 col-md-6 mb-3">
-        <div class="stats-card stats-card-orange">
-            <div class="stats-icon">
-                <i class="fas fa-check-circle"></i>
-            </div>
-            <div class="stats-info">
-                <h3>{{ $stats['dossiers_actifs'] }}</h3>
-                <p>Dossiers Actifs</p>
+        <div class="stats-card" style="border-left: 5px solid #28a745;">
+            <div class="d-flex justify-content-between align-items-center">
+                <div>
+                    <h3 class="mb-0" style="color: #28a745; font-weight: 600;">{{ $stats['total_dossiers'] }}</h3>
+                    <p class="mb-0" style="color: #666; font-size: 0.9rem;">Dossiers Médicaux</p>
+                </div>
+                <div style="background: linear-gradient(135deg, #28a745 0%, #20c997 100%); width: 60px; height: 60px; border-radius: 50%; display: flex; align-items: center; justify-content: center;">
+                    <i class="fas fa-file-medical fa-2x text-white"></i>
+                </div>
             </div>
         </div>
     </div>
     <div class="col-xl-3 col-md-6 mb-3">
-        <div class="stats-card stats-card-purple">
-            <div class="stats-icon">
-                <i class="fas fa-calendar-day"></i>
+        <div class="stats-card" style="border-left: 5px solid #00a8e8;">
+            <div class="d-flex justify-content-between align-items-center">
+                <div>
+                    <h3 class="mb-0" style="color: #00a8e8; font-weight: 600;">{{ $stats['dossiers_actifs'] }}</h3>
+                    <p class="mb-0" style="color: #666; font-size: 0.9rem;">Dossiers Actifs</p>
+                </div>
+                <div style="background: linear-gradient(135deg, #00a8e8 0%, #007bff 100%); width: 60px; height: 60px; border-radius: 50%; display: flex; align-items: center; justify-content: center;">
+                    <i class="fas fa-check-circle fa-2x text-white"></i>
+                </div>
             </div>
-            <div class="stats-info">
-                <h3>{{ $stats['consultations_aujourd_hui'] }}</h3>
-                <p>Consultations Aujourd'hui</p>
+        </div>
+    </div>
+    <div class="col-xl-3 col-md-6 mb-3">
+        <div class="stats-card" style="border-left: 5px solid #ffc107;">
+            <div class="d-flex justify-content-between align-items-center">
+                <div>
+                    <h3 class="mb-0" style="color: #ffc107; font-weight: 600;">{{ $stats['consultations_aujourd_hui'] }}</h3>
+                    <p class="mb-0" style="color: #666; font-size: 0.9rem;">Consultations Aujourd'hui</p>
+                </div>
+                <div style="background: linear-gradient(135deg, #ffc107 0%, #ff8f00 100%); width: 60px; height: 60px; border-radius: 50%; display: flex; align-items: center; justify-content: center;">
+                    <i class="fas fa-calendar-day fa-2x text-white"></i>
+                </div>
             </div>
         </div>
     </div>

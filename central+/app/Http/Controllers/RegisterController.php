@@ -10,7 +10,6 @@ use App\Models\Utilisateur;
 use App\Models\Pharmacie;
 use App\Models\BanqueSang;
 use App\Models\Centre;
-use App\Models\Patient;
 
 class RegisterController extends Controller
 {
@@ -85,6 +84,9 @@ public function submit(Request $request)
     } elseif ($request->type_utilisateur === 'patient') {
         $rules['date_naissance'] = 'required|date';
         $rules['sexe'] = 'required|in:masculin,feminin';
+        $rules['telephone'] = 'nullable|string|max:20';
+        $rules['hopital_id'] = 'nullable|exists:hopitaux,id';
+        $rules['groupe_sanguin'] = 'nullable|in:A+,A-,B+,B-,AB+,AB-,O+,O-';
     }
 
     // Messages d'erreur personnalisés en français
@@ -156,13 +158,28 @@ public function submit(Request $request)
                 break;
 
             case 'patient':
-                $entite = Patient::create([
+                // Pour les patients, on crée directement l'utilisateur sans entité séparée
+                $utilisateur = Utilisateur::create([
                     'nom' => $validated['nom'],
                     'email' => $validated['email'],
+                    'mot_de_passe' => Hash::make($validated['password']),
+                    'role' => 'patient',
+                    'type_utilisateur' => 'patient',
                     'date_naissance' => $validated['date_naissance'],
                     'sexe' => $validated['sexe'],
+                    'telephone' => $validated['telephone'] ?? null,
+                    'hopital_id' => $validated['hopital_id'] ?? null,
+                    'groupe_sanguin' => $validated['groupe_sanguin'] ?? null,
+                    'status' => 'approved', // Les patients sont automatiquement approuvés
                 ]);
-                break;
+                
+                // Assigner le rôle patient
+                $utilisateur->assignRole('patient');
+                
+                DB::commit();
+                
+                return redirect()->route('login')
+                    ->with('success', 'Inscription réussie ! Vous pouvez maintenant vous connecter avec vos identifiants.');
 
             default:
                 throw new \Exception('Type d\'entité non reconnu');

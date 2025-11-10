@@ -11,6 +11,15 @@ class Pharmacie extends Model
         'nom',
         'email',
         'adresse',
+        'telephone',
         'logo'
     ];
+    
+    /**
+     * Relation avec les médicaments
+     */
+    public function medicaments()
+    {
+        return $this->hasMany(Medicament::class, 'pharmacie_id');
+    }
 }
