@@ -6,6 +6,13 @@
 @section('content')
 <div class="row">
     <div class="col-12">
+        @if(session('success'))
+            <div class="alert alert-success alert-dismissible fade show" role="alert">
+                <i class="fas fa-check-circle me-2"></i>{{ session('success') }}
+                <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+            </div>
+        @endif
+
         <div class="card">
             <div class="card-header">
                 <div class="d-flex justify-content-between align-items-center">
@@ -23,7 +30,7 @@
                                 <th>Nom</th>
                                 <th>Email</th>
                                 <th>Téléphone</th>
-                                <th>Dernière Consultation</th>
+                                <th>Statut</th>
                                 <th>Dossiers</th>
                                 <th>Actions</th>
                             </tr>
@@ -47,27 +54,54 @@
                                 <td>{{ $patient->email }}</td>
                                 <td>{{ $patient->telephone ?? 'Non renseigné' }}</td>
                                 <td>
-                                    @php
-                                        $dernierDossier = $patient->dossiers()->where('medecin_id', auth()->id())->latest()->first();
-                                    @endphp
-                                    @if($dernierDossier)
-                                        <span class="badge bg-success">{{ $dernierDossier->date_consultation->format('d/m/Y') }}</span>
+                                    @if($patient->consultations_en_attente > 0)
+                                        <span class="badge bg-warning text-dark animate-badge">
+                                            <i class="fas fa-exclamation-circle me-1"></i>
+                                            {{ $patient->consultations_en_attente }} Consultation(s) en attente
+                                        </span>
                                     @else
-                                        <span class="badge bg-secondary">Aucune</span>
+                                        @php
+                                            $dernierDossier = $patient->dossiers()->where('medecin_id', auth()->id())->latest()->first();
+                                        @endphp
+                                        @if($dernierDossier)
+                                            <span class="badge bg-success">Dernière : {{ $dernierDossier->date_consultation->format('d/m/Y') }}</span>
+                                        @else
+                                            <span class="badge bg-secondary">Aucune consultation</span>
+                                        @endif
                                     @endif
                                 </td>
                                 <td>
-                                    <span class="badge bg-info">{{ $patient->dossiers()->where('medecin_id', auth()->id())->count() }} dossiers</span>
+                                    <span class="badge bg-info">{{ $patient->dossiers()->where('medecin_id', auth()->id())->count() }} dossier(s)</span>
                                 </td>
                                 <td>
-                                    <div class="btn-group" role="group">
-                                        <a href="{{ route('admin.medecin.dossiers') }}?patient={{ $patient->id }}" class="btn btn-sm btn-primary">
-                                            <i class="fas fa-file-medical"></i> Dossiers
-                                        </a>
-                                        <button class="btn btn-sm btn-success" onclick="createDossier({{ $patient->id }}, '{{ $patient->nom }}')">
-                                            <i class="fas fa-plus"></i> Nouveau Dossier
-                                        </button>
-                                    </div>
+                                    @if($patient->consultations_en_attente > 0)
+                                        @php
+                                            $consultation = \App\Models\Consultation::where('patient_id', $patient->id)
+                                                ->where('medecin_id', auth()->id())
+                                                ->where('statut_paiement', 'paye')
+                                                ->whereIn('statut_consultation', ['paye_en_attente', 'en_cours'])
+                                                ->first();
+                                        @endphp
+                                        @if($consultation)
+                                            @if($consultation->dossier_medical_id)
+                                                {{-- Dossier déjà créé, afficher le lien vers le dossier --}}
+                                                <a href="{{ route('admin.medecin.dossier.show', $consultation->dossier_medical_id) }}" class="btn btn-sm btn-success">
+                                                    <i class="fas fa-file-medical"></i> Voir le Dossier
+                                                </a>
+                                            @else
+                                                {{-- Pas encore de dossier, afficher le bouton consulter --}}
+                                                <a href="{{ route('admin.medecin.consultations.show', $consultation->id) }}" class="btn btn-sm btn-warning">
+                                                    <i class="fas fa-stethoscope"></i> Consulter
+                                                </a>
+                                            @endif
+                                        @endif
+                                    @else
+                                        <div class="btn-group" role="group">
+                                            <a href="{{ route('admin.medecin.dossiers') }}?patient={{ $patient->id }}" class="btn btn-sm btn-primary">
+                                                <i class="fas fa-file-medical"></i> Dossiers
+                                            </a>
+                                        </div>
+                                    @endif
                                 </td>
                             </tr>
                             @empty
@@ -239,4 +273,25 @@ document.getElementById('createDossierForm').addEventListener('submit', function
     });
 });
 </script>
+
+<style>
+@keyframes pulse {
+    0% {
+        transform: scale(1);
+        opacity: 1;
+    }
+    50% {
+        transform: scale(1.05);
+        opacity: 0.8;
+    }
+    100% {
+        transform: scale(1);
+        opacity: 1;
+    }
+}
+
+.animate-badge {
+    animation: pulse 2s infinite;
+}
+</style>
 @endsection

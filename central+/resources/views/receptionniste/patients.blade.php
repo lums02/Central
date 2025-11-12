@@ -143,59 +143,45 @@
     </div>
 </div>
 
-<!-- Modal Nouveau Patient -->
+<!-- Modal Nouveau Patient + Consultation -->
 <div class="modal fade" id="nouveauPatientModal" tabindex="-1">
-    <div class="modal-dialog modal-lg">
+    <div class="modal-dialog modal-xl">
         <div class="modal-content">
             <div class="modal-header bg-primary text-white">
                 <h5 class="modal-title">
-                    <i class="fas fa-user-plus me-2"></i>Nouveau Patient
+                    <i class="fas fa-user-plus me-2"></i>Nouveau Patient + Consultation
                 </h5>
                 <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
             </div>
             <form action="{{ route('admin.receptionniste.patients.store') }}" method="POST">
                 @csrf
                 <div class="modal-body">
+                    <!-- Informations Patient -->
+                    <h6 class="text-primary mb-3"><i class="fas fa-user me-2"></i>Informations du Patient</h6>
                     <div class="row">
                         <div class="col-md-6 mb-3">
-                            <label class="form-label">Nom *</label>
+                            <label class="form-label">Nom <span class="text-danger">*</span></label>
                             <input type="text" name="nom" class="form-control" required>
                         </div>
                         <div class="col-md-6 mb-3">
-                            <label class="form-label">Prénom *</label>
+                            <label class="form-label">Prénom <span class="text-danger">*</span></label>
                             <input type="text" name="prenom" class="form-control" required>
                         </div>
                     </div>
                     <div class="row">
-                        <div class="col-md-6 mb-3">
-                            <label class="form-label">Date de Naissance *</label>
+                        <div class="col-md-4 mb-3">
+                            <label class="form-label">Date de Naissance <span class="text-danger">*</span></label>
                             <input type="date" name="date_naissance" class="form-control" required>
                         </div>
-                        <div class="col-md-6 mb-3">
-                            <label class="form-label">Sexe *</label>
+                        <div class="col-md-4 mb-3">
+                            <label class="form-label">Sexe <span class="text-danger">*</span></label>
                             <select name="sexe" class="form-control" required>
                                 <option value="">-- Sélectionnez --</option>
                                 <option value="masculin">Masculin</option>
                                 <option value="feminin">Féminin</option>
                             </select>
                         </div>
-                    </div>
-                    <div class="row">
-                        <div class="col-md-6 mb-3">
-                            <label class="form-label">Téléphone *</label>
-                            <input type="tel" name="telephone" class="form-control" required>
-                        </div>
-                        <div class="col-md-6 mb-3">
-                            <label class="form-label">Email</label>
-                            <input type="email" name="email" class="form-control">
-                        </div>
-                    </div>
-                    <div class="mb-3">
-                        <label class="form-label">Adresse *</label>
-                        <textarea name="adresse" class="form-control" rows="2" required></textarea>
-                    </div>
-                    <div class="row">
-                        <div class="col-md-6 mb-3">
+                        <div class="col-md-4 mb-3">
                             <label class="form-label">Groupe Sanguin</label>
                             <select name="groupe_sanguin" class="form-control">
                                 <option value="">-- Non renseigné --</option>
@@ -209,16 +195,100 @@
                                 <option value="O-">O-</option>
                             </select>
                         </div>
+                    </div>
+                    <div class="row">
                         <div class="col-md-6 mb-3">
-                            <label class="form-label">Mot de Passe *</label>
-                            <input type="password" name="mot_de_passe" class="form-control" required>
+                            <label class="form-label">Téléphone <span class="text-danger">*</span></label>
+                            <input type="tel" name="telephone" class="form-control" required>
                         </div>
+                        <div class="col-md-6 mb-3">
+                            <label class="form-label">Email</label>
+                            <input type="email" name="email" class="form-control">
+                        </div>
+                    </div>
+                    <div class="row">
+                        <div class="col-md-6 mb-3">
+                            <label class="form-label">Adresse <span class="text-danger">*</span></label>
+                            <textarea name="adresse" class="form-control" rows="2" required></textarea>
+                        </div>
+                        <div class="col-md-6 mb-3">
+                            <label class="form-label">Mot de Passe <span class="text-danger">*</span></label>
+                            <input type="password" name="mot_de_passe" class="form-control" required>
+                            <small class="text-muted">Le patient pourra se connecter avec son email et ce mot de passe</small>
+                        </div>
+                    </div>
+
+                    <hr class="my-4">
+
+                    <!-- Signes Vitaux -->
+                    <h6 class="text-primary mb-3"><i class="fas fa-heartbeat me-2"></i>Signes Vitaux</h6>
+                    <div class="row">
+                        <div class="col-md-3 mb-3">
+                            <label class="form-label">Poids (kg)</label>
+                            <input type="number" name="poids" class="form-control" step="0.01" placeholder="Ex: 70.5">
+                        </div>
+                        <div class="col-md-3 mb-3">
+                            <label class="form-label">Taille (cm)</label>
+                            <input type="number" name="taille" class="form-control" step="0.01" placeholder="Ex: 175">
+                        </div>
+                        <div class="col-md-3 mb-3">
+                            <label class="form-label">Température (°C)</label>
+                            <input type="number" name="temperature" class="form-control" step="0.1" placeholder="Ex: 37.5">
+                        </div>
+                        <div class="col-md-3 mb-3">
+                            <label class="form-label">Pouls (bpm)</label>
+                            <input type="number" name="frequence_cardiaque" class="form-control" placeholder="Ex: 80">
+                        </div>
+                    </div>
+                    <div class="row">
+                        <div class="col-md-12 mb-3">
+                            <label class="form-label">Tension Artérielle</label>
+                            <input type="text" name="tension_arterielle" class="form-control" placeholder="Ex: 120/80">
+                        </div>
+                    </div>
+
+                    <hr class="my-4">
+
+                    <!-- Informations de Consultation -->
+                    <h6 class="text-primary mb-3"><i class="fas fa-stethoscope me-2"></i>Informations de Consultation</h6>
+                    <div class="row">
+                        <div class="col-md-12 mb-3">
+                            <label class="form-label">Motif de Consultation <span class="text-danger">*</span></label>
+                            <textarea name="motif_consultation" class="form-control" rows="3" required placeholder="Pourquoi le patient consulte-t-il aujourd'hui ?"></textarea>
+                            <small class="text-muted">Notez ce que le patient vous dit (symptômes, plaintes, etc.)</small>
+                        </div>
+                    </div>
+                    <div class="row">
+                        <div class="col-md-6 mb-3">
+                            <label class="form-label">Médecin <span class="text-danger">*</span></label>
+                            <select name="medecin_id" class="form-control" required>
+                                <option value="">-- Sélectionnez un médecin --</option>
+                                @foreach(\App\Models\Utilisateur::where('entite_id', auth()->user()->entite_id)->where('type_utilisateur', 'hopital')->where('role', 'medecin')->get() as $medecin)
+                                    <option value="{{ $medecin->id }}">Dr. {{ $medecin->nom }} {{ $medecin->prenom }}</option>
+                                @endforeach
+                            </select>
+                        </div>
+                        <div class="col-md-6 mb-3">
+                            <label class="form-label">Frais de Consultation (FC) <span class="text-danger">*</span></label>
+                            <input type="number" name="frais_consultation" class="form-control" required min="0" placeholder="Ex: 5000">
+                        </div>
+                    </div>
+                    <div class="row">
+                        <div class="col-md-12 mb-3">
+                            <label class="form-label">Notes Complémentaires</label>
+                            <textarea name="notes_receptionniste" class="form-control" rows="2" placeholder="Observations ou informations supplémentaires..."></textarea>
+                        </div>
+                    </div>
+
+                    <div class="alert alert-info mt-3">
+                        <i class="fas fa-info-circle me-2"></i>
+                        <strong>Information :</strong> Après validation, le patient sera enregistré et devra se rendre à la <strong>caisse</strong> pour payer les frais de consultation avant de consulter le médecin.
                     </div>
                 </div>
                 <div class="modal-footer">
                     <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Annuler</button>
-                    <button type="submit" class="btn btn-primary">
-                        <i class="fas fa-save me-2"></i>Enregistrer
+                    <button type="submit" class="btn btn-success btn-lg">
+                        <i class="fas fa-save me-2"></i>Enregistrer et Envoyer à la Caisse
                     </button>
                 </div>
             </form>

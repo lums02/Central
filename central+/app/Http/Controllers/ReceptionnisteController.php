@@ -8,6 +8,8 @@ use App\Models\Utilisateur;
 use App\Models\RendezVous;
 use App\Models\DossierMedical;
 use App\Models\Hopital;
+use App\Models\Consultation;
+use App\Models\Notification;
 use Carbon\Carbon;
 
 class ReceptionnisteController extends Controller
@@ -73,9 +75,13 @@ class ReceptionnisteController extends Controller
     {
         $user = Auth::user();
         
-        // Récupérer tous les patients ayant des rendez-vous ou dossiers dans cet hôpital
-        $patientIds = RendezVous::where('hopital_id', $user->entite_id)
+        // Récupérer tous les patients ayant des consultations, rendez-vous ou dossiers dans cet hôpital
+        $patientIds = Consultation::where('hopital_id', $user->entite_id)
             ->pluck('patient_id')
+            ->merge(
+                RendezVous::where('hopital_id', $user->entite_id)
+                    ->pluck('patient_id')
+            )
             ->merge(
                 DossierMedical::where('hopital_id', $user->entite_id)
                     ->pluck('patient_id')
@@ -91,7 +97,7 @@ class ReceptionnisteController extends Controller
     }
     
     /**
-     * Créer un nouveau patient
+     * Créer un nouveau patient avec consultation
      */
     public function storePatient(Request $request)
     {
@@ -107,6 +113,17 @@ class ReceptionnisteController extends Controller
             'adresse' => 'required|string',
             'groupe_sanguin' => 'nullable|in:A+,A-,B+,B-,AB+,AB-,O+,O-',
             'mot_de_passe' => 'required|string|min:6',
+            
+            // Informations de consultation
+            'medecin_id' => 'required|exists:utilisateurs,id',
+            'motif_consultation' => 'required|string',
+            'poids' => 'nullable|numeric|min:0',
+            'taille' => 'nullable|numeric|min:0',
+            'temperature' => 'nullable|numeric|min:30|max:45',
+            'tension_arterielle' => 'nullable|string|max:20',
+            'frequence_cardiaque' => 'nullable|integer|min:0',
+            'frais_consultation' => 'required|numeric|min:0',
+            'notes_receptionniste' => 'nullable|string',
         ]);
         
         // Créer l'utilisateur patient
@@ -116,7 +133,7 @@ class ReceptionnisteController extends Controller
             'email' => $validated['email'],
             'telephone' => $validated['telephone'],
             'adresse' => $validated['adresse'],
-            'password' => bcrypt($validated['mot_de_passe']),
+            'mot_de_passe' => bcrypt($validated['mot_de_passe']),
             'type_utilisateur' => 'patient',
             'role' => 'patient',
             'status' => 'approved',
@@ -129,8 +146,43 @@ class ReceptionnisteController extends Controller
         // Assigner le rôle patient
         $patient->assignRole('patient');
         
-        return redirect()->route('admin.receptionniste.patients')
-            ->with('success', 'Patient créé avec succès');
+        // Créer la consultation
+        $consultation = Consultation::create([
+            'hopital_id' => $user->entite_id,
+            'patient_id' => $patient->id,
+            'medecin_id' => $validated['medecin_id'],
+            'receptionniste_id' => $user->id,
+            'motif_consultation' => $validated['motif_consultation'],
+            'poids' => $validated['poids'] ?? null,
+            'taille' => $validated['taille'] ?? null,
+            'temperature' => $validated['temperature'] ?? null,
+            'tension_arterielle' => $validated['tension_arterielle'] ?? null,
+            'frequence_cardiaque' => $validated['frequence_cardiaque'] ?? null,
+            'frais_consultation' => $validated['frais_consultation'],
+            'notes_receptionniste' => $validated['notes_receptionniste'] ?? null,
+            'statut_paiement' => 'en_attente',
+            'statut_consultation' => 'en_attente_paiement',
+        ]);
+        
+        // Notifier les caissiers
+        $caissiers = Utilisateur::where('entite_id', $user->entite_id)
+            ->where('type_utilisateur', 'hopital')
+            ->where('role', 'caissier')
+            ->get();
+        
+        foreach ($caissiers as $caissier) {
+            Notification::create([
+                'user_id' => $caissier->id,
+                'type' => 'nouvelle_consultation',
+                'title' => 'Nouvelle consultation à encaisser',
+                'message' => "Patient : {$patient->nom} {$patient->prenom} - Montant : {$validated['frais_consultation']} FC",
+                'data' => json_encode(['consultation_id' => $consultation->id]),
+                'read' => false,
+            ]);
+        }
+        
+        return redirect()->route('admin.receptionniste.dashboard')
+            ->with('success', 'Patient et consultation créés avec succès. Le patient doit maintenant payer à la caisse.');
     }
     
     /**

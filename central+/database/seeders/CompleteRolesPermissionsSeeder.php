@@ -70,6 +70,8 @@ class CompleteRolesPermissionsSeeder extends Seeder
         $medecin = Role::firstOrCreate(['name' => 'medecin', 'guard_name' => 'web']);
         $infirmier = Role::firstOrCreate(['name' => 'infirmier', 'guard_name' => 'web']);
         $receptionniste = Role::firstOrCreate(['name' => 'receptionniste', 'guard_name' => 'web']);
+        $caissier = Role::firstOrCreate(['name' => 'caissier', 'guard_name' => 'web']);
+        $laborantin = Role::firstOrCreate(['name' => 'laborantin', 'guard_name' => 'web']);
         
         // ========== RÔLES PHARMACIE ==========
         $pharmacieAdmin = Role::firstOrCreate(['name' => 'pharmacie_admin', 'guard_name' => 'web']);
@@ -115,6 +117,18 @@ class CompleteRolesPermissionsSeeder extends Seeder
         $receptionniste->syncPermissions([
             'view_patients', 'create_patients', 'edit_patients',
             'view_appointments', 'create_appointments', 'edit_appointments',
+        ]);
+
+        $caissier->syncPermissions([
+            'view_patients',
+            'view_invoices', 'create_invoices', 'edit_invoices',
+            'view_appointments',
+        ]);
+
+        $laborantin->syncPermissions([
+            'view_patients',
+            'view_medical_records',
+            'view_prescriptions',
         ]);
 
         // ========== PERMISSIONS PHARMACIE ==========

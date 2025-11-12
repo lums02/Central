@@ -196,6 +196,10 @@ function handleNotificationClick(notifId, type, data) {
         window.location.href = '{{ route("admin.hopital.transferts.demandes-recues") }}';
     } else if (type === 'transfert_complete') {
         window.location.href = '{{ route("admin.hopital.patients.index") }}';
+    } else if (type === 'nouvelle_consultation') {
+        window.location.href = '{{ route("admin.caissier.consultations") }}';
+    } else if (type === 'consultation_payee') {
+        window.location.href = '{{ route("admin.medecin.patients") }}';
     } else if (type === 'resultats_examen' && data && data.dossier_id) {
         window.location.href = `/admin/medecin/dossiers/${data.dossier_id}`;
     } else if (type === 'examens_a_payer') {

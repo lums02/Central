@@ -87,8 +87,8 @@ class LoginController extends Controller
                 // Les médecins vont vers leur dashboard spécifique
                 return redirect()->intended(route('admin.medecin.dashboard'));
             } elseif ($utilisateur->role === 'caissier') {
-                // Les caissiers vont vers leur page d'examens
-                return redirect()->intended(route('admin.caissier.examens'));
+                // Les caissiers vont vers leur dashboard
+                return redirect()->intended(route('admin.caissier.dashboard'));
             } elseif ($utilisateur->role === 'laborantin') {
                 // Les laborantins vont vers leur page d'examens
                 return redirect()->intended(route('admin.laborantin.examens'));
@@ -127,7 +127,7 @@ class LoginController extends Controller
         } elseif ($user->role === 'medecin') {
             return redirect()->route('admin.medecin.dashboard');
         } elseif ($user->role === 'caissier') {
-            return redirect()->route('admin.caissier.examens');
+            return redirect()->route('admin.caissier.dashboard');
         } elseif ($user->role === 'laborantin') {
             return redirect()->route('admin.laborantin.examens');
         } elseif ($user->role === 'receptionniste') {

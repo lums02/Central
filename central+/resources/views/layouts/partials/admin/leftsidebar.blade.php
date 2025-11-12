@@ -165,19 +165,35 @@
                     </a>
                 @endif
 
-                {{-- ========== MENU POUR CAISSIERS ========== --}}
-                @if(auth()->user()->role === 'caissier')
-                    <a href="{{ route('admin.caissier.examens') }}"
-                       class="nav-link text-white mb-2 {{ request()->routeIs('admin.caissier*') ? 'active bg-primary rounded' : '' }}">
-                        <i class="fas fa-cash-register me-2"></i> Examens à Valider
+                {{-- ========== MENU POUR LABORANTINS ========== --}}
+                @if(auth()->user()->role === 'laborantin')
+                    <a href="{{ route('admin.laborantin.dashboard') }}"
+                       class="nav-link text-white mb-2 {{ request()->routeIs('admin.laborantin.dashboard') ? 'active bg-primary rounded' : '' }}">
+                        <i class="fas fa-home me-2"></i> Tableau de Bord
+                    </a>
+                    <a href="{{ route('admin.laborantin.examens') }}"
+                       class="nav-link text-white mb-2 {{ request()->routeIs('admin.laborantin.examens') ? 'active bg-primary rounded' : '' }}">
+                        <i class="fas fa-microscope me-2"></i> Examens à Réaliser
+                    </a>
+                    <a href="{{ route('admin.laborantin.historique') }}"
+                       class="nav-link text-white mb-2 {{ request()->routeIs('admin.laborantin.historique') ? 'active bg-primary rounded' : '' }}">
+                        <i class="fas fa-history me-2"></i> Historique
                     </a>
                 @endif
 
-                {{-- ========== MENU POUR LABORANTINS ========== --}}
-                @if(auth()->user()->role === 'laborantin')
-                    <a href="{{ route('admin.laborantin.examens') }}"
-                       class="nav-link text-white mb-2 {{ request()->routeIs('admin.laborantin*') ? 'active bg-primary rounded' : '' }}">
-                        <i class="fas fa-microscope me-2"></i> Examens à Réaliser
+                {{-- ========== MENU POUR CAISSIERS ========== --}}
+                @if(auth()->user()->role === 'caissier')
+                    <a href="{{ route('admin.caissier.dashboard') }}"
+                       class="nav-link text-white mb-2 {{ request()->routeIs('admin.caissier.dashboard') ? 'active bg-primary rounded' : '' }}">
+                        <i class="fas fa-home me-2"></i> Tableau de Bord
+                    </a>
+                    <a href="{{ route('admin.caissier.examens') }}"
+                       class="nav-link text-white mb-2 {{ request()->routeIs('admin.caissier.examens*') ? 'active bg-primary rounded' : '' }}">
+                        <i class="fas fa-flask me-2"></i> Examens
+                    </a>
+                    <a href="{{ route('admin.caissier.historique-examens') }}"
+                       class="nav-link text-white mb-2 {{ request()->routeIs('admin.caissier.historique-examens') ? 'active bg-primary rounded' : '' }}">
+                        <i class="fas fa-history me-2"></i> Historique Examens
                     </a>
                 @endif
 

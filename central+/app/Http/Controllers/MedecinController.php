@@ -7,6 +7,7 @@ use App\Models\DossierMedical;
 use App\Models\RendezVous;
 use App\Models\ExamenPrescrit;
 use App\Models\Notification;
+use App\Models\Consultation;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 
@@ -18,7 +19,10 @@ class MedecinController extends Controller
         
         // Récupérer UNIQUEMENT les patients de SON hôpital
         $patients = Utilisateur::where('type_utilisateur', 'patient')
-            ->where('entite_id', $medecin->entite_id)
+            ->where(function($query) use ($medecin) {
+                $query->where('entite_id', $medecin->entite_id)
+                      ->orWhere('hopital_id', $medecin->entite_id);
+            })
             ->get();
         
         // Récupérer UNIQUEMENT ses dossiers médicaux
@@ -42,12 +46,38 @@ class MedecinController extends Controller
     {
         $medecin = Auth::user();
         
-        $patients = Utilisateur::where('type_utilisateur', 'patient')
-            ->where('entite_id', $medecin->entite_id)
-            ->with(['dossiers' => function($query) use ($medecin) {
-                $query->where('medecin_id', $medecin->id);
-            }])
+        // Récupérer les patients avec consultations payées pour ce médecin
+        $consultationsPatientsIds = Consultation::where('hopital_id', $medecin->entite_id)
+            ->where('medecin_id', $medecin->id)
+            ->where('statut_paiement', 'paye')
+            ->pluck('patient_id')
+            ->unique();
+        
+        // Récupérer aussi les patients avec dossiers existants
+        $dossiersPatientsIds = DossierMedical::where('medecin_id', $medecin->id)
+            ->pluck('patient_id')
+            ->unique();
+        
+        // Fusionner les deux listes
+        $allPatientsIds = $consultationsPatientsIds->merge($dossiersPatientsIds)->unique();
+        
+        $patients = Utilisateur::whereIn('id', $allPatientsIds)
+            ->where('type_utilisateur', 'patient')
+            ->with([
+                'dossiers' => function($query) use ($medecin) {
+                    $query->where('medecin_id', $medecin->id);
+                }
+            ])
             ->get();
+        
+        // Ajouter les consultations en attente pour chaque patient
+        foreach ($patients as $patient) {
+            $patient->consultations_en_attente = Consultation::where('patient_id', $patient->id)
+                ->where('medecin_id', $medecin->id)
+                ->where('statut_paiement', 'paye')
+                ->whereIn('statut_consultation', ['paye_en_attente', 'en_cours'])
+                ->count();
+        }
         
         return view('medecin.patients', compact('patients'));
     }
@@ -58,7 +88,10 @@ class MedecinController extends Controller
         
         // Récupérer les patients pour le formulaire
         $patients = Utilisateur::where('type_utilisateur', 'patient')
-            ->where('entite_id', $medecin->entite_id)
+            ->where(function($query) use ($medecin) {
+                $query->where('entite_id', $medecin->entite_id)
+                      ->orWhere('hopital_id', $medecin->entite_id);
+            })
             ->get();
         
         // Récupérer les rendez-vous du médecin
@@ -436,5 +469,171 @@ class MedecinController extends Controller
         
         return redirect()->route('admin.medecin.dossier.show', $dossier->id)
             ->with('success', count($examensCreated) . ' examen(s) prescrit(s) avec succès ! Le caissier a été notifié.');
+    }
+    
+    /**
+     * Afficher une consultation pour le médecin
+     */
+    public function showConsultation($id)
+    {
+        $medecin = Auth::user();
+        
+        $consultation = Consultation::where('id', $id)
+            ->where('medecin_id', $medecin->id)
+            ->where('hopital_id', $medecin->entite_id)
+            ->with(['patient', 'receptionniste', 'caissier', 'dossierMedical'])
+            ->firstOrFail();
+        
+        return view('medecin.consultation-show', compact('consultation'));
+    }
+    
+    /**
+     * Démarrer une consultation (marquer comme "en cours")
+     */
+    public function demarrerConsultation($id)
+    {
+        $medecin = Auth::user();
+        
+        $consultation = Consultation::where('id', $id)
+            ->where('medecin_id', $medecin->id)
+            ->where('hopital_id', $medecin->entite_id)
+            ->firstOrFail();
+        
+        $consultation->demarrerConsultation();
+        
+        return redirect()->back()->with('success', 'Consultation démarrée');
+    }
+    
+    /**
+     * Créer un dossier médical à partir d'une consultation
+     */
+    public function creerDossierDepuisConsultation(Request $request, $id)
+    {
+        $medecin = Auth::user();
+        
+        $consultation = Consultation::where('id', $id)
+            ->where('medecin_id', $medecin->id)
+            ->where('hopital_id', $medecin->entite_id)
+            ->firstOrFail();
+        
+        $validated = $request->validate([
+            'anamnese' => 'required|string',
+            'examen_clinique' => 'required|string',
+            'diagnostic' => 'required|string',
+            'antecedents_medicaux' => 'nullable|string',
+            'antecedents_familiaux' => 'nullable|string',
+            'allergies' => 'nullable|string',
+            'traitement_actuel' => 'nullable|string',
+            'notes' => 'nullable|string',
+        ]);
+        
+        // Créer le dossier médical
+        $dossier = DossierMedical::create([
+            'patient_id' => $consultation->patient_id,
+            'medecin_id' => $medecin->id,
+            'hopital_id' => $medecin->entite_id,
+            'numero_dossier' => 'DOS-' . strtoupper(uniqid()),
+            'date_consultation' => $consultation->date_consultation ?? now(),
+            'motif_consultation' => $consultation->motif_consultation,
+            
+            // Signes vitaux depuis la consultation
+            'poids' => $consultation->poids,
+            'taille' => $consultation->taille,
+            'temperature' => $consultation->temperature,
+            'tension_arterielle' => $consultation->tension_arterielle,
+            'frequence_cardiaque' => $consultation->frequence_cardiaque,
+            
+            // Informations remplies par le médecin
+            'anamnese' => $validated['anamnese'],
+            'examen_clinique' => $validated['examen_clinique'],
+            'diagnostic' => $validated['diagnostic'],
+            'traitement' => 'En attente des résultats d\'examens',
+            'antecedents_medicaux' => $validated['antecedents_medicaux'] ?? null,
+            'antecedents_familiaux' => $validated['antecedents_familiaux'] ?? null,
+            'allergies' => $validated['allergies'] ?? null,
+            'traitement_actuel' => $validated['traitement_actuel'] ?? null,
+            'notes' => $validated['notes'] ?? null,
+            'statut' => 'actif',
+        ]);
+        
+        // Lier le dossier à la consultation et marquer la consultation comme terminée
+        $consultation->update([
+            'dossier_medical_id' => $dossier->id,
+            'statut_consultation' => 'termine'
+        ]);
+        
+        return redirect()->route('admin.medecin.dossier.show', $dossier->id)
+            ->with('success', 'Dossier médical créé avec succès');
+    }
+    
+    /**
+     * Prescrire des examens depuis une consultation
+     */
+    public function prescrireExamensConsultation(Request $request, $id)
+    {
+        $medecin = Auth::user();
+        
+        $consultation = Consultation::where('id', $id)
+            ->where('medecin_id', $medecin->id)
+            ->where('hopital_id', $medecin->entite_id)
+            ->firstOrFail();
+        
+        // Si pas encore de dossier, créer d'abord le dossier
+        if (!$consultation->dossier_medical_id) {
+            return redirect()->back()->with('error', 'Veuillez d\'abord créer le dossier médical avant de prescrire des examens');
+        }
+        
+        $validated = $request->validate([
+            'examens' => 'required|array|min:1',
+            'examens.*.type_examen' => 'required|string',
+            'examens.*.nom_examen' => 'required|string',
+            'examens.*.indication' => 'required|string',
+        ]);
+        
+        $examensCreated = [];
+        
+        foreach ($validated['examens'] as $index => $examenData) {
+            $numeroExamen = 'EX-' . $medecin->entite_id . '-' . date('Ymd') . '-' . str_pad($index + 1, 4, '0', STR_PAD_LEFT);
+            
+            $examen = ExamenPrescrit::create([
+                'dossier_medical_id' => $consultation->dossier_medical_id,
+                'patient_id' => $consultation->patient_id,
+                'medecin_id' => $medecin->id,
+                'hopital_id' => $medecin->entite_id,
+                'numero_examen' => $numeroExamen,
+                'type_examen' => $examenData['type_examen'],
+                'nom_examen' => $examenData['nom_examen'],
+                'indication' => $examenData['indication'],
+                'date_prescription' => now(),
+                'prix' => 0,
+                'statut_paiement' => 'en_attente',
+                'statut_examen' => 'prescrit',
+            ]);
+            
+            $examensCreated[] = $examen;
+        }
+        
+        // Terminer la consultation
+        $consultation->terminerConsultation($consultation->dossier_medical_id);
+        
+        // Notifier les caissiers
+        $caissiers = Utilisateur::where('type_utilisateur', 'hopital')
+            ->where('entite_id', $medecin->entite_id)
+            ->where('role', 'caissier')
+            ->get();
+        
+        foreach ($caissiers as $caissier) {
+            Notification::create([
+                'user_id' => $caissier->id,
+                'type' => 'examens_a_payer',
+                'title' => 'Examens à encaisser',
+                'message' => "Le Dr. {$medecin->nom} a prescrit " . count($examensCreated) . " examen(s) pour {$consultation->patient->nom} {$consultation->patient->prenom}",
+                'data' => json_encode(['dossier_id' => $consultation->dossier_medical_id]),
+                'read' => false,
+            ]);
+        }
+        
+        return redirect()->route('admin.medecin.patients')
+            ->with('success', 'Examens prescrits avec succès. Le patient doit retourner à la caisse pour payer.');
     }
 }

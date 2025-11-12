@@ -71,7 +71,10 @@ class HopitalRendezVousController extends Controller
         
         // Liste des patients pour le modal
         $patients = Utilisateur::where('type_utilisateur', 'patient')
-            ->where('entite_id', $user->entite_id)
+            ->where(function($query) use ($user) {
+                $query->where('entite_id', $user->entite_id)
+                      ->orWhere('hopital_id', $user->entite_id);
+            })
             ->where('status', 'actif')
             ->get();
         
@@ -87,7 +90,10 @@ class HopitalRendezVousController extends Controller
         
         // Récupérer les patients et médecins de l'hôpital
         $patients = Utilisateur::where('type_utilisateur', 'patient')
-            ->where('entite_id', $user->entite_id)
+            ->where(function($query) use ($user) {
+                $query->where('entite_id', $user->entite_id)
+                      ->orWhere('hopital_id', $user->entite_id);
+            })
             ->where('status', 'actif')
             ->get();
         

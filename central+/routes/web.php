@@ -199,6 +199,13 @@ Route::prefix('admin')->name('admin.')->middleware(['auth'])->group(function () 
     // Routes pour les médecins
     Route::prefix('medecin')->name('medecin.')->group(function () {
         Route::get('/dashboard', [MedecinController::class, 'dashboard'])->name('dashboard');
+        
+        // Consultations (nouveau système)
+        Route::get('/consultations', [MedecinController::class, 'consultations'])->name('consultations');
+        Route::get('/consultations/{id}', [MedecinController::class, 'showConsultation'])->name('consultations.show');
+        Route::post('/consultations/{id}/demarrer', [MedecinController::class, 'demarrerConsultation'])->name('consultations.demarrer');
+        Route::post('/consultations/{id}/creer-dossier', [MedecinController::class, 'creerDossierDepuisConsultation'])->name('consultations.creer-dossier');
+        
         Route::get('/patients', [MedecinController::class, 'patients'])->name('patients');
         Route::get('/dossiers', [MedecinController::class, 'dossiers'])->name('dossiers');
         Route::get('/dossiers/{id}', [MedecinController::class, 'showDossier'])->name('dossier.show');
@@ -219,8 +226,20 @@ Route::prefix('admin')->name('admin.')->middleware(['auth'])->group(function () 
     // Routes pour les caissiers
     Route::prefix('caissier')->name('caissier.')->group(function () {
         Route::get('/dashboard', [\App\Http\Controllers\CaissierController::class, 'dashboard'])->name('dashboard');
+        
+        // Consultations
+        Route::get('/consultations', [\App\Http\Controllers\CaissierController::class, 'consultations'])->name('consultations');
+        Route::get('/consultations/{id}', [\App\Http\Controllers\CaissierController::class, 'showConsultation'])->name('consultations.show');
+        Route::post('/consultations/{id}/encaisser', [\App\Http\Controllers\CaissierController::class, 'encaisser'])->name('consultations.encaisser');
+        Route::get('/consultations/{id}/facture', [\App\Http\Controllers\CaissierController::class, 'facture'])->name('facture');
+        Route::get('/consultations/{id}/facture/pdf', [\App\Http\Controllers\CaissierController::class, 'telechargerFacture'])->name('facture.pdf');
+        Route::get('/rechercher-patient', [\App\Http\Controllers\CaissierController::class, 'rechercherPatient'])->name('rechercher-patient');
+        Route::get('/historique', [\App\Http\Controllers\CaissierController::class, 'historique'])->name('historique');
+        
+        // Examens
         Route::get('/examens', [\App\Http\Controllers\CaissierController::class, 'examensEnAttente'])->name('examens');
         Route::post('/examens/{id}/valider-paiement', [\App\Http\Controllers\CaissierController::class, 'validerPaiement'])->name('examens.valider');
+        Route::get('/historique-examens', [\App\Http\Controllers\CaissierController::class, 'historiqueExamens'])->name('historique-examens');
     });
     
     // Routes pour les laborantins
@@ -229,6 +248,7 @@ Route::prefix('admin')->name('admin.')->middleware(['auth'])->group(function () 
         Route::get('/examens', [\App\Http\Controllers\LaborantinController::class, 'examensARealiser'])->name('examens');
         Route::post('/examens/{id}/marquer-en-cours', [\App\Http\Controllers\LaborantinController::class, 'marquerEnCours'])->name('examens.en-cours');
         Route::post('/examens/{id}/uploader-resultats', [\App\Http\Controllers\LaborantinController::class, 'uploaderResultats'])->name('examens.upload');
+        Route::get('/historique', [\App\Http\Controllers\LaborantinController::class, 'historique'])->name('historique');
     });
     
     // Routes pour la gestion des patients de l'hôpital

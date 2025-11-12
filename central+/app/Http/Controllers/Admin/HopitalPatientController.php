@@ -27,7 +27,10 @@ class HopitalPatientController extends Controller
         
         // Récupérer les patients de cet hôpital
         $query = Utilisateur::where('type_utilisateur', 'patient')
-            ->where('entite_id', $user->entite_id)
+            ->where(function($q) use ($user) {
+                $q->where('entite_id', $user->entite_id)
+                  ->orWhere('hopital_id', $user->entite_id);
+            })
             ->with(['dossiersMedicaux' => function($q) {
                 $q->orderBy('date_consultation', 'desc');
             }]);
@@ -56,16 +59,28 @@ class HopitalPatientController extends Controller
         // Statistiques
         $stats = [
             'total_patients' => Utilisateur::where('type_utilisateur', 'patient')
-                ->where('entite_id', $user->entite_id)->count(),
+                ->where(function($q) use ($user) {
+                    $q->where('entite_id', $user->entite_id)
+                      ->orWhere('hopital_id', $user->entite_id);
+                })->count(),
             'patients_actifs' => Utilisateur::where('type_utilisateur', 'patient')
-                ->where('entite_id', $user->entite_id)
+                ->where(function($q) use ($user) {
+                    $q->where('entite_id', $user->entite_id)
+                      ->orWhere('hopital_id', $user->entite_id);
+                })
                 ->where('status', 'actif')->count(),
             'nouveaux_patients' => Utilisateur::where('type_utilisateur', 'patient')
-                ->where('entite_id', $user->entite_id)
+                ->where(function($q) use ($user) {
+                    $q->where('entite_id', $user->entite_id)
+                      ->orWhere('hopital_id', $user->entite_id);
+                })
                 ->whereDate('created_at', '>=', now()->subDays(7))->count(),
             'total_dossiers' => DossierMedical::whereIn('patient_id', 
                 Utilisateur::where('type_utilisateur', 'patient')
-                    ->where('entite_id', $user->entite_id)
+                    ->where(function($q) use ($user) {
+                        $q->where('entite_id', $user->entite_id)
+                          ->orWhere('hopital_id', $user->entite_id);
+                    })
                     ->pluck('id')
             )->count(),
         ];

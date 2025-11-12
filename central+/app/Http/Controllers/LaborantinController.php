@@ -131,5 +131,21 @@ class LaborantinController extends Controller
         
         return response()->json(['success' => true]);
     }
+    
+    /**
+     * Historique de tous les examens réalisés
+     */
+    public function historique()
+    {
+        $laborantin = Auth::user();
+        
+        $examens = ExamenPrescrit::where('hopital_id', $laborantin->entite_id)
+            ->where('statut_examen', 'termine')
+            ->with(['patient', 'medecin', 'dossierMedical', 'laborantin'])
+            ->orderBy('date_realisation', 'desc')
+            ->paginate(20);
+        
+        return view('laborantin.historique', compact('examens'));
+    }
 }
 

@@ -183,6 +183,8 @@ class NotificationController extends Controller
             'transfert_complete' => 'check-circle',
             'patient_nouveau' => 'user-plus',
             'nouveau_patient' => 'user-plus',
+            'nouvelle_consultation' => 'cash-register',
+            'consultation_payee' => 'check-circle',
             'rendez_vous' => 'calendar-check',
             'rappel_rdv_24h' => 'calendar-day',
             'rappel_rdv_2h' => 'clock',
