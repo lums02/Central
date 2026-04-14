@@ -25,6 +25,74 @@
             padding: 0;
             box-sizing: border-box;
         }
+/* Header Glassmorphism */
+.header {
+    background: rgba(255, 255, 255, 0.85); /* Semi-transparent */
+    backdrop-filter: blur(12px); /* Effet de flou */
+    -webkit-backdrop-filter: blur(12px);
+    box-shadow: 0 4px 20px rgba(0,0,0,0.03);
+    position: sticky;
+    top: 0;
+    z-index: 1000;
+    transition: all 0.3s ease;
+    border-bottom: 1px solid rgba(0,0,0,0.02);
+}
+
+.logo {
+    color: var(--central-primary);
+    font-weight: 800;
+    font-size: 1.6rem;
+    letter-spacing: -0.5px;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.nav-moyo .nav-link {
+    margin: 0 0.8rem;
+    font-weight: 600;
+    color: var(--central-gradient);
+    font-size: 0.95rem;
+    opacity: 0.8;
+    transition: all 0.2s ease;
+}
+
+.nav-moyo .nav-link:hover, .nav-moyo .nav-link.active {
+    color: var(--central-primary);
+    opacity: 1;
+}
+
+.btn-login {
+    color: var(--central-gradient);
+    font-weight: 600;
+    background: transparent;
+    border: 1px solid transparent;
+    padding: 8px 20px;
+    border-radius: 50px;
+    transition: all 0.3s ease;
+}
+
+.btn-login:hover {
+    background: #f0fbfd;
+    color: var(--central-primary);
+}
+
+.btn-signup {
+    background: var(--central-primary);
+    color: white;
+    font-weight: 600;
+    padding: 8px 24px;
+    border-radius: 50px;
+    box-shadow: 0 4px 12px rgba(0, 168, 201, 0.25);
+    transition: all 0.3s ease;
+}
+
+.btn-signup:hover {
+    background: var(--central-secondary);
+    transform: translateY(-2px);
+    box-shadow: 0 8px 16px rgba(0, 168, 201, 0.3);
+    color: white;
+}
 
         body {
             font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
@@ -408,7 +476,27 @@
     </style>
 </head>
 <body>
+<!-- Header -->
+<header class="header py-3">
+  <div class="container d-flex justify-content-between align-items-center">
+    <!-- Logo -->
+    <a href="/" class="text-decoration-none">
+        <h3 class="logo m-0">
+            <i class="fa-solid fa-dna text-primary"></i> 
+            <span>Central+</span>
+        </h3>
+    </a>
 
+
+    <!-- Boutons -->
+    <div class="header-buttons d-flex align-items-center gap-2">
+      <a href="/login" class="btn-login text-decoration-none">Se connecter</a>
+      <a href="/register" class="btn-signup text-decoration-none">
+        Créer un compte <i class="fa-solid fa-arrow-right ms-2 small"></i>
+      </a>
+    </div>
+  </div>
+</header>
     <!-- SECTION HERO -->
     <div class="hero-section">
         <div class="container">

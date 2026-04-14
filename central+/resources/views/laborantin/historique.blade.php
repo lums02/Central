@@ -35,8 +35,8 @@
                                 <th width="10%">Prescrit le</th>
                                 <th width="10%">Réalisé le</th>
                                 <th width="10%">Réalisé par</th>
-                                <th width="10%">Résultats</th>
-                                <th width="8%">Actions</th>
+                                <th width="10%">Actions</th>
+                                <!--th width="8%">Actions</th!-->
                             </tr>
                         </thead>
                         <tbody>
@@ -85,7 +85,7 @@
                                         <span class="text-muted">-</span>
                                     @endif
                                 </td>
-                                <td>
+                                <!--td>
                                     @if($examen->dossierMedical)
                                         <a href="{{ route('admin.medecin.dossier.show', $examen->dossierMedical->id) }}" 
                                            class="btn btn-sm btn-outline-primary" 
@@ -93,7 +93,7 @@
                                             <i class="fas fa-folder-open"></i>
                                         </a>
                                     @endif
-                                </td>
+                                </td!-->
                             </tr>
                             @endforeach
                         </tbody>

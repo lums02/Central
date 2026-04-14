@@ -7,9 +7,6 @@
 <div class="container-fluid">
     <!-- En-tête -->
     <div class="d-flex justify-content-between align-items-center mb-4">
-        <h1 class="h3 mb-0 text-gray-800">
-            <i class="fas fa-users text-primary me-2"></i>Gestion des Patients
-        </h1>
         <button class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#nouveauPatientModal">
             <i class="fas fa-user-plus me-2"></i>Nouveau Patient
         </button>

@@ -3,9 +3,9 @@
 @section('title', 'Dashboard Laborantin')
 
 @section('content')
-<div class="container-fluid">
+<!--div class="container-fluid">
     <!-- Actions rapides -->
-    <div class="card mb-4">
+    <!--div class="card mb-4">
         <div class="card-header bg-primary text-white">
             <i class="fas fa-bolt me-2"></i>Actions Rapides
         </div>
@@ -19,7 +19,7 @@
                 </a>
             </div>
         </div>
-    </div>
+    </div!-->
 
     <!-- Statistiques -->
     <div class="row g-3 mb-4">
